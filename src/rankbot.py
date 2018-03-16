@@ -46,7 +46,7 @@ class Isperia(discord.Client):
             return
         text = msg.content
 
-        if text[0] != '!':
+        if not text or text[0] != '!':
             return
 
         cmd = text.split()[0][1:]
