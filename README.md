@@ -2,6 +2,7 @@
 Simple discord bot to track records for cEDH ranked matches.
 
 Requirements:
+
 |Package|Version|
 |---|---|
 |aiohttp|1.0.5|
