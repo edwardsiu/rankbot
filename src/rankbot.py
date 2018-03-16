@@ -75,7 +75,7 @@ class Isperia(discord.Client):
 
     async def help(self, msg):
         user = msg.author
-        if (len(msg.split()) == 1):
+        if (len(msg.content.split()) == 1):
             await self.say(
                 ("Commands:\n"
             +   "```!help        -   show command list\n"
@@ -84,11 +84,11 @@ class Isperia(discord.Client):
             +   "!confirm     -   confirm a match result\n"
             +   "!deny        -   dispute a match result\n"
             +   "!score       -   check your league points\n"
-            +   "!describe    -   league stats"),
+            +   "!describe    -   league stats```"),
                 user)
         else:
-            await self.say(("To log a match result, type: "
-                + "```!log @player1 @player2 @player3```"
+            await self.say(("To log a match result, type: \n"
+                + "```!log @player1 @player2 @player3```\n"
                 + "where players are the losers of the match, and the "
                 + "winner is the user calling the log command.\n"
                 + "There must be exactly 3 losers to log the match."),
@@ -159,9 +159,9 @@ class Isperia(discord.Client):
         for user in losers:
             msg_text = ("Confirm game loss against **{}**?\n".format(
                     winner.name)
-                    +   "To **confirm** this record, say: "
+                    +   "To **confirm** this record, say: \n"
                     +   "```!confirm {}```\n".format(game_id)
-                    +   "To **deny** this record, say: "
+                    +   "To **deny** this record, say: \n"
                     +   "```!deny {}```".format(game_id))
             await self.say(msg_text, user)
 
