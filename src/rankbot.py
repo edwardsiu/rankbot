@@ -270,11 +270,15 @@ class Isperia(discord.Client):
             msg.channel)
 
     async def score(self, msg):
-        user = msg.author
+        if (len(msg.content.split()) < 2):
+            users = [msg.author]
+        else:
+            users = msg.mentions
         members = self.db.members
-        member = members.find_one({"user_id": user.id})
-        await self.say("{} has {} points".format(
-            user.mention, member["points"]), msg.channel)
+        for user in users:
+            member = members.find_one({"user_id": user.id})
+            await self.say("{} has {} points".format(
+                user.mention, member["points"]), msg.channel)
 
     async def describe(self, msg):
         matches = self.db.matches
