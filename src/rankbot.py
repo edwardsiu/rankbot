@@ -8,7 +8,7 @@ import hashids
 from pymongo import MongoClient
 
 class Isperia(discord.Client):
-    def __init__(self, token):
+    def __init__(self, token, mongodb_host, mongodb_port):
         super().__init__()
         self.token = token
         self.commands = [
@@ -25,7 +25,7 @@ class Isperia(discord.Client):
         handler.setFormatter(logging.Formatter(
             '%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
         self.logger.addHandler(handler)
-        self.db = MongoClient('localhost', 27017).rankdb
+        self.db = MongoClient(mongodb_host, mongodb_port).rankdb
 
     async def on_ready(self):
         self.logger.info('Logged in as {}'.format(self.user.name))
