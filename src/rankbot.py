@@ -306,7 +306,7 @@ class Isperia(discord.Client):
         )
 
     async def score(self, msg):
-        if len(msg.content.split() < 2):
+        if len(msg.content.split()) < 2:
             users = [msg.author]
         else:
             users = msg.mentions
