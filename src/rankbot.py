@@ -86,7 +86,9 @@ class Isperia(discord.Client):
                  +   "!deny        -   dispute a match result\n"
                  +   "!score       -   check your league points\n"
                  +   "!describe    -   league stats```",
-                 +   "!top         -   see the top players in the league```"),
+                 +   "!top         -   see the top players in the league
+                 +   "!pending     -   list your pending matches
+                 +   "!status      -   show the status of a match (must include game id)```"),
                 user)
         else:
             await self.say(("To log a match result, type: \n"
