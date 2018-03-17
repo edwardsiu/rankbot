@@ -71,7 +71,11 @@ class Isperia(discord.Client):
         elif cmd == "describe":
             await self.describe(msg)
         elif cmd == "reset":
-            await self.reset(msg) 
+            await self.reset(msg)
+        elif cmd == "pending":
+            await self.pending(msg)
+        elif cmd == "status":
+            await self.status(msg) 
 
     async def help(self, msg):
         user = msg.author
@@ -244,18 +248,14 @@ class Isperia(discord.Client):
                 members.update_one(
                 {"user_id": match["winner"]},
                 {
-                    "$inc": {
-                        "points": 3
-                    }
+                    "$inc": {"points": 3}
                 }
                 )
             else:
                 members.update_one(
                 {"user_id": player},
                 {
-                    "$inc": {
-                        "points": -1
-                    }
+                    "$inc": {"points": -1}
                 }
                 )
             
@@ -352,6 +352,11 @@ class Isperia(discord.Client):
                 +   "Winner: {}\n".format(winner["name"])
                 +   "Players:\n"
         )
+        for player in players:
+            status_text += "    {}: {}\n".format(
+                player["name"],
+                match["players"][player["user_id"]])
+        status_text += "Status: {}".format(match["status"])
         await self.say(status_text, msg.channel)
 
     async def reset(self, msg):
