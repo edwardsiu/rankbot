@@ -347,6 +347,7 @@ class Isperia(discord.Client):
                         ) for player in players]
                     )
                 )
+                +   "```"
         )
         await self.say(status_text, msg.channel)
 
