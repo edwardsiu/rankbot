@@ -193,6 +193,9 @@ class Isperia(discord.Client):
         matches = self.db.matches
         members = self.db.members
         pending_game = matches.find_one({"game_id": game_id})
+        player = members.find_one({"user_id": user.id})
+        if not player or user.id not in pending_game["players"]:
+            return
         if not pending_game:
             await self.say("No matching game id found", msg.channel)
             return
@@ -272,6 +275,10 @@ class Isperia(discord.Client):
         if not pending_game:
             await self.say("No matching game id found", msg.channel)
             return
+        members = self.db.members
+        player = members.find_one({"user_id": user.id})
+        if not player or user.id not in pending_game["players"]:
+            return
         if pending_game["status"] == stc.ACCEPTED:
             await self.say("Cannot deny a confirmed match", msg.channel)
             return
@@ -313,6 +320,8 @@ class Isperia(discord.Client):
         members = self.db.members
         for user in users:
             member = members.find_one({"user_id": user.id})
+            if not member:
+                return
             await self.say("{} has {} points".format(
                 user.mention, member["points"]), msg.channel)
 
@@ -335,6 +344,8 @@ class Isperia(discord.Client):
         user = msg.author
         members = self.db.members
         player = members.find_one({"user_id": user.id})
+        if not player:
+            return
         if len(player["pending"]) == 0:
             await self.say("You have no pending match records.", msg.channel)
             return
