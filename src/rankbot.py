@@ -99,7 +99,7 @@ class Isperia(discord.Client):
         members = self.db.members
         if not members.find_one({"user_id": user.id}):
             data = {
-                "name": user.name,
+                "user": user.name,
                 "user_id": user.id,
                 "points": 0,
                 "pending": [],
@@ -343,8 +343,7 @@ class Isperia(discord.Client):
         players = [members.find_one({"user_id": player_id}) for player_id
             in match["players"]]
         status_text = ("```Game id: {}\n".format(match["game_id"])
-                +   "Status: {}\n".format(match["status"])
-                +   "Winner: {}\n".format(winner["name"])
+                +   "Winner: {}\n".format(winner["user"])
                 +   "Players:\n"
         )
         for player in players:
