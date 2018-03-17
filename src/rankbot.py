@@ -85,9 +85,9 @@ class Isperia(discord.Client):
                  +   "!confirm     -   confirm a match result\n"
                  +   "!deny        -   dispute a match result\n"
                  +   "!score       -   check your league points\n"
-                 +   "!describe    -   league stats```"
-                 +   "!top         -   see the top players in the league"
-                 +   "!pending     -   list your pending matches"
+                 +   "!describe    -   league stats\n"
+                 +   "!top         -   see the top players in the league\n"
+                 +   "!pending     -   list your pending matches\n"
                  +   "!status      -   show the status of a match (must include game id)```"),
                 user)
         else:
