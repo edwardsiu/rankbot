@@ -5,7 +5,7 @@ import asyncio
 from src import status_codes as stc
 import discord
 import hashids
-from pymongo import MongoClient
+from pymongo import MongoClient, DESCENDING
 
 class Isperia(discord.Client):
     def __init__(self, token, mongodb_host, mongodb_port):
@@ -13,7 +13,7 @@ class Isperia(discord.Client):
         self.token = token
         self.commands = [
             'help', 'log', 'register', 'unregister', 'confirm', 'deny',
-            'describe', 'score', 'reset']
+            'describe', 'score', 'reset', 'top']
         self.MAX_MSG_LEN = 2000
         self.admin = "asm"
         self.hasher = hashids.Hashids(salt="cEDH league")
@@ -71,20 +71,23 @@ class Isperia(discord.Client):
         elif cmd == "describe":
             await self.describe(msg)
         elif cmd == "reset":
-            await self.reset(msg) 
+            await self.reset(msg)
+        elif cmd == "top":
+            await self.top(msg)
 
     async def help(self, msg):
         user = msg.author
         if (len(msg.content.split()) == 1):
             await self.say(
                 ("Commands:\n"
-            +   "```!help        -   show command list\n"
-            +   "!register    -   register to the cEDH league\n"
-            +   "!log         -   log a match result, type '!help log' for more info\n"
-            +   "!confirm     -   confirm a match result\n"
-            +   "!deny        -   dispute a match result\n"
-            +   "!score       -   check your league points\n"
-            +   "!describe    -   league stats```"),
+                 +   "```!help        -   show command list\n"
+                 +   "!register    -   register to the cEDH league\n"
+                 +   "!log         -   log a match result, type '!help log' for more info\n"
+                 +   "!confirm     -   confirm a match result\n"
+                 +   "!deny        -   dispute a match result\n"
+                 +   "!score       -   check your league points\n"
+                 +   "!describe    -   league stats```",
+                 +   "!top         -   see the top players in the league```"),
                 user)
         else:
             await self.say(("To log a match result, type: \n"
@@ -310,4 +313,12 @@ class Isperia(discord.Client):
         matches.delete_many({})
         await self.say(
             ("All registered players have had their score reset to 0 and "
-        +   "all match records have been cleared."), msg.channel)
+             + "all match records have been cleared."), msg.channel)
+
+    async def top(self, msg):
+        members = self.db.members
+        topMembers = members.find(limit=10, sort=[('points', DESCENDING)])
+        await self.say("Top Players:\n {}".format(
+            ["{}. {} with {} points".format(ix + 1, member.user, member['points'])
+             for ix, member in enumerate(topMembers)]
+        ), msg.channel)
