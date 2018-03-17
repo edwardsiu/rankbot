@@ -342,7 +342,7 @@ class Isperia(discord.Client):
         )
         for player in players:
             status_text += "    {}: {}\n".format(
-                player["name"],
+                player["user"],
                 match["players"][player["user_id"]])
         status_text += "Status: {}".format(match["status"])
         await self.say(status_text, msg.channel)
