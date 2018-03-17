@@ -196,12 +196,12 @@ class Isperia(discord.Client):
         if not pending_game:
             await self.say("No matching game id found", msg.channel)
             return
-        if pending_game["losers"][user.id] == stc.UNCONFIRMED:
+        if pending_game["players"][user.id] == stc.UNCONFIRMED:
             matches.update_one(
                 {"game_id": game_id},
                 {
                     "$set": {
-                        "losers.{}".format(user.id): stc.CONFIRMED
+                        "players.{}".format(user.id): stc.CONFIRMED
                     }
                 }
             )
