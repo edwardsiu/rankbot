@@ -380,7 +380,10 @@ class Isperia(discord.Client):
         matches = self.db.matches
         members.update_many({}, {
             "$set": {
-                "points": 0
+                "points": 0,
+                "accepted": 0,
+                "disputed": 0,
+                "pending": []
             }
         })
         matches.delete_many({})
