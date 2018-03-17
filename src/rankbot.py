@@ -85,9 +85,9 @@ class Isperia(discord.Client):
                  +   "!confirm     -   confirm a match result\n"
                  +   "!deny        -   dispute a match result\n"
                  +   "!score       -   check your league points\n"
-                 +   "!describe    -   league stats```",
-                 +   "!top         -   see the top players in the league
-                 +   "!pending     -   list your pending matches
+                 +   "!describe    -   league stats```"
+                 +   "!top         -   see the top players in the league"
+                 +   "!pending     -   list your pending matches"
                  +   "!status      -   show the status of a match (must include game id)```"),
                 user)
         else:
@@ -173,12 +173,13 @@ class Isperia(discord.Client):
         matches.insert_one(pending_record)
         members = self.db.members
         for player in players:
-            members.update_one(
-                {"user_id": player.id},
-                {
-                    "$push": {"pending": game_id}
-                }
-            )
+            if player != winner:
+                members.update_one(
+                    {"user_id": player.id},
+                    {
+                        "$push": {"pending": game_id}
+                    }
+                )
         return game_id
 
     async def confirm(self, msg):
@@ -190,6 +191,7 @@ class Isperia(discord.Client):
         user = msg.author
         game_id = msg.content.split()[1]
         matches = self.db.matches
+        members = self.db.members
         pending_game = matches.find_one({"game_id": game_id})
         if not pending_game:
             await self.say("No matching game id found", msg.channel)
@@ -205,6 +207,12 @@ class Isperia(discord.Client):
             )
             await self.say("Received confirmation from {}".format(
                 user.mention), msg.channel)
+            members.update_one(
+                {"user_id": user.id},
+                {
+                    "$pull": {"pending": game_id}
+                }
+            )
             await self.check_match_status(game_id, msg.channel)
         else:
             await self.say("You have already confirmed this match", msg.channel)
@@ -229,8 +237,7 @@ class Isperia(discord.Client):
             members.update_one(
                 {"user_id": player['user_id']},
                 {
-                    "$inc": {"accepted": 1},
-                    "$pull": {"pending": game_id}
+                    "$inc": {"accepted": 1}
                 }
             )
         await self.say("Match {} has been confirmed".format(game_id), channel)
@@ -276,16 +283,27 @@ class Isperia(discord.Client):
                 }
             )
             if pending_game["players"][user.id] == stc.CONFIRMED:
-                matches.update_one(
-                    {"game_id": game_id},
-                    {
-                        "$set": {
-                            "players.{}".format(user.id): stc.UNCONFIRMED
-                        }
-                    }
-                )
+                self.reset_to_unconfirmed(game_id, user)
         await self.say("This match has been marked as **disputed**",
                        msg.channel)
+
+    def reset_to_unconfirmed(self, game_id, user):
+        matches = self.db.matches
+        members = self.db.members
+        matches.update_one(
+            {"game_id": game_id},
+            {
+                "$set": {
+                    "players.{}".format(user.id): stc.UNCONFIRMED
+                }
+            }
+        )
+        members.update_one(
+            {"user_id": user.id},
+            {
+                "$push": {"pending": game_id}
+            }
+        )
 
     async def score(self, msg):
         if len(msg.content.split() < 2):
