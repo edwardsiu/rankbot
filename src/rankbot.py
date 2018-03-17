@@ -11,9 +11,6 @@ class Isperia(discord.Client):
     def __init__(self, token, mongodb_host, mongodb_port):
         super().__init__()
         self.token = token
-        self.commands = [
-            'help', 'log', 'register', 'unregister', 'confirm', 'deny',
-            'describe', 'score', 'reset']
         self.MAX_MSG_LEN = 2000
         self.admin = "asm"
         self.hasher = hashids.Hashids(salt="cEDH league")
@@ -50,10 +47,6 @@ class Isperia(discord.Client):
             return
 
         cmd = text.split()[0][1:]
-        if cmd not in self.commands:
-            await self.help(msg)
-            return
-
         if cmd == "help":
             await self.help(msg)
         elif cmd == "log":
@@ -75,7 +68,9 @@ class Isperia(discord.Client):
         elif cmd == "pending":
             await self.pending(msg)
         elif cmd == "status":
-            await self.status(msg) 
+            await self.status(msg)
+        else:
+            await self.help(msg) 
 
     async def help(self, msg):
         user = msg.author
