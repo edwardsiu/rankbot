@@ -336,15 +336,18 @@ class Isperia(discord.Client):
             return
         members = self.db.members
         winner = members.find_one({"user_id": match["winner"]})
+        players = [members.find_one({"user_id": player}) for player in match["players"]]
         status_text = ("```Game id: {}\n".format(match["game_id"])
+                +   "Status: {}\n".format(match["status"])
                 +   "Winner: {}\n".format(winner["user"])
-                +   "Players:\n"
+                +   "Players:\n{}".format(
+                    "\n".join(
+                        ["   {}: {}".format(
+                            player["user"], match["players"][player["user_id"]]
+                        ) for player in players]
+                    )
+                )
         )
-        for player in players:
-            status_text += "    {}: {}\n".format(
-                player["user"],
-                match["players"][player["user_id"]])
-        status_text += "Status: {}".format(match["status"])
         await self.say(status_text, msg.channel)
 
     async def reset(self, msg):
