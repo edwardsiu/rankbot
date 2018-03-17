@@ -142,11 +142,6 @@ class Isperia(discord.Client):
                            msg.channel)
             return
 
-        if (winner in losers) or (len(losers) != len(set(losers))):
-            await self.say("Duplicate players are not allowed.",
-                           msg.channel)
-            return
-
         game_id = self.create_pending_game(msg, winner, players)
         await self.say(
             ("Match has been logged and awaiting confirmation from "
@@ -179,9 +174,7 @@ class Isperia(discord.Client):
             members.update_one(
                 {"user_id": player.id},
                 {
-                    "$push": {
-                        "pending": game_id
-                    }
+                    "$push": {"pending": game_id}
                 }
             )
         return game_id
@@ -225,9 +218,7 @@ class Isperia(discord.Client):
         matches.update_one(
             {"game_id": game_id},
             {
-                "$set": {
-                    "status": stc.ACCEPTED
-                }
+                "$set": {"status": stc.ACCEPTED}
             }
         )
         self.update_score(pending_game)
