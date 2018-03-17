@@ -33,8 +33,8 @@ class Isperia(discord.Client):
     async def say(self, msg, channel):
         if len(msg) > self.MAX_MSG_LEN:
             self.logger.info("Split message into two")
-            await self.say(message[:self.MAX_MSG_LEN], channel)
-            await self.say(message[self.MAX_MSG_LEN:], channel)
+            await self.say(msg[:self.MAX_MSG_LEN], channel)
+            await self.say(msg[self.MAX_MSG_LEN:], channel)
             return
 
         self.logger.info("Saying: {}".format(msg).encode("ascii", "ignore"))
