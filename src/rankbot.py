@@ -8,11 +8,13 @@ import hashids
 from pymongo import MongoClient, DESCENDING
 
 class Isperia(discord.Client):
-    def __init__(self, token, mongodb_host, mongodb_port):
+    def __init__(self, token, config):
         super().__init__()
         self.token = token
         self.MAX_MSG_LEN = 2000
-        self.admin = "asm"
+        self.admins = config["admins"]
+        self.league_name = config["league_name"]
+        self.players = config["players"]
         self.hasher = hashids.Hashids(salt="cEDH league")
         self.logger = logging.getLogger('discord')
         self.logger.setLevel(logging.INFO)
@@ -22,7 +24,7 @@ class Isperia(discord.Client):
         handler.setFormatter(logging.Formatter(
             '%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
         self.logger.addHandler(handler)
-        self.db = MongoClient(mongodb_host, mongodb_port).rankdb
+        self.db = MongoClient(config["mongodb_host"], config["mongodb_port"]).rankdb
 
     async def on_ready(self):
         self.logger.info('Logged in as {}'.format(self.user.name))
@@ -80,7 +82,7 @@ class Isperia(discord.Client):
             await self.say(
                 ("Commands:\n"
                  +   "```!help        -   show command list\n"
-                 +   "!register    -   register to the cEDH league\n"
+                 +   "!register    -   register to the {}\n".format(self.league_name)
                  +   "!log         -   log a match result, type '!help log' for more info\n"
                  +   "!confirm     -   confirm a match result\n"
                  +   "!deny        -   dispute a match result\n"
@@ -95,7 +97,8 @@ class Isperia(discord.Client):
                             + "```!log @player1 @player2 @player3```\n"
                             + "where players are the losers of the match, and the "
                             + "winner is the user calling the log command.\n"
-                            + "There must be exactly 3 losers to log the match."),
+                            + "There must be exactly {} losers to log the match.".format(
+                                self.players-1)),
                            user)
 
     async def register(self, msg):
@@ -112,8 +115,8 @@ class Isperia(discord.Client):
                 "disputed": []
             }
             members.insert_one(data)
-            await self.say("Registered {} to the cEDH league".format(
-                user.mention), msg.channel)
+            await self.say("Registered {} to the {}".format(
+                user.mention, self.league_name), msg.channel)
         else:
             await self.say("{} is already registered".format(user.mention), msg.channel)
 
@@ -124,8 +127,8 @@ class Isperia(discord.Client):
             await self.say("{} is not previously registered".format(
                 user.mention), msg.channel)
         else:
-            await self.say("{} has been unregistered from the cEDH league".format(
-                user.mention), msg.channel)
+            await self.say("{} has been unregistered from the {}".format(
+                user.mention, self.league_name), msg.channel)
 
     async def log(self, msg):
         winner = msg.author
@@ -139,9 +142,9 @@ class Isperia(discord.Client):
                     user.mention), msg.channel)
                 return
 
-        if len(losers) != 1:
-            await self.say("There must be exactly 4 players to log a result.",
-                           msg.channel)
+        if len(losers) != (self.players-1):
+            await self.say("There must be exactly {} players to log a result.".format(
+                self.players), msg.channel)
             return
 
         game_id = self.create_pending_game(msg, winner, players)
@@ -333,8 +336,8 @@ class Isperia(discord.Client):
         members = self.db.members
         num_members = members.count()
         await self.say(
-            ("There are {} registered players in the cEDH league\n".format(
-                num_members)
+            ("There are {} registered players in the {}\n".format(
+                num_members, self.league_name)
              + "Confirmed match results: {}\n".format(num_accepted_matches)
              + "Pending match results: {}\n".format(num_pending_matches)
              + "Disputed match results: {}".format(num_disputed_matches)),
@@ -385,7 +388,7 @@ class Isperia(discord.Client):
         await self.say(status_text, msg.channel)
 
     async def reset(self, msg):
-        if msg.author.name != self.admin:
+        if msg.author.name not in self.admins:
             return
         members = self.db.members
         matches = self.db.matches
