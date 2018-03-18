@@ -433,7 +433,7 @@ class Isperia(discord.Client):
     async def top(self, msg):
         members = self.db.members
         topMembers = members.find(limit=10, sort=[('points', DESCENDING)])
-        await self.say("Top Players:\n {}".format(
+        await self.say("Top Players:\n{}".format(
             '\n'.join(["{}. {} with {} points".format(ix + 1, member['user'], member['points'])
              for ix, member in enumerate(topMembers)])
         ), msg.channel)
