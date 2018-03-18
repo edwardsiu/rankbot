@@ -83,6 +83,8 @@ class Isperia(discord.Client):
             await self.rm_admin(msg)
         elif cmd == "override":
             await self.override(msg)
+        elif cmd == "disputed":
+            await self.list_disputed(msg)
         else:
             await self.help(msg)
 
@@ -109,6 +111,7 @@ class Isperia(discord.Client):
                      +   "```!reset       -   reset all points to 0 and remove all matches\n"
                      +   "!add_admin   -   set all mentioned users to admin\n"
                      +   "!rm_admin    -   remove admin privileges to mentioned users\n"
+                     +   "!disputed    -   list all disputed matches\n"
                      +   "!override    -   include game_id and 'accept' or 'remove' to resolve dispute```"),
                     user)
         else:
@@ -524,3 +527,18 @@ class Isperia(discord.Client):
                 }
             )
             await self.check_match_status(game_id, msg.channel)
+
+    async def list_disputed(self, msg):
+        if not self.__is_admin(msg.author):
+            return
+        matches = self.db.matches
+        disputed = matches.find({"status": stc.DISPUTED})
+        if not disputed.count():
+            await self.say("No disputed matches found", msg.channel)
+            return
+        await self.say(
+            "List of disputed matches:\n```{}```".format(
+                "\n".join([match["game_id"] for match in disputed])), msg.channel)
+        await self.say(
+            "To resolve a dispute, say: `!override game_id accept/remove`",
+            msg.channel)
