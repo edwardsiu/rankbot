@@ -2,10 +2,11 @@ import logging
 import logging.handlers
 
 import asyncio
-from src import status_codes as stc
 import discord
 import hashids
 from pymongo import MongoClient, DESCENDING
+from src import status_codes as stc
+from src import utils
 
 class Isperia(discord.Client):
     def __init__(self, token, config):
@@ -187,7 +188,7 @@ class Isperia(discord.Client):
 
     def create_pending_game(self, msg, winner, players):
         # generate a unique game_id
-        game_id = self.hasher.encode(int(msg.id))
+        game_id = utils.generate_game_id(self.hasher, msg.id)
         # create a pending game record in the database for players
         pending_record = {
             "game_id": game_id,
