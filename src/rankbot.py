@@ -359,7 +359,7 @@ class Isperia(discord.Client):
             +   "Points: {}\n".format(member["points"])
             +   "Wins:   {}\n".format(member["wins"])
             +   "Losses: {}\n".format(member["losses"])
-            +   "Win %:  {0:.3f}```".format(wl_ratio)
+            +   "Win %:  {0:.3f}```".format(100*wl_ratio)
                 , msg.channel)
 
     async def describe(self, msg):
