@@ -157,8 +157,8 @@ class Isperia(discord.Client):
 
         game_id = self.create_pending_game(msg, winner, players)
         await self.say(("Match has been logged and awaiting confirmation from "
-            + ("{} "*len(losers)).format(*[u.mention for u in losers]), msg.channel)
-        await self.say("`game id: {}`".format(game_id)), msg.channel)
+            + ("{} "*len(losers)).format(*[u.mention for u in losers])), msg.channel)
+        await self.say("`game id: {}`".format(game_id), msg.channel)
         
         await self.say("Confirm game loss against {}?".format(winner.mention), msg.channel)
         msg_text = (  "To **confirm** this record, say: \n"
