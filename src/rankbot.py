@@ -358,12 +358,14 @@ class Isperia(discord.Client):
         if len(player["pending"]) == 0:
             await self.say("You have no pending match records.", msg.channel)
             return
-        pending_list = "List of matches awaiting confirmation from {}:\n```{}```".format(
+        pending_list = "List of game ids awaiting confirmation from {}:\n```{}```".format(
             user.mention,
             "\n".join(player["pending"])
         )
         await self.say(pending_list, msg.channel)
-        await self.say("To check the status of a pending match, say: `!status [game_id]`", msg.channel)
+        await self.say("To check the status of a pending match, say: `!status game_id`", msg.channel)
+        await self.say("To confirm a pending match, say: `!confirm game_id`", msg.channel)
+        await self.say("To deny a pending match, say: `!deny game_id`", msg.channel)
 
     async def status(self, msg):
         if len(msg.content.split()) < 2:
