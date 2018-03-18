@@ -77,6 +77,12 @@ class Isperia(discord.Client):
             await self.status(msg)
         elif cmd == "top":
             await self.top(msg)
+        elif cmd == "add_admin":
+            await self.add_admin(msg)
+        elif cmd == "rm_admin":
+            await self.rm_admin(msg)
+        elif cmd == "override":
+            await self.override(msg)
         else:
             await self.help(msg)
 
@@ -97,6 +103,14 @@ class Isperia(discord.Client):
                  +   "!pending     -   list your pending matches\n"
                  +   "!status      -   show the status of a match (must include game id)```"),
                 user)
+            if self.__is_admin(user):
+                await self.say(
+                    ("Admin Commands:\n"
+                     +   "```!reset       -   reset all points to 0 and remove all matches\n"
+                     +   "!add_admin   -   set all mentioned users to admin\n"
+                     +   "!rm_admin    -   remove admin privileges to mentioned users\n"
+                     +   "!override    -   include game_id and 'accept' or 'remove' to resolve dispute```"),
+                    user)
         else:
             await self.say(("To log a match result, type: \n"
                             + "```!log @player1 @player2 @player3```\n"
@@ -253,7 +267,7 @@ class Isperia(discord.Client):
                     "$inc": {"accepted": 1}
                 }
             )
-        await self.say("Match {} has been confirmed".format(game_id), channel)
+        await self.say("Match {} has been accepted".format(game_id), channel)
 
     def update_score(self, match):
         members = self.db.members
@@ -356,7 +370,7 @@ class Isperia(discord.Client):
         player = members.find_one({"user_id": user.id})
         if not player:
             return
-        if len(player["pending"]) == 0:
+        if not player["pending"]:
             await self.say("You have no pending match records.", msg.channel)
             return
         pending_list = "List of game ids awaiting confirmation from {}:\n```{}```".format(
@@ -397,7 +411,7 @@ class Isperia(discord.Client):
         await self.say(status_text, msg.channel)
 
     async def reset(self, msg):
-        if not self.is_admin(msg.author):
+        if not self.__is_admin(msg.author):
             return
         members = self.db.members
         matches = self.db.matches
@@ -446,13 +460,13 @@ class Isperia(discord.Client):
             }
         )
 
-    def is_admin(self, user):
+    def __is_admin(self, user):
         admin_col = self.db.admins
         admins = admin_col.find_one({})
         return user.name in admins
 
     async def add_admin(self, msg):
-        if not self.is_admin(msg.author):
+        if not self.__is_admin(msg.author):
             return
         users = [user.name for user in msg.mentions]
         self.__add_admins(users)
@@ -460,9 +474,50 @@ class Isperia(discord.Client):
             await self.say("{} is now an admin".format(user.mention), msg.channel)
 
     async def rm_admin(self, msg):
-        if not self.is_admin(msg.author):
+        if not self.__is_admin(msg.author):
             return
         users = [user.name for user in msg.mentions]
         self.__rm_admins(users)
         for user in msg.mentions:
             await self.say("{} is no longer an admin".format(user.mention), msg.channel)
+
+    async def override(self, msg):
+        if not self.__is_admin(msg.author):
+            return
+        if len(msg.content.split()) < 3:
+            await self.say("Please include game id to override and the override status:\n"
+                        +  "`!override game_id status`", msg.channel)
+            return
+        cmd, game_id, status = msg.content.split()
+        matches = self.db.matches
+        match = matches.find_one({"game_id": game_id})
+        if not match:
+            await self.say("No match with indicated game id found", msg.channel)
+            return
+        if match["status"] == stc.ACCEPTED:
+            await self.say("cannot override an accepted match", msg.channel)
+            return
+        if status.lower() not in ["accept", "remove"]:
+            await self.say("Override status can only be `accept` or `remove`", msg.channel)
+            return
+        members = self.db.members
+        for player_id in match["players"]:
+            members.update_one(
+                {"user_id": player_id},
+                {
+                    "$pull": {"pending": game_id}
+                }
+            )
+        if status.lower == "remove":
+            matches.delete({"game_id": game_id})
+            await self.say("Match {} has been removed".format(game_id), msg.channel)
+        else:
+            matches.update_one(
+                {"game_id": game_id},
+                {
+                    "$set": {
+                        "players.{}".format(p_id): stc.CONFIRMED for p_id in match["players"]
+                    }
+                }
+            )
+            await self.check_match_status(game_id, msg.channel)
