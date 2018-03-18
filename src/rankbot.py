@@ -134,7 +134,7 @@ class Isperia(discord.Client):
             data = {
                 "user": user.name,
                 "user_id": user.id,
-                "points": 0,
+                "points": 1000,
                 "pending": [],
                 "accepted": 0,
                 "wins": 0,
@@ -261,8 +261,8 @@ class Isperia(discord.Client):
                 "$set": {"status": stc.ACCEPTED}
             }
         )
-        self.update_score(pending_game)
         members = self.db.members
+        delta = utils.update_score(pending_game, members)
         for player in players:
             members.update_one(
                 {"user_id": player},
@@ -270,31 +270,12 @@ class Isperia(discord.Client):
                     "$inc": {"accepted": 1}
                 }
             )
-        await self.say("Match {} has been accepted".format(game_id), channel)
+        await self.__show_delta(game_id, delta, channel)
 
-    def update_score(self, match):
-        members = self.db.members
-        for player in match["players"]:
-            if player == match["winner"]:
-                members.update_one(
-                    {"user_id": match["winner"]},
-                    {
-                        "$inc": {
-                            "points": 3,
-                            "wins": 1
-                        }
-                    }
-                )
-            else:
-                members.update_one(
-                    {"user_id": player},
-                    {
-                        "$inc": {
-                            "points": -1,
-                            "losses": 1
-                        }
-                    }
-                )
+    async def __show_delta(self, game_id, delta, channel):
+        await self.say("Match {} has been accepted.\n".format(game_id)
+                    +  "`{}`".format(", ".join(
+                    ["{0}: {1:+}".format(i["player"], i["change"]) for i in delta])), channel)
 
     async def deny(self, msg):
         if len(msg.content.split()) < 2:
@@ -435,7 +416,7 @@ class Isperia(discord.Client):
         matches = self.db.matches
         members.update_many({}, {
             "$set": {
-                "points": 0,
+                "points": 1000,
                 "accepted": 0,
                 "pending": [],
                 "wins": 0,
@@ -444,7 +425,7 @@ class Isperia(discord.Client):
         })
         matches.delete_many({})
         await self.say(
-            ("All registered players have had their score reset to 0 and "
+            ("All registered players have had their scores reset and "
              + "all match records have been cleared."), msg.channel)
 
     async def top(self, msg):
