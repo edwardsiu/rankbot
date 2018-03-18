@@ -94,7 +94,6 @@ class Isperia(discord.Client):
             await self.say(
                 ("Commands:\n"
                  +   "```!help        -   show command list\n\n"
-                 +   "!addme       -   get invite link to add Isperia\n\n"
                  +   "!register    -   register to the {}\n\n".format(self.league_name)
                  +   "!log         -   log a match result\n"
                  +   "                 type '!help log' for more info\n\n"
@@ -112,6 +111,7 @@ class Isperia(discord.Client):
                 await self.say(
                     ("Admin Commands:\n"
                      +   "```!reset       -   reset all points and remove all matches\n\n"
+                     +   "!addme       -   get invite link to add Isperia\n\n"
                      +   "!add_admin   -   set all mentioned users to admin\n\n"
                      +   "!rm_admin    -   remove admin privileges to mentioned users\n\n"
                      +   "!disputed    -   list all disputed matches\n\n"
@@ -128,6 +128,8 @@ class Isperia(discord.Client):
                            user)
 
     async def addme(self, msg):
+        if not self.__is_admin(msg.author):
+            return
         await self.say("https://discordapp.com/oauth2/authorize?client_id={}&scope=bot&permissions=0".format(
             self.client_id), msg.author)
 
