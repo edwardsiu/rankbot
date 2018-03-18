@@ -209,21 +209,26 @@ class Isperia(discord.Client):
         return game_id
 
     async def confirm(self, msg):
-        if len(msg.content.split()) < 2:
-            await self.say("Please include the game id to confirm",
-                           msg.channel)
+        user = msg.author
+        members = self.db.members
+        player = members.find_one({"user_id": user.id})
+        if not player:
+            return
+        if not player["pending"]:
+            await self.say("You have no pending games to confirm", msg.channel)
             return
 
-        user = msg.author
-        game_id = msg.content.split()[1]
+        if len(msg.content.split()) < 2:
+            game_id = player["pending"][-1]
+        else:
+            game_id = msg.content.split()[1]
+
         matches = self.db.matches
-        members = self.db.members
         pending_game = matches.find_one({"game_id": game_id})
         if not pending_game:
             await self.say("No matching game id found", msg.channel)
             return
-        player = members.find_one({"user_id": user.id})
-        if not player or user.id not in pending_game["players"]:
+        if user.id not in pending_game["players"]:
             return
         if pending_game["players"][user.id] == stc.UNCONFIRMED:
             matches.update_one(
@@ -277,20 +282,26 @@ class Isperia(discord.Client):
                     ["{0}: {1:+}".format(i["player"], i["change"]) for i in delta])), channel)
 
     async def deny(self, msg):
-        if len(msg.content.split()) < 2:
-            await self.say("Please include the game id to deny", msg.channel)
+        user = msg.author
+        members = self.db.members
+        player = members.find_one({"user_id": user.id})
+        if not player:
+            return
+        if not player["pending"]:
+            await self.say("You have no pending games to confirm", msg.channel)
             return
 
-        user = msg.author
-        game_id = msg.content.split()[1]
+        if len(msg.content.split()) < 2:
+            game_id = player["pending"][-1]
+        else:
+            game_id = msg.content.split()[1]
+
         matches = self.db.matches
         pending_game = matches.find_one({"game_id": game_id})
         if not pending_game:
             await self.say("No matching game id found", msg.channel)
             return
-        members = self.db.members
-        player = members.find_one({"user_id": user.id})
-        if not player or user.id not in pending_game["players"]:
+        if user.id not in pending_game["players"]:
             return
         if pending_game["status"] == stc.ACCEPTED:
             await self.say("Cannot deny a confirmed match", msg.channel)
