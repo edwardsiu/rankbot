@@ -93,26 +93,30 @@ class Isperia(discord.Client):
         if len(msg.content.split()) == 1:
             await self.say(
                 ("Commands:\n"
-                 +   "```!help        -   show command list\n"
-                 +   "!addme       -   get invite link to add Isperia\n"
-                 +   "!register    -   register to the {}\n".format(self.league_name)
-                 +   "!log         -   log a match result, type '!help log' for more info\n"
-                 +   "!confirm     -   confirm a match result\n"
-                 +   "!deny        -   dispute a match result\n"
-                 +   "!score       -   check your league points\n"
-                 +   "!describe    -   league stats\n"
-                 +   "!top         -   see the top players in the league\n"
-                 +   "!pending     -   list your pending matches\n"
+                 +   "```!help        -   show command list\n\n"
+                 +   "!addme       -   get invite link to add Isperia\n\n"
+                 +   "!register    -   register to the {}\n\n".format(self.league_name)
+                 +   "!log         -   log a match result\n"
+                 +   "                 type '!help log' for more info\n\n"
+                 +   "!confirm     -   confirm the most recent match result\n"
+                 +   "                 or a specified game id\n\n"
+                 +   "!deny        -   dispute the most recent match result\n"
+                 +   "                 or a specified game id\n\n"
+                 +   "!score       -   check your league score card\n\n"
+                 +   "!describe    -   league stats\n\n"
+                 +   "!top         -   see the top players in the league\n\n"
+                 +   "!pending     -   list your pending matches\n\n"
                  +   "!status      -   show the status of a match (must include game id)```"),
                 user)
             if self.__is_admin(user):
                 await self.say(
                     ("Admin Commands:\n"
-                     +   "```!reset       -   reset all points to 0 and remove all matches\n"
-                     +   "!add_admin   -   set all mentioned users to admin\n"
-                     +   "!rm_admin    -   remove admin privileges to mentioned users\n"
-                     +   "!disputed    -   list all disputed matches\n"
-                     +   "!override    -   include game_id and 'accept' or 'remove' to resolve dispute```"),
+                     +   "```!reset       -   reset all points and remove all matches\n\n"
+                     +   "!add_admin   -   set all mentioned users to admin\n\n"
+                     +   "!rm_admin    -   remove admin privileges to mentioned users\n\n"
+                     +   "!disputed    -   list all disputed matches\n\n"
+                     +   "!override    -   include game_id and 'accept'\n"
+                     +   "                 or 'remove' to resolve dispute```"),
                     user)
         else:
             await self.say(("To log a match result, type: \n"
