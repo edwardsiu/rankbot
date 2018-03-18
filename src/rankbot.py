@@ -137,7 +137,8 @@ class Isperia(discord.Client):
                 "points": 0,
                 "pending": [],
                 "accepted": 0,
-                "disputed": []
+                "wins": 0,
+                "losses": 0
             }
             members.insert_one(data)
             await self.say("Registered {} to the {}".format(
@@ -278,14 +279,20 @@ class Isperia(discord.Client):
                 members.update_one(
                     {"user_id": match["winner"]},
                     {
-                        "$inc": {"points": 3}
+                        "$inc": {
+                            "points": 3,
+                            "wins": 1
+                        }
                     }
                 )
             else:
                 members.update_one(
                     {"user_id": player},
                     {
-                        "$inc": {"points": -1}
+                        "$inc": {
+                            "points": -1,
+                            "losses": 1
+                        }
                     }
                 )
 
@@ -348,8 +355,17 @@ class Isperia(discord.Client):
             member = members.find_one({"user_id": user.id})
             if not member:
                 return
-            await self.say("{} has {} points".format(
-                user.mention, member["points"]), msg.channel)
+            if not member["accepted"]:
+                wl_ratio = 0.0
+            else:
+                wl_ratio = float(member["wins"])/member["accepted"]
+            await self.say(
+                "```Player: {}\n".format(user.name)
+            +   "Points: {}\n".format(member["points"])
+            +   "Wins:   {}\n".format(member["wins"])
+            +   "Losses: {}\n".format(member["losses"])
+            +   "W/L:    {0:.3f}```".format(wl_ratio)
+                , msg.channel)
 
     async def describe(self, msg):
         matches = self.db.matches
@@ -421,8 +437,9 @@ class Isperia(discord.Client):
             "$set": {
                 "points": 0,
                 "accepted": 0,
-                "disputed": 0,
-                "pending": []
+                "pending": [],
+                "wins": 0,
+                "losses": 0
             }
         })
         matches.delete_many({})
