@@ -86,8 +86,6 @@ class Isperia(discord.Client):
             await self.override(msg)
         elif cmd == "disputed":
             await self.list_disputed(msg)
-        else:
-            await self.help(msg)
 
     async def help(self, msg):
         user = msg.author
