@@ -219,11 +219,11 @@ class Isperia(discord.Client):
         matches = self.db.matches
         members = self.db.members
         pending_game = matches.find_one({"game_id": game_id})
-        player = members.find_one({"user_id": user.id})
-        if not player or user.id not in pending_game["players"]:
-            return
         if not pending_game:
             await self.say("No matching game id found", msg.channel)
+            return
+        player = members.find_one({"user_id": user.id})
+        if not player or user.id not in pending_game["players"]:
             return
         if pending_game["players"][user.id] == stc.UNCONFIRMED:
             matches.update_one(
