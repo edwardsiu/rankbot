@@ -178,9 +178,9 @@ class Isperia(discord.Client):
             + "`game id: {}`".format(game_id)), msg.channel)
         
         await self.say("Confirm game loss against {}?".format(winner.mention), msg.channel)
-        msg_text = (  "To **confirm** this record, say: \n"
+        msg_text = (  "To **confirm** this record, say: "
                     + "`!confirm {}`\n".format(game_id)
-                    + "To **deny** this record, say: \n"
+                    + "To **deny** this record, say: "
                     + "`!deny {}`".format(game_id))
         await self.say(msg_text, msg.channel)
 
