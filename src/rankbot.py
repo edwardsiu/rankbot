@@ -172,8 +172,8 @@ class Isperia(discord.Client):
 
         game_id = self.create_pending_game(msg, winner, players)
         await self.say(("Match has been logged and awaiting confirmation from "
-            + ("{} "*len(losers)).format(*[u.mention for u in losers])), msg.channel)
-        await self.say("`game id: {}`".format(game_id), msg.channel)
+            + ("{} "*len(losers) + "\n").format(*[u.mention for u in losers])
+            + "`game id: {}`".format(game_id)), msg.channel)
         
         await self.say("Confirm game loss against {}?".format(winner.mention), msg.channel)
         msg_text = (  "To **confirm** this record, say: \n"
@@ -262,7 +262,7 @@ class Isperia(discord.Client):
         members = self.db.members
         for player in players:
             members.update_one(
-                {"user_id": player['user_id']},
+                {"user_id": player},
                 {
                     "$inc": {"accepted": 1}
                 }
@@ -443,6 +443,7 @@ class Isperia(discord.Client):
     def __add_admins(self, admins):
         admin_col = self.db.admins
         admin_col.update_one(
+            {},
             {
                 "$push": {
                     "admins": {"$each": admins}
@@ -453,6 +454,7 @@ class Isperia(discord.Client):
     def __rm_admins(self, admins):
         admin_col = self.db.admins
         admin_col.update_one(
+            {},
             {
                 "$pull": {
                     "admins": {"$in": admins}
@@ -463,7 +465,7 @@ class Isperia(discord.Client):
     def __is_admin(self, user):
         admin_col = self.db.admins
         admins = admin_col.find_one({})
-        return user.name in admins
+        return user.name in admins["admins"]
 
     async def add_admin(self, msg):
         if not self.__is_admin(msg.author):
@@ -484,7 +486,7 @@ class Isperia(discord.Client):
     async def override(self, msg):
         if not self.__is_admin(msg.author):
             return
-        if len(msg.content.split()) < 3:
+        if len(msg.content.split()) != 3:
             await self.say("Please include game id to override and the override status:\n"
                         +  "`!override game_id status`", msg.channel)
             return
@@ -495,7 +497,7 @@ class Isperia(discord.Client):
             await self.say("No match with indicated game id found", msg.channel)
             return
         if match["status"] == stc.ACCEPTED:
-            await self.say("cannot override an accepted match", msg.channel)
+            await self.say("Cannot override an accepted match", msg.channel)
             return
         if status.lower() not in ["accept", "remove"]:
             await self.say("Override status can only be `accept` or `remove`", msg.channel)
@@ -508,8 +510,9 @@ class Isperia(discord.Client):
                     "$pull": {"pending": game_id}
                 }
             )
-        if status.lower == "remove":
-            matches.delete({"game_id": game_id})
+        self.logger.info("Overriding game {} with {}".format(game_id, status))
+        if status.lower() == "remove":
+            matches.delete_one({"game_id": game_id})
             await self.say("Match {} has been removed".format(game_id), msg.channel)
         else:
             matches.update_one(
