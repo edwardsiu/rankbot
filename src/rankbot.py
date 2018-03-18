@@ -12,6 +12,7 @@ class Isperia(discord.Client):
         super().__init__()
         self.token = token
         self.MAX_MSG_LEN = 2000
+        self.client_id = config["client_id"]
         self.admins = config["admins"]
         self.league_name = config["league_name"]
         self.players = config["players"]
@@ -51,6 +52,8 @@ class Isperia(discord.Client):
         cmd = text.split()[0][1:]
         if cmd == "help":
             await self.help(msg)
+        elif cmd == "addme":
+            await self.addme(msg)
         elif cmd == "log":
             await self.log(msg)
         elif cmd == "register":
@@ -82,6 +85,7 @@ class Isperia(discord.Client):
             await self.say(
                 ("Commands:\n"
                  +   "```!help        -   show command list\n"
+                 +   "!addme       -   get invite link to add Isperia\n"
                  +   "!register    -   register to the {}\n".format(self.league_name)
                  +   "!log         -   log a match result, type '!help log' for more info\n"
                  +   "!confirm     -   confirm a match result\n"
@@ -100,6 +104,10 @@ class Isperia(discord.Client):
                             + "There must be exactly {} losers to log the match.".format(
                                 self.players-1)),
                            user)
+
+    async def addme(self, msg):
+        await self.say("https://discordapp.com/oauth2/authorize?client_id={}&scope=bot&permissions=0".format(
+            self.client_id), msg.author)
 
     async def register(self, msg):
         # check if user is already registered
@@ -148,14 +156,12 @@ class Isperia(discord.Client):
             return
 
         game_id = self.create_pending_game(msg, winner, players)
-        await self.say(
-            ("Match has been logged and awaiting confirmation from "
-            + ("{} "*len(losers) + "\n").format(*[u.mention for u in losers])
-            + "`game id: {}`".format(game_id)), msg.channel)
+        await self.say(("Match has been logged and awaiting confirmation from "
+            + ("{} "*len(losers)).format(*[u.mention for u in losers]), msg.channel)
+        await self.say("`game id: {}`".format(game_id)), msg.channel)
         
-
-        msg_text = ("Confirm game loss against {}?\n".format(winner.mention)
-                    + "To **confirm** this record, say: \n"
+        await self.say("Confirm game loss against {}?".format(winner.mention), msg.channel)
+        msg_text = (  "To **confirm** this record, say: \n"
                     + "`!confirm {}`\n".format(game_id)
                     + "To **deny** this record, say: \n"
                     + "`!deny {}`".format(game_id))
@@ -352,7 +358,7 @@ class Isperia(discord.Client):
         if len(player["pending"]) == 0:
             await self.say("You have no pending match records.", msg.channel)
             return
-        pending_list = "List of matches awaiting confirmation from {}:\n{}".format(
+        pending_list = "List of matches awaiting confirmation from {}:\n```{}```".format(
             user.mention,
             "\n".join(player["pending"])
         )
