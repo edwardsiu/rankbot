@@ -174,16 +174,13 @@ class Isperia(discord.Client):
             return
 
         game_id = self.create_pending_game(msg, winner, players)
-        await self.say(("Match has been logged and awaiting confirmation from "
-            + ("{} "*len(losers) + "\n").format(*[u.mention for u in losers])
-            + "`game id: {}`".format(game_id)), msg.channel)
-        
-        await self.say("Confirm game loss against {}?".format(winner.mention), msg.channel)
-        msg_text = (  "To **confirm** this record, say: "
-                    + "`!confirm {}`\n".format(game_id)
-                    + "To **deny** this record, say: "
-                    + "`!deny {}`".format(game_id))
-        await self.say(msg_text, msg.channel)
+        await self.say("Match has been logged and awaiting confirmation from "
+            +   ("{} "*len(losers) + "\n").format(*[u.mention for u in losers])
+            +   "`game id: {}`\n".format(game_id)
+            +   "To **confirm** this record, say: "
+            +   "`!confirm {}`\n".format(game_id)
+            +   "To **deny** this record, say: "
+            +   "`!deny {}`".format(game_id), msg.channel)
 
     def create_pending_game(self, msg, winner, players):
         # generate a unique game_id
