@@ -13,7 +13,7 @@ class Isperia(discord.Client):
         self.token = token
         self.MAX_MSG_LEN = 2000
         self.client_id = config["client_id"]
-        self.admins = config["admins"]
+        self.super_admins = config["admins"]
         self.league_name = config["league_name"]
         self.players = config["players"]
         self.hasher = hashids.Hashids(salt="cEDH league")
@@ -26,6 +26,7 @@ class Isperia(discord.Client):
             '%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
         self.logger.addHandler(handler)
         self.db = MongoClient(config["mongodb_host"], config["mongodb_port"]).rankdb
+        self.__configure_admins(self.super_admins)
 
     async def on_ready(self):
         self.logger.info('Logged in as {}'.format(self.user.name))
@@ -396,7 +397,7 @@ class Isperia(discord.Client):
         await self.say(status_text, msg.channel)
 
     async def reset(self, msg):
-        if msg.author.name not in self.admins:
+        if not self.is_admin(msg.author):
             return
         members = self.db.members
         matches = self.db.matches
@@ -420,3 +421,48 @@ class Isperia(discord.Client):
             '\n'.join(["{}. {} with {} points".format(ix + 1, member['user'], member['points'])
              for ix, member in enumerate(topMembers)])
         ), msg.channel)
+
+    def __configure_admins(self, admins):
+        admin_col = self.db.admins
+        admin_col.insert_one({"admins": admins})
+
+    def __add_admins(self, admins):
+        admin_col = self.db.admins
+        admin_col.update_one(
+            {
+                "$push": {
+                    "admins": {"$each": admins}
+                }
+            }
+        )
+
+    def __rm_admins(self, admins):
+        admin_col = self.db.admins
+        admin_col.update_one(
+            {
+                "$pull": {
+                    "admins": {"$in": admins}
+                }
+            }
+        )
+
+    def is_admin(self, user):
+        admin_col = self.db.admins
+        admins = admin_col.find_one({})
+        return user.name in admins
+
+    async def add_admin(self, msg):
+        if not self.is_admin(msg.author):
+            return
+        users = [user.name for user in msg.mentions]
+        self.__add_admins(users)
+        for user in msg.mentions:
+            await self.say("{} is now an admin".format(user.mention), msg.channel)
+
+    async def rm_admin(self, msg):
+        if not self.is_admin(msg.author):
+            return
+        users = [user.name for user in msg.mentions]
+        self.__rm_admins(users)
+        for user in msg.mentions:
+            await self.say("{} is no longer an admin".format(user.mention), msg.channel)
