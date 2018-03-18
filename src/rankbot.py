@@ -27,8 +27,62 @@ class Isperia(discord.Client):
         handler.setFormatter(logging.Formatter(
             '%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
         self.logger.addHandler(handler)
-        self.db = MongoClient(config["mongodb_host"], config["mongodb_port"]).rankdb
-        self.__configure_admins(self.super_admins)
+        self.db = MongoClient(config["mongodb_host"], config["mongodb_port"])
+
+    def __get_db(self, msg):
+        if not msg.server:
+            return None
+        return self.db[str(msg.server.id)]
+
+    def __get_members(self, msg):
+        db = self.__get_db(msg)
+        if not db:
+            return None
+        return db.members
+
+    def __get_matches(self, msg):
+        db = self.__get_db(msg)
+        if not db:
+            return None
+        return db.matches
+
+    def __get_admins(self, msg):
+        db = self.__get_db(msg)
+        if not db:
+            return None
+        return db.admins
+
+    def __add_admins(self, admins, msg):
+        admin_col = self.__get_admins(msg)
+        admin_col.update_one(
+            {},
+            {
+                "$push": {
+                    "admins": {"$each": admins}
+                }
+            }
+        )
+
+    def __rm_admins(self, admins, msg):
+        admin_col = self.__get_admins(msg)
+        admin_col.update_one(
+            {},
+            {
+                "$pull": {
+                    "admins": {"$in": admins}
+                }
+            }
+        )
+
+    def __is_admin(self, msg):
+        admin_col = self.__get_admins(msg)
+        admins = admin_col.find_one({})
+        if not admins:
+            admin_col.insert_one({"admins": []})
+            admins = admin_col.find_one({})
+        if msg.author.name in self.super_admins:
+            return True
+        return msg.author.name in admins["admins"]
 
     async def on_ready(self):
         self.logger.info('Logged in as {}'.format(self.user.name))
@@ -53,16 +107,21 @@ class Isperia(discord.Client):
             return
 
         cmd = text.split()[0][1:]
+        # non server-specific commands
         if cmd == "help":
             await self.help(msg)
-        elif cmd == "addme":
-            await self.addme(msg)
-        elif cmd == "log":
+
+        # server-specific commands
+        if not msg.server:
+            await self.say("This command must be used in a server", msg.channel)
+            return
+        
+        if cmd == "log":
             await self.log(msg)
         elif cmd == "register":
             await self.register(msg)
-        elif cmd == "unregister":
-            await self.unregister(msg)
+        #elif cmd == "unregister":
+        #    await self.unregister(msg)
         elif cmd == "confirm":
             await self.confirm(msg)
         elif cmd == "deny":
@@ -71,22 +130,27 @@ class Isperia(discord.Client):
             await self.score(msg)
         elif cmd == "describe":
             await self.describe(msg)
-        elif cmd == "reset":
-            await self.reset(msg)
         elif cmd == "pending":
             await self.pending(msg)
         elif cmd == "status":
             await self.status(msg)
         elif cmd == "top":
             await self.top(msg)
-        elif cmd == "add_admin":
-            await self.add_admin(msg)
-        elif cmd == "rm_admin":
-            await self.rm_admin(msg)
-        elif cmd == "override":
-            await self.override(msg)
-        elif cmd == "disputed":
-            await self.list_disputed(msg)
+
+        # admin commands (still server-specific)
+        if self.__is_admin(msg):
+            if cmd == "add_admin":
+                await self.add_admin(msg)
+            elif cmd == "rm_admin":
+                await self.rm_admin(msg)
+            elif cmd == "override":
+                await self.override(msg)
+            elif cmd == "disputed":
+                await self.list_disputed(msg)
+            elif cmd == "addme":
+                await self.addme(msg)
+            elif cmd == "reset":
+                await self.reset(msg)
 
     async def help(self, msg):
         user = msg.author
@@ -107,7 +171,7 @@ class Isperia(discord.Client):
                  +   "!pending     -   list your pending matches\n\n"
                  +   "!status      -   show the status of a match (must include game id)```"),
                 user)
-            if self.__is_admin(user):
+            if self.__is_admin(msg):
                 await self.say(
                     ("Admin Commands:\n"
                      +   "```!reset       -   reset all points and remove all matches\n\n"
@@ -128,15 +192,13 @@ class Isperia(discord.Client):
                            user)
 
     async def addme(self, msg):
-        if not self.__is_admin(msg.author):
-            return
         await self.say("https://discordapp.com/oauth2/authorize?client_id={}&scope=bot&permissions=0".format(
             self.client_id), msg.author)
 
     async def register(self, msg):
         # check if user is already registered
         user = msg.author
-        members = self.db.members
+        members = self.__get_members(msg)
         if not members.find_one({"user_id": user.id}):
             data = {
                 "user": user.name,
@@ -155,7 +217,7 @@ class Isperia(discord.Client):
 
     async def unregister(self, msg):
         user = msg.author
-        members = self.db.members
+        members = self.__get_members(msg)
         if not members.find_one_and_delete({"user_id": user.id}):
             await self.say("{} is not previously registered".format(
                 user.mention), msg.channel)
@@ -167,7 +229,7 @@ class Isperia(discord.Client):
         winner = msg.author
         losers = msg.mentions
         players = [winner] + losers
-        members = self.db.members
+        members = self.__get_members(msg)
         # verify that all players are registered players
         for user in players:
             if not members.find_one({"user_id": user.id}):
@@ -190,8 +252,10 @@ class Isperia(discord.Client):
             +   "`!deny {}`".format(game_id), msg.channel)
 
     def create_pending_game(self, msg, winner, players):
+        matches = self.__get_matches(msg)
+        members = self.__get_members(msg)
         # generate a unique game_id
-        game_id = utils.generate_game_id(self.hasher, msg.id, self.db.matches)
+        game_id = utils.generate_game_id(self.hasher, msg.id, matches)
         # create a pending game record in the database for players
         pending_record = {
             "game_id": game_id,
@@ -201,9 +265,7 @@ class Isperia(discord.Client):
             "timestamp": time.time()
         }
         pending_record["players"][winner.id] = stc.CONFIRMED
-        matches = self.db.matches
         matches.insert_one(pending_record)
-        members = self.db.members
         for player in players:
             if player != winner:
                 members.update_one(
@@ -216,7 +278,8 @@ class Isperia(discord.Client):
 
     async def confirm(self, msg):
         user = msg.author
-        members = self.db.members
+        members = self.__get_members(msg)
+        matches = self.__get_matches(msg)
         player = members.find_one({"user_id": user.id})
         if not player:
             return
@@ -229,7 +292,6 @@ class Isperia(discord.Client):
         else:
             game_id = msg.content.split()[1]
 
-        matches = self.db.matches
         pending_game = matches.find_one({"game_id": game_id})
         if not pending_game:
             await self.say("No matching game id found", msg.channel)
@@ -253,12 +315,11 @@ class Isperia(discord.Client):
                     "$pull": {"pending": game_id}
                 }
             )
-            await self.check_match_status(game_id, msg.channel)
+            await self.check_match_status(game_id, members, matches, msg.channel)
         else:
             await self.say("You have already confirmed this match", msg.channel)
 
-    async def check_match_status(self, game_id, channel):
-        matches = self.db.matches
+    async def check_match_status(self, game_id, members, matches, channel):
         pending_game = matches.find_one({"game_id": game_id})
         players = pending_game["players"]
         for player in players:
@@ -271,7 +332,6 @@ class Isperia(discord.Client):
                 "$set": {"status": stc.ACCEPTED}
             }
         )
-        members = self.db.members
         delta = utils.update_score(pending_game, members)
         for player in players:
             members.update_one(
@@ -289,7 +349,8 @@ class Isperia(discord.Client):
 
     async def deny(self, msg):
         user = msg.author
-        members = self.db.members
+        members = self.__get_members(msg)
+        matches = self.__get_matches(msg)
         player = members.find_one({"user_id": user.id})
         if not player:
             return
@@ -302,7 +363,6 @@ class Isperia(discord.Client):
         else:
             game_id = msg.content.split()[1]
 
-        matches = self.db.matches
         pending_game = matches.find_one({"game_id": game_id})
         if not pending_game:
             await self.say("No matching game id found", msg.channel)
@@ -320,13 +380,11 @@ class Isperia(discord.Client):
                 }
             )
             if pending_game["players"][user.id] == stc.CONFIRMED:
-                self.reset_to_unconfirmed(game_id, user)
+                self.reset_to_unconfirmed(game_id, user, members, matches)
         await self.say("This match has been marked as **disputed**",
                        msg.channel)
 
-    def reset_to_unconfirmed(self, game_id, user):
-        matches = self.db.matches
-        members = self.db.members
+    def reset_to_unconfirmed(self, game_id, user, members, matches):
         matches.update_one(
             {"game_id": game_id},
             {
@@ -347,7 +405,7 @@ class Isperia(discord.Client):
             users = [msg.author]
         else:
             users = msg.mentions
-        members = self.db.members
+        members = self.__get_members(msg)
         for user in users:
             member = members.find_one({"user_id": user.id})
             if not member:
@@ -365,11 +423,11 @@ class Isperia(discord.Client):
                 , msg.channel)
 
     async def describe(self, msg):
-        matches = self.db.matches
+        matches = self.__get_matches(msg)
+        members = self.__get_members(msg)
         num_accepted_matches = matches.count({"status": stc.ACCEPTED})
         num_pending_matches = matches.count({"status": stc.PENDING})
         num_disputed_matches = matches.count({"status": stc.DISPUTED})
-        members = self.db.members
         num_members = members.count()
         await self.say(
             ("There are {} registered players in the {}\n".format(
@@ -381,7 +439,7 @@ class Isperia(discord.Client):
 
     async def pending(self, msg):
         user = msg.author
-        members = self.db.members
+        members = self.__get_members(msg)
         player = members.find_one({"user_id": user.id})
         if not player:
             return
@@ -402,13 +460,13 @@ class Isperia(discord.Client):
             await self.say("Please include a game id", msg.channel)
             return
         game_id = msg.content.split()[1]
-        matches = self.db.matches
+        matches = self.__get_matches(msg)
         match = matches.find_one({"game_id": game_id})
         if not match:
             await self.say("No match found for game id {}".format(game_id),
                            msg.channel)
             return
-        members = self.db.members
+        members = self.__get_members(msg)
         winner = members.find_one({"user_id": match["winner"]})
         players = [members.find_one({"user_id": player}) for player in match["players"]]
         status_text = ("```Game id: {}\n".format(match["game_id"])
@@ -426,10 +484,8 @@ class Isperia(discord.Client):
         await self.say(status_text, msg.channel)
 
     async def reset(self, msg):
-        if not self.__is_admin(msg.author):
-            return
-        members = self.db.members
-        matches = self.db.matches
+        members = self.__get_members(msg)
+        matches = self.__get_matches(msg)
         members.update_many({}, {
             "$set": {
                 "points": 1000,
@@ -445,69 +501,32 @@ class Isperia(discord.Client):
              + "all match records have been cleared."), msg.channel)
 
     async def top(self, msg):
-        members = self.db.members
+        members = self.__get_members(msg)
         topMembers = members.find({"accepted": {"$gt": 0}}, limit=10, sort=[('points', DESCENDING)])
         await self.say("Top Players:\n{}".format(
             '\n'.join(["{}. {} with {} points".format(ix + 1, member['user'], member['points'])
              for ix, member in enumerate(topMembers)])
         ), msg.channel)
 
-    def __configure_admins(self, admins):
-        admin_col = self.db.admins
-        admin_col.insert_one({"admins": admins})
-
-    def __add_admins(self, admins):
-        admin_col = self.db.admins
-        admin_col.update_one(
-            {},
-            {
-                "$push": {
-                    "admins": {"$each": admins}
-                }
-            }
-        )
-
-    def __rm_admins(self, admins):
-        admin_col = self.db.admins
-        admin_col.update_one(
-            {},
-            {
-                "$pull": {
-                    "admins": {"$in": admins}
-                }
-            }
-        )
-
-    def __is_admin(self, user):
-        admin_col = self.db.admins
-        admins = admin_col.find_one({})
-        return user.name in admins["admins"]
-
     async def add_admin(self, msg):
-        if not self.__is_admin(msg.author):
-            return
         users = [user.name for user in msg.mentions]
-        self.__add_admins(users)
+        self.__add_admins(users, msg)
         for user in msg.mentions:
             await self.say("{} is now an admin".format(user.mention), msg.channel)
 
     async def rm_admin(self, msg):
-        if not self.__is_admin(msg.author):
-            return
         users = [user.name for user in msg.mentions]
-        self.__rm_admins(users)
+        self.__rm_admins(users, msg)
         for user in msg.mentions:
             await self.say("{} is no longer an admin".format(user.mention), msg.channel)
 
     async def override(self, msg):
-        if not self.__is_admin(msg.author):
-            return
         if len(msg.content.split()) != 3:
             await self.say("Please include game id to override and the override status:\n"
                         +  "`!override game_id status`", msg.channel)
             return
         cmd, game_id, status = msg.content.split()
-        matches = self.db.matches
+        matches = self.__get_matches(msg)
         match = matches.find_one({"game_id": game_id})
         if not match:
             await self.say("No match with indicated game id found", msg.channel)
@@ -518,7 +537,7 @@ class Isperia(discord.Client):
         if status.lower() not in ["accept", "remove"]:
             await self.say("Override status can only be `accept` or `remove`", msg.channel)
             return
-        members = self.db.members
+        members = self.__get_members(msg)
         for player_id in match["players"]:
             members.update_one(
                 {"user_id": player_id},
@@ -539,12 +558,10 @@ class Isperia(discord.Client):
                     }
                 }
             )
-            await self.check_match_status(game_id, msg.channel)
+            await self.check_match_status(game_id, members, matches, msg.channel)
 
     async def list_disputed(self, msg):
-        if not self.__is_admin(msg.author):
-            return
-        matches = self.db.matches
+        matches = self.__get_matches(msg)
         disputed = matches.find({"status": stc.DISPUTED})
         if not disputed.count():
             await self.say("No disputed matches found", msg.channel)
