@@ -7,6 +7,7 @@ import hashids
 from pymongo import MongoClient, DESCENDING
 from src import status_codes as stc
 from src import utils
+import time
 
 class Isperia(discord.Client):
     def __init__(self, token, config):
@@ -190,7 +191,8 @@ class Isperia(discord.Client):
             "game_id": game_id,
             "status": stc.PENDING,
             "winner": winner.id,
-            "players": {u.id: stc.UNCONFIRMED for u in players}
+            "players": {u.id: stc.UNCONFIRMED for u in players},
+            "timestamp": time.time()
         }
         pending_record["players"][winner.id] = stc.CONFIRMED
         matches = self.db.matches
