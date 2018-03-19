@@ -15,7 +15,6 @@ class Isperia(discord.Client):
         self.token = token
         self.MAX_MSG_LEN = 2000
         self.client_id = config["client_id"]
-        self.super_admins = config["admins"]
         self.league_name = config["league_name"]
         self.players = config["players"]
         self.hasher = hashids.Hashids(salt="cEDH league")
@@ -52,24 +51,24 @@ class Isperia(discord.Client):
             return None
         return db.admins
 
-    def __add_admins(self, admins, msg):
+    def __add_admins(self, admin_ids, msg):
         admin_col = self.__get_admins(msg)
         admin_col.update_one(
             {},
             {
                 "$push": {
-                    "admins": {"$each": admins}
+                    "admins": {"$each": admin_ids}
                 }
             }
         )
 
-    def __rm_admins(self, admins, msg):
+    def __rm_admins(self, admin_ids, msg):
         admin_col = self.__get_admins(msg)
         admin_col.update_one(
             {},
             {
                 "$pull": {
-                    "admins": {"$in": admins}
+                    "admins": {"$in": admin_ids}
                 }
             }
         )
@@ -77,15 +76,22 @@ class Isperia(discord.Client):
     def __is_admin(self, msg):
         admin_col = self.__get_admins(msg)
         admins = admin_col.find_one({})
-        if not admins:
+        if not admins or not admins["admins"]:
             admin_col.insert_one({"admins": []})
             admins = admin_col.find_one({})
-        if msg.author.name in self.super_admins:
+        if msg.author.id == msg.server.owner.id:
             return True
-        return msg.author.name in admins["admins"]
+        return msg.author.id in admins["admins"]
 
     async def on_ready(self):
         self.logger.info('Logged in as {}'.format(self.user.name))
+
+    async def on_server_join(self, server):
+        db = self.db[str(server.id)]
+        db.admins.insert_one({"admins":[]})
+
+    async def on_server_remove(self, server):
+        self.db.drop_database(str(server.id))
 
     async def say(self, msg, channel):
         if len(msg) > self.MAX_MSG_LEN:
@@ -143,6 +149,8 @@ class Isperia(discord.Client):
                 await self.add_admin(msg)
             elif cmd == "rm_admin":
                 await self.rm_admin(msg)
+            elif cmd == "drop_admins":
+                await self.clear_admins(msg)
             elif cmd == "override":
                 await self.override(msg)
             elif cmd == "disputed":
@@ -178,6 +186,7 @@ class Isperia(discord.Client):
                      +   "!addme       -   get invite link to add Isperia\n\n"
                      +   "!add_admin   -   set all mentioned users to admin\n\n"
                      +   "!rm_admin    -   remove admin privileges to mentioned users\n\n"
+                     +   "!drop_admins -   remove all admins except the server owner\n\n"
                      +   "!disputed    -   list all disputed matches\n\n"
                      +   "!override    -   include game_id and 'accept'\n"
                      +   "                 or 'remove' to resolve dispute```"),
@@ -521,16 +530,21 @@ class Isperia(discord.Client):
         ), channel)
 
     async def add_admin(self, msg):
-        users = [user.name for user in msg.mentions]
+        users = [user.id for user in msg.mentions]
         self.__add_admins(users, msg)
         for user in msg.mentions:
             await self.say("{} is now an admin".format(user.mention), msg.channel)
 
     async def rm_admin(self, msg):
-        users = [user.name for user in msg.mentions]
+        users = [user.id for user in msg.mentions]
         self.__rm_admins(users, msg)
         for user in msg.mentions:
             await self.say("{} is no longer an admin".format(user.mention), msg.channel)
+
+    async def clear_admins(self, msg):
+        admins = self.__get_admins(msg)
+        admins.update_one({},{"$set": {"admins": []}})
+        await self.say("All league admins have been cleared", msg.channel)
 
     async def override(self, msg):
         if len(msg.content.split()) != 3:
