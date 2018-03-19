@@ -45,50 +45,41 @@ class Isperia(discord.Client):
             return None
         return db.matches
 
-    def __get_admins(self, msg):
+    def __get_server_settings(self, msg):
         db = self.__get_db(msg)
         if not db:
             return None
-        return db.admins
+        return db.server
 
-    def __add_admins(self, admin_ids, msg):
-        admin_col = self.__get_admins(msg)
-        admin_col.update_one(
-            {},
-            {
-                "$push": {
-                    "admins": {"$each": admin_ids}
+    def __set_admin_role(self, role, msg):
+        server_settings = self.__get_server_settings(msg)
+        if not server_settings.find_one({}):
+            server_settings.insert_one({"admin": role.name})
+        else:
+            server_settings.update_one(
+                {},
+                {
+                    "$set": {
+                        "admin": role.name
+                    }
                 }
-            }
-        )
-
-    def __rm_admins(self, admin_ids, msg):
-        admin_col = self.__get_admins(msg)
-        admin_col.update_one(
-            {},
-            {
-                "$pull": {
-                    "admins": {"$in": admin_ids}
-                }
-            }
-        )
+            )
 
     def __is_admin(self, msg):
-        admin_col = self.__get_admins(msg)
-        admins = admin_col.find_one({})
-        if not admins or not admins["admins"]:
-            admin_col.insert_one({"admins": []})
-            admins = admin_col.find_one({})
+        server_settings = self.__get_server_settings(msg)
+        setting = server_settings.find_one({})
         if msg.author.id == msg.server.owner.id:
             return True
-        return msg.author.id in admins["admins"]
+        if not setting or not setting["admin"]:
+            return False
+        return setting["admin"] in [role.name for role in msg.author.roles]
 
     async def on_ready(self):
         self.logger.info('Logged in as {}'.format(self.user.name))
 
     async def on_server_join(self, server):
-        db = self.db[str(server.id)]
-        db.admins.insert_one({"admins":[]})
+        await self.say("Please create a role and assign that role as the league "
+                    +   "admin using !set_admin `role name`", server.owner)
 
     async def on_server_remove(self, server):
         self.db.drop_database(str(server.id))
@@ -147,12 +138,8 @@ class Isperia(discord.Client):
 
         # admin commands (still server-specific)
         if self.__is_admin(msg):
-            if cmd == "add_admin":
-                await self.add_admin(msg)
-            elif cmd == "rm_admin":
-                await self.rm_admin(msg)
-            elif cmd == "drop_admins":
-                await self.clear_admins(msg)
+            if cmd == "set_admin":
+                await self.set_admin_role(msg)
             elif cmd == "override":
                 await self.override(msg)
             elif cmd == "disputed":
@@ -184,9 +171,7 @@ class Isperia(discord.Client):
                 await self.say(
                     ("Admin Commands:\n"
                      +   "```!reset       -   reset all points and remove all matches\n\n"
-                     +   "!add_admin   -   set all mentioned users to admin\n\n"
-                     +   "!rm_admin    -   remove admin privileges to mentioned users\n\n"
-                     +   "!drop_admins -   remove all admins except the server owner\n\n"
+                     +   "!set_admin   -   set the mentioned role as league admin\n\n"
                      +   "!disputed    -   list all disputed matches\n\n"
                      +   "!override    -   include game_id and 'accept'\n"
                      +   "                 or 'remove' to resolve dispute```"),
@@ -529,22 +514,10 @@ class Isperia(discord.Client):
              for ix, member in enumerate(topMembers)])
         ), channel)
 
-    async def add_admin(self, msg):
-        users = [user.id for user in msg.mentions]
-        self.__add_admins(users, msg)
-        for user in msg.mentions:
-            await self.say("{} is now an admin".format(user.mention), msg.channel)
-
-    async def rm_admin(self, msg):
-        users = [user.id for user in msg.mentions]
-        self.__rm_admins(users, msg)
-        for user in msg.mentions:
-            await self.say("{} is no longer an admin".format(user.mention), msg.channel)
-
-    async def clear_admins(self, msg):
-        admins = self.__get_admins(msg)
-        admins.update_one({},{"$set": {"admins": []}})
-        await self.say("All league admins have been cleared", msg.channel)
+    async def set_admin_role(self, msg):
+        role = msg.role_mentions[0]
+        self.__set_admin_role(role, msg)
+        await self.say("{} are now the league admins".format(role.mention), msg.channel)
 
     async def override(self, msg):
         if len(msg.content.split()) != 3:
