@@ -501,12 +501,24 @@ class Isperia(discord.Client):
              + "all match records have been cleared."), msg.channel)
 
     async def top(self, msg):
+        tokens = msg.content.split()
+        if len(tokens) < 2:
+            limit = 10
+        else:
+            if tokens[1].isdigit():
+                limit = int(tokens[1])
+            else:
+                limit = 10
+        if limit > 32:
+            channel = msg.author
+        else:
+            channel = msg.channel
         members = self.__get_members(msg)
-        topMembers = members.find({"accepted": {"$gt": 0}}, limit=10, sort=[('points', DESCENDING)])
+        topMembers = members.find({"accepted": {"$gt": 0}}, limit=limit, sort=[('points', DESCENDING)])
         await self.say("Top Players:\n{}".format(
             '\n'.join(["{}. {} with {} points".format(ix + 1, member['user'], member['points'])
              for ix, member in enumerate(topMembers)])
-        ), msg.channel)
+        ), channel)
 
     async def add_admin(self, msg):
         users = [user.name for user in msg.mentions]
