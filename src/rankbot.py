@@ -65,6 +65,13 @@ class Isperia(discord.Client):
                 }
             )
 
+    def __get_admin_role(self, msg):
+        server_settings = self.__get_server_settings(msg)
+        setting = server_settings.find_one({})
+        if not setting or "admin" not in setting:
+            return None
+        return discord.utils.get(msg.server.roles, name=setting["admin"])
+
     def __is_admin(self, msg):
         server_settings = self.__get_server_settings(msg)
         setting = server_settings.find_one({})
@@ -375,8 +382,9 @@ class Isperia(discord.Client):
             )
             if pending_game["players"][user.id] == stc.CONFIRMED:
                 self.reset_to_unconfirmed(game_id, user, members, matches)
-        await self.say("This match has been marked as **disputed**",
-                       msg.channel)
+        admin_role = self.__get_admin_role(msg)
+        await self.say("Match `{}` has been marked as **disputed** {}".format(
+                        game_id, admin_role.mention), msg.channel)
 
     def reset_to_unconfirmed(self, game_id, user, members, matches):
         matches.update_one(
