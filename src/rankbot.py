@@ -142,6 +142,8 @@ class Isperia(discord.Client):
             await self.status(msg)
         elif cmd == "top":
             await self.top(msg)
+        elif cmd == "addme":
+            await self.addme(msg)
 
         # admin commands (still server-specific)
         if self.__is_admin(msg):
@@ -155,8 +157,6 @@ class Isperia(discord.Client):
                 await self.override(msg)
             elif cmd == "disputed":
                 await self.list_disputed(msg)
-            elif cmd == "addme":
-                await self.addme(msg)
             elif cmd == "reset":
                 await self.reset(msg)
 
@@ -166,6 +166,7 @@ class Isperia(discord.Client):
             await self.say(
                 ("Commands:\n"
                  +   "```!help        -   show command list\n\n"
+                 +   "!addme       -   get invite link to add Isperia\n\n"
                  +   "!register    -   register to the {}\n\n".format(self.league_name)
                  +   "!log         -   log a match result\n"
                  +   "                 type '!help log' for more info\n\n"
@@ -183,7 +184,6 @@ class Isperia(discord.Client):
                 await self.say(
                     ("Admin Commands:\n"
                      +   "```!reset       -   reset all points and remove all matches\n\n"
-                     +   "!addme       -   get invite link to add Isperia\n\n"
                      +   "!add_admin   -   set all mentioned users to admin\n\n"
                      +   "!rm_admin    -   remove admin privileges to mentioned users\n\n"
                      +   "!drop_admins -   remove all admins except the server owner\n\n"
