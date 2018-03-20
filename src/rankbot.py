@@ -245,7 +245,7 @@ class Isperia(discord.Client):
 
     async def show_delta(self, game_id, delta, channel):
         await self.say("Match {} has been accepted.\n".format(game_id)
-                    +  "`{}`".format(", ".join(
+                    +  "```{}```".format(", ".join(
                     ["{0}: {1:+}".format(i["player"], i["change"]) for i in delta])), channel)
 
     @server
