@@ -77,6 +77,10 @@ class RankDB(MongoClient):
         members = self.get_members(server_id)
         return members.find_one({"user_id": user_id})
 
+    def find_all_members(self, server_id):
+        members = self.get_members(server_id)
+        return members.find()
+
     def find_top_players(self, limit, server_id):
         members = self.get_members(server_id)
         return members.find({"accepted": {"$gt": 0}}, limit=limit, sort=[('points', DESCENDING)])

@@ -44,6 +44,7 @@ commands = [
     # these commands must be used in a server
     "log", "register", "confirm", "deny",
     "pending", "status", "top", "score", "describe", 
+    "who",
 
     # these commands must be used in a server and can only be called by an admin
     "set_admin", "override", "disputed", "reset",
@@ -123,6 +124,7 @@ class Isperia(discord.Client):
                  +   "```!help        -   show command list\n\n"
                  +   "!addme       -   get invite link to add Isperia\n\n"
                  +   "!register    -   register to the {}\n\n".format(self.league_name)
+                 +   "!who         -   list the names of every registered player\n\n"
                  +   "!log         -   log a match result\n"
                  +   "                 type '!help log' for more info\n\n"
                  +   "!confirm     -   confirm the most recent match result\n"
@@ -374,6 +376,13 @@ class Isperia(discord.Client):
             '\n'.join(["{}. {} with {} points".format(ix + 1, member['user'], member['points'])
                        for ix, member in enumerate(top_members)])
         ), channel)
+
+    @server
+    async def who(self, msg):
+        members = self.db.find_all_members(msg.server.id)
+        await self.say("```{}```".format(
+            ", ".join([member["user"] for member in members])
+        ), msg.channel)
 
     @server
     @admin
