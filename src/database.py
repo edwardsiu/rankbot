@@ -203,7 +203,7 @@ class RankDB(MongoClient):
                 return None
         # all players have confirmed the result
         self.set_match_status(stc.ACCEPTED, game_id, server_id)
-        delta = self.update_score(match, server_id)
+        delta = self.update_scores(match, server_id)
         for player_id in players:
             self.member_inc_accepted(player_id, server_id)
         return delta
