@@ -48,7 +48,7 @@ commands = [
 
     # these commands must be used in a server and can only be called by an admin
     "set_admin", "override", "disputed", "reset",
-    "add_user", "rm_user"
+    "test", "add_user", "rm_user"
 ]
 
 class Isperia(discord.Client):
