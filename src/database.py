@@ -19,12 +19,12 @@ class RankDB(MongoClient):
         db = self.get_db(server_id)
         return db.matches
 
-    def get_settings(self, server_id):
+    def get_server(self, server_id):
         db = self.get_db(server_id)
         return db.server
 
     def set_admin_role(self, role_name, server_id):
-        server_settings = self.get_settings(server_id)
+        server_settings = self.get_server(server_id)
         if not server_settings.find_one({}):
             server_settings.insert_one({"admin": role_name})
         else:
@@ -36,14 +36,14 @@ class RankDB(MongoClient):
             )
 
     def get_admin_role(self, server):
-        server_settings = self.get_settings(server.id)
+        server_settings = self.get_server(server.id)
         setting = server_settings.find_one({})
         if not setting or "admin" not in setting:
             return None
         return discord.utils.get(server.roles, name=setting["admin"])
 
     def is_admin(self, user_roles, server_id):
-        server_settings = self.get_settings(server_id)
+        server_settings = self.get_server(server_id)
         setting = server_settings.find_one({})
         if not setting or not setting["admin"]:
             return False
@@ -252,3 +252,28 @@ class RankDB(MongoClient):
         )
         delta.append({"player": winner["user"], "change": gains})
         return delta
+
+    def get_lfg_queue(self, server_id):
+        server = self.get_server(server_id)
+        server_doc = server.find_one({})
+        if not server_doc or "lfg" not in server_doc:
+            server.update_one(
+                {},
+                {
+                    "$set": {"lfg": []}
+                }
+            )
+            return []
+        else:
+            return server_doc["lfg"]
+
+    def add_to_lfg_queue(self, user_id, server):
+        self.get_lfg_queue(server.id)
+        server = self.get_server(server.id)
+        server.update_one(
+            {}
+            {
+                "$push": {"lfg": user_id}
+            }
+        )
+

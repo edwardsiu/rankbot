@@ -385,6 +385,10 @@ class Isperia(discord.Client):
         ), msg.channel)
 
     @server
+    async def lfg(self, msg):
+        pass
+
+    @server
     @admin
     async def reset(self, msg):
         self.db.reset_scores(msg.server.id)
