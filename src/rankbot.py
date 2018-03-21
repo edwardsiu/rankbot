@@ -135,6 +135,8 @@ class Isperia(discord.Client):
                  +   "!describe    -   league stats\n\n"
                  +   "!top         -   see the top players in the league\n\n"
                  +   "!pending     -   list your pending matches\n\n"
+                 +   "!remind      -   send a mention to all players who haven't\n"
+                 +   "                 confirmed your pending matches\n\n"
                  +   "!status      -   show the status of a match (must include game id)```"),
                 user)
             if self.__is_admin(msg):
