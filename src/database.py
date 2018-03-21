@@ -152,6 +152,13 @@ class RankDB(MongoClient):
         matches = self.get_matches(server_id)
         return matches.find(match_filter)
 
+    def find_player_pending(self, user_id, server_id):
+        player = self.find_member(user_id, server_id)
+        if not player:
+            return []
+        matches = [self.find_match(game_id, server_id) for game_id in player["pending"]]
+        return matches
+
     def reset_matches(self, server_id):
         matches = self.get_matches(server_id)
         matches.delete_many({})

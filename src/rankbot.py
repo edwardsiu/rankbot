@@ -44,7 +44,7 @@ commands = [
     # these commands must be used in a server
     "log", "register", "confirm", "deny",
     "pending", "status", "top", "score", "describe", 
-    "who",
+    "who", "remind",
 
     # these commands must be used in a server and can only be called by an admin
     "set_admin", "override", "disputed", "reset",
@@ -318,13 +318,10 @@ class Isperia(discord.Client):
     @server
     async def pending(self, msg):
         user = msg.author
-        player = self.db.find_member(user.id, msg.server.id)
-        if not player:
-            return
-        if not player["pending"]:
+        pending_matches = self.db.find_player_pending(user.id, msg.server.id)
+        if not pending_matches:
             await self.say("You have no pending match records.", msg.channel)
             return
-        pending_matches = [self.db.find_match(game_id, msg.server.id) for game_id in player["pending"]]
         pending_list = "List of game ids awaiting confirmation:\n```{}```".format(
             "\n".join(["{}: {}".format(match["game_id"], match["players"][user.id]) for match in pending_matches])
         )
@@ -383,6 +380,18 @@ class Isperia(discord.Client):
         await self.say("```{}```".format(
             ", ".join([member["user"] for member in members])
         ), msg.channel)
+
+    @server
+    async def remind(self, msg):
+        user = msg.author
+        pending = self.db.find_player_pending(user.id, msg.server.id)
+        for match in pending:
+            unconfirmed = [discord.utils.get(msg.server.members, id=user_id).mention
+                for user_id in match["players"] if match["players"][user_id] != stc.CONFIRMED
+            ]
+            await self.say("{} Please confirm match `{}`".format(
+                " ".join(unconfirmed), match["game_id"]
+            ), msg.channel)
 
     @server
     async def lfg(self, msg):
