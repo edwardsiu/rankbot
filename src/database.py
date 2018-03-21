@@ -136,10 +136,11 @@ class RankDB(MongoClient):
         pending_record["players"][winner.id] = stc.CONFIRMED
         matches.insert_one(pending_record)
         for player in players:
-            if player != winner:
-                self.add_pending_match(player.id, game_id, server_id)
+            self.add_pending_match(player.id, game_id, server_id)
 
     def delete_match(self, game_id, server_id):
+        members = self.get_members(server_id)
+        members.update_many({"pending": game_id},{"$pull":{"pending": game_id}})
         matches = self.get_matches(server_id)
         matches.delete_one({"game_id": game_id})
 
@@ -176,7 +177,6 @@ class RankDB(MongoClient):
                 "$set": {"players.{}".format(user_id): stc.CONFIRMED}
             }
         )
-        self.remove_pending_match(user_id, game_id, server_id)
 
     def confirm_all_players(self, players, game_id, server_id):
         matches = self.get_matches(server_id)
@@ -197,7 +197,6 @@ class RankDB(MongoClient):
                 "$set": {"players.{}".format(user_id): stc.CONFIRMED}
             }
         )
-        self.add_pending_match(user_id, game_id, server_id)
 
     def check_match_status(self, game_id, server_id):
         match = self.find_match(game_id, server_id)
@@ -210,6 +209,8 @@ class RankDB(MongoClient):
         delta = self.update_scores(match, server_id)
         for player_id in players:
             self.member_inc_accepted(player_id, server_id)
+        members = self.get_members(server_id)
+        members.update_many({"pending": game_id}, {"$pull": {"pending": game_id}})
         return delta
 
     def get_game_id(self, hasher, msg_id, server_id):
@@ -271,7 +272,7 @@ class RankDB(MongoClient):
         self.get_lfg_queue(server.id)
         server = self.get_server(server.id)
         server.update_one(
-            {}
+            {},
             {
                 "$push": {"lfg": user_id}
             }
