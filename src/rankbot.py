@@ -201,11 +201,9 @@ class Isperia(discord.Client):
         game_id = self.create_pending_game(msg, winner, players)
         await self.say("Match has been logged and awaiting confirmation from "
             +   ("{} "*len(losers) + "\n").format(*[u.mention for u in losers])
-            +   "`game id: {}`\n".format(game_id)
-            +   "To **confirm** this record, say: "
-            +   "`!confirm {}`\n".format(game_id)
-            +   "To **deny** this record, say: "
-            +   "`!deny {}`".format(game_id), msg.channel)
+            +   "Game ID: **{}**\n".format(game_id)
+            +   "To **confirm** this record, say: `!confirm`\n"
+            +   "To **deny** this record, say: `!deny`", msg.channel)
 
     def create_pending_game(self, msg, winner, players):
         game_id = self.db.get_game_id(self.hasher, msg.id, msg.server.id)
@@ -389,8 +387,8 @@ class Isperia(discord.Client):
             unconfirmed = [discord.utils.get(msg.server.members, id=user_id).mention
                 for user_id in match["players"] if match["players"][user_id] != stc.CONFIRMED
             ]
-            await self.say("{} Please confirm match `{}`".format(
-                " ".join(unconfirmed), match["game_id"]
+            await self.say("{} Please confirm match **{}** by saying: `!confirm {}`".format(
+                " ".join(unconfirmed), match["game_id"], match["game_id"]
             ), msg.channel)
 
     @server
