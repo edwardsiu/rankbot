@@ -324,8 +324,9 @@ class Isperia(discord.Client):
         if not player["pending"]:
             await self.say("You have no pending match records.", msg.channel)
             return
+        pending_matches = [self.db.find_match(game_id, msg.server.id) for game_id in player["pending"]]
         pending_list = "List of game ids awaiting confirmation:\n```{}```".format(
-            "\n".join(player["pending"])
+            "\n".join(["{}: {}".format(match["game_id"], match["players"][user.id]) for match in pending_matches])
         )
         await self.say(pending_list, msg.channel)
         await self.say("To check the status of a pending match, say: `!status game_id`\n"
