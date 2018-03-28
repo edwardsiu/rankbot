@@ -301,8 +301,12 @@ class Isperia(discord.Client):
             if pending_game["players"][user.id] == stc.CONFIRMED:
                 self.db.unconfirm_player(user.id, game_id, msg.server.id)
         admin_role = self.db.get_admin_role(msg.server)
+        if not admin_role:
+            mention = ""
+        else:
+            mention = admin_role.mention
         emsg.description = "{} Match `{}` has been marked as **disputed**".format(
-            admin_role.mention, game_id)
+            mention, game_id)
         await self.send_error(msg.channel, emsg)
 
     @server
