@@ -72,7 +72,7 @@ class Isperia(discord.Client):
         self.MAX_MSG_LEN = 2000
         self.client_id = config["client_id"]
         self.commands = commands
-        self.command_token = "!"
+        self.command_token = "$"
         self.mode = stc.OPERATION
         self.hasher = hashids.Hashids(salt="cEDH league")
         self.lfgq = {}
@@ -151,14 +151,14 @@ class Isperia(discord.Client):
     async def help(self, msg):
         user = msg.author
         if len(msg.content.split()) == 1:
-            embedded_msg = help_cmds.user_help()
+            embedded_msg = help_cmds.user_help(self.command_token)
             await self.send_help(user, embedded_msg)
             if self.__is_admin(msg):
-                embedded_msg = help_cmds.admin_help()
+                embedded_msg = help_cmds.admin_help(self.command_token)
                 await self.send_help(user, embedded_msg)
         else:
             tokens = msg.content.split()
-            embedded_msg = help_cmds.get_help_detail(tokens[1])
+            embedded_msg = help_cmds.get_help_detail(tokens[1], self.command_token)
             if embedded_msg:
                 await self.send_help(msg.channel, embedded_msg)
             else:
@@ -215,7 +215,7 @@ class Isperia(discord.Client):
         emsg.title = "Game id: {}".format(game_id)
         emsg.description = ("Match has been logged and awaiting confirmation from "
             + "{}\n".format(" ".join([u.mention for u in losers]))
-            + "Please `!confirm` or `!deny` this record.")
+            + "Please `{0}confirm` or `{0}deny` this record.".format(self.command_token))
         await self.send_embed(msg.channel, emsg)
 
     def create_pending_game(self, msg, winner, players):
@@ -357,7 +357,9 @@ class Isperia(discord.Client):
         emsg.title = "Pending Matches"
         emsg.description = ("\n".join(
             ["**{}**: {}".format(match["game_id"], match["players"][user.id]) for match in pending_matches])
-            + "\n\nActions: `!status [game id]` `!confirm [game id]` `!deny [game id]`")
+            + "\n\nActions: `{0}status [game id]` `{0}confirm [game id]` `{0}deny [game id]`".format(
+                self.command_token
+            ))
         await self.send_embed(msg.channel, emsg)
 
     @server
@@ -421,8 +423,8 @@ class Isperia(discord.Client):
                 for user_id in match["players"] if match["players"][user_id] != stc.CONFIRMED
             ]
             emsg.title = "Game id: {}".format(match["game_id"])
-            emsg.description = "{}\nPlease confirm this match by saying: `!confirm {}`".format(
-                " ".join(unconfirmed), match["game_id"])
+            emsg.description = "{}\nPlease confirm this match by saying: `{}confirm {}`".format(
+                " ".join(unconfirmed), self.command_token, match["game_id"])
             await self.send_embed(msg.channel, emsg)
 
     @server
@@ -482,7 +484,11 @@ class Isperia(discord.Client):
     async def override(self, msg):
         emsg = discord.Embed()
         if len(msg.content.split()) != 3:
-            emsg.description = "Please include the game id and override action. See `!help override` for more info."
+            emsg.description = (
+                "Please include the game id and override action. "
+                + "See `{}help override` for more info.".format(
+                    self.command_token
+                ))
             await self.send_error(msg.channel, emsg)
             return
         try:
@@ -527,8 +533,8 @@ class Isperia(discord.Client):
             return
         emsg.title = "Disputed Matches"
         emsg.description = ("\n".join([match["game_id"] for match in disputed_matches])
-            + "\nTo resolve a dispute, say `!override [game id] [action]`\n"
-            + "See `!help override` for more info")
+            + "\nTo resolve a dispute, say `{}override [game id] [action]`\n".format(self.command_token)
+            + "See `{}help override` for more info".format(self.command_token))
         await self.send_embed(msg.channel, emsg)
 
     @admin

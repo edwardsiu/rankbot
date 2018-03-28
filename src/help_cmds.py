@@ -1,28 +1,29 @@
 import discord
 from src.colors import *
 
-def user_help():
+def user_help(token):
     emsg = discord.Embed(title="Help")
     emsg.add_field(name="Command", inline=True, value=(
         "**"
-        + "!help\n\n"
-        + "!addme\n\n"
-        + "!register\n\n"
-        + "!players\n\n"
-        + "!describe\n\n"
-        + "!log\n\n"
-        + "!confirm\n\n"
-        + "!deny\n\n"
-        + "!score\n\n"
-        + "!top\n\n"
-        + "!pending\n\n"
-        + "!remind\n\n"
-        + "!status\n\n"
-        + "!lfg"
+        + "{}help\n\n".format(token)
+        + "{}addme\n\n".format(token)
+        + "{}register\n\n".format(token)
+        + "{}players\n\n".format(token)
+        + "{}describe\n\n".format(token)
+        + "{}log\n\n".format(token)
+        + "{}confirm\n\n".format(token)
+        + "{}deny\n\n".format(token)
+        + "{}score\n\n".format(token)
+        + "{}top\n\n".format(token)
+        + "{}pending\n\n".format(token)
+        + "{}remind\n\n".format(token)
+        + "{}status\n\n".format(token)
+        + "{}lfg".format(token)
         + "**"
     ))
     emsg.add_field(name="Description", inline=True, value=(
-        "show the command list. `!help [command]` for detail\n\n"
+        "show the command list. `{}help [command]` for detail\n\n".format(
+            token)
         + "get an invite link to add Isperia\n\n"
         + "register to the server league\n\n"
         + "list the name of all players in the league\n\n"
@@ -39,16 +40,16 @@ def user_help():
     ))
     return emsg
 
-def admin_help():
+def admin_help(token):
     emsg = discord.Embed(title="Admin Help")
     emsg.add_field(name="Command", inline=True, value=(
         "**"
-        + "!add_user\n\n"
-        + "!rm_user\n\n"
-        + "!reset\n\n"
-        + "!set_admin\n\n"
-        + "!disputed\n\n"
-        + "!override"
+        + "{}add_user\n\n".format(token)
+        + "{}rm_user\n\n".format(token)
+        + "{}reset\n\n".format(token)
+        + "{}set_admin\n\n".format(token)
+        + "{}disputed\n\n".format(token)
+        + "{}override".format(token)
         + "**"
     ))
     emsg.add_field(name="Description", inline=True, value=(
@@ -67,28 +68,28 @@ def help_detail(command, usage, description):
     emsg.add_field(name="Description", value=description)
     return emsg
 
-def get_help_detail(command):
+def get_help_detail(command, token):
     name = "help_{}".format(command)
     if name in globals():
-        emsg = globals()[name]()
+        emsg = globals()[name](token)
         return emsg
     return None
 
-def help_log():
-    usage = "`!log @player1 @player2 @player3`"
+def help_log(token):
+    usage = "`{}log @player1 @player2 @player3`".format(token)
     description = (
         "Logs a match result into the league. The winner of the match must be the one to log "
         + "the result, and mention exactly 3 losers. Upon logging the result, each loser must "
-        + "confirm the match result via the `!confirm` command, or dispute it via `!deny`."
+        + "confirm the match result via the `{0}confirm` command, or dispute it via `{0}deny`.".format(token)
     )
     return help_detail("log", usage, description)
 
-def help_override():
-    usage = "`!override game_id action`\nValid actions are `accept` and `remove`"
+def help_override(token):
+    usage = "`{}override game_id action`\nValid actions are `accept` and `remove`".format(token)
     description = (
         "League admins can resolve a disputed match via the override command. "
         + "To override a match, the admin must indicate the game id. A list of disputed "
-        + "game ids can be produced via the `!disputed` command. Resolutions that are "
+        + "game ids can be produced via the `{}disputed` command. Resolutions that are ".format(token)
         + "allowed are `accept` and `remove`, where `accept` sets the match to confirmed "
         + "and `remove` deletes the match entirely."
     )
