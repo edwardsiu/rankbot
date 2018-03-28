@@ -58,7 +58,7 @@ commands = [
     # these commands must be used in a server
     "log", "register", "confirm", "deny",
     "pending", "status", "top", "score", "describe", 
-    "players", "remind",
+    "players", "remind", "lfg",
 
     # these commands must be used in a server and can only be called by an admin
     "set_admin", "override", "disputed", "reset",
@@ -72,6 +72,7 @@ class Isperia(discord.Client):
         self.MAX_MSG_LEN = 2000
         self.client_id = config["client_id"]
         self.commands = commands
+        self.command_token = "!"
         self.mode = stc.OPERATION
         self.hasher = hashids.Hashids(salt="cEDH league")
         self.lfgq = {}
@@ -102,7 +103,7 @@ class Isperia(discord.Client):
     async def on_server_join(self, server):
         emsg = discord.Embed(description=(
             "Please create a role and assign that role as the league "
-            + "admin using !set_admin `role name`"
+            + "admin using `set_admin [role name]`"
         ))
         await self.send_embed(server.owner, emsg)
 
@@ -139,7 +140,7 @@ class Isperia(discord.Client):
         if msg.author == self.user:
             return
         text = msg.content
-        if not text or text[0] != '!':
+        if not text or text[0] != self.command_token:
             return
 
         cmd = text.split()[0][1:]
@@ -174,10 +175,10 @@ class Isperia(discord.Client):
         user = msg.author
         emsg = discord.Embed()
         if self.db.add_member(user, msg.server.id):
-            emsg.description = "Registered {} to the {} league".format(user.name, msg.server.name)
+            emsg.description = "Registered **{}** to the {} league".format(user.name, msg.server.name)
             await self.send_embed(msg.channel, emsg)
         else:
-            emsg.description = "{} is already registered".format(user.name)
+            emsg.description = "**{}** is already registered".format(user.name)
             await self.send_error(msg.channel, emsg)
 
 
@@ -186,10 +187,10 @@ class Isperia(discord.Client):
         user = msg.author
         emsg = discord.Embed()
         if not self.db.delete_member(user, msg.server.id):
-            emsg.description = "{} is not previously registered".format(user.name)
+            emsg.description = "**{}** is not previously registered".format(user.name)
             await self.send_error(msg.channel, emsg)
         else:
-            emsg.description = "{} has been unregistered from the {} league".format(user.name, msg.server.name)
+            emsg.description = "**{}** has been unregistered from the {} league".format(user.name, msg.server.name)
             await self.send_embed(msg.channel, emsg)
 
     @server
@@ -201,7 +202,7 @@ class Isperia(discord.Client):
         emsg = discord.Embed()
         for user in players:
             if not self.db.find_member(user.id, msg.server.id):
-                emsg.description = "{} is not a registered player".format(user.name)
+                emsg.description = "**{}** is not a registered player".format(user.name)
                 await self.send_error(msg.channel, emsg)
                 return
 
@@ -250,7 +251,7 @@ class Isperia(discord.Client):
             return
         if pending_game["players"][user.id] == stc.UNCONFIRMED:
             self.db.confirm_player(user.id, game_id, msg.server.id)
-            emsg.description = "Received confirmation from {}".format(user.name)
+            emsg.description = "Received confirmation from **{}**".format(user.name)
             await self.send_embed(msg.channel, emsg)
             delta = self.db.check_match_status(game_id, msg.server.id)
             if not delta:
@@ -314,7 +315,7 @@ class Isperia(discord.Client):
             emsg = discord.Embed()
             member = self.db.find_member(user.id, msg.server.id)
             if not member:
-                emsg.description = "{} is not a registered player".format(user.name)
+                emsg.description = "**{}** is not a registered player".format(user.name)
                 await self.send_error(msg.channel, emsg)
                 continue
             if not member["accepted"]:
@@ -429,7 +430,31 @@ class Isperia(discord.Client):
     @server
     @registered
     async def lfg(self, msg):
-        pass
+        if msg.server.id not in self.lfgq:
+            self.lfgq[msg.server.id] = []
+        if msg.author not in self.lfgq[msg.server.id]:
+            self.lfgq[msg.server.id].append(msg.author)
+            emsg = discord.Embed(description=(
+                "Added **{}** to the lfg queue\n".format(msg.author.name)
+                + "LFG: {}".format(" ".join(["**{}**".format(user.name)
+                                             for user in self.lfgq[msg.server.id]]))
+            ))
+            await self.send_embed(msg.channel, emsg)
+            if len(self.lfgq[msg.server.id]) >= 4:
+                emsg = discord.Embed(title="Game found", description=(
+                    " ".join([user.mention for user in self.lfgq[msg.server.id]])
+                ))
+                self.lfgq[msg.server.id] = []
+                await self.send_embed(msg.channel, emsg)
+        else:
+            self.lfgq[msg.server.id].remove(msg.author)
+            emsg = discord.Embed(description=(
+                "Removed **{}** from the lfg queue\n".format(msg.author.name)
+                + "LFG: {}".format(" ".join(["**{}**".format(user.name)
+                                             for user in self.lfgq[msg.server.id]]))
+            ))
+            await self.send_embed(msg.channel, emsg)
+            
 
     @server
     @admin
@@ -533,7 +558,7 @@ class Isperia(discord.Client):
                     user.mention, msg.server.name)
                 await self.send_embed(msg.channel, emsg)
             else:
-                emsg.description = "{} is already registered".format(user.name)
+                emsg.description = "**{}** is already registered".format(user.name)
                 await self.send_error(msg.channel, emsg)
 
     @server
@@ -545,9 +570,9 @@ class Isperia(discord.Client):
         for user in users:
             emsg = discord.Embed()
             if self.db.delete_member(user, msg.server.id):
-                emsg.description = "Unregistered {} from the {} league".format(
+                emsg.description = "Unregistered **{}** from the {} league".format(
                     user.name, msg.server.name)
                 await self.send_embed(msg.channel, emsg)
             else:
-                emsg.description = "{} is not a registered player".format(user.name)
+                emsg.description = "**{}** is not a registered player".format(user.name)
                 await self.send_error(msg.channel, emsg)

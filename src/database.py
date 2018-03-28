@@ -260,28 +260,3 @@ class RankDB(MongoClient):
         )
         delta.append({"player": winner["user"], "change": gains})
         return delta
-
-    def get_lfg_queue(self, server_id):
-        server = self.get_server(server_id)
-        server_doc = server.find_one({})
-        if not server_doc or "lfg" not in server_doc:
-            server.update_one(
-                {},
-                {
-                    "$set": {"lfg": []}
-                }
-            )
-            return []
-        else:
-            return server_doc["lfg"]
-
-    def add_to_lfg_queue(self, user_id, server):
-        self.get_lfg_queue(server.id)
-        server = self.get_server(server.id)
-        server.update_one(
-            {},
-            {
-                "$push": {"lfg": user_id}
-            }
-        )
-

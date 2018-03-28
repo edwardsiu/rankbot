@@ -2,7 +2,7 @@ import discord
 from src.colors import *
 
 def user_help():
-    emsg = discord.Embed(title="Help", color=YELLOW)
+    emsg = discord.Embed(title="Help")
     emsg.add_field(name="Command", inline=True, value=(
         "**"
         + "!help\n\n"
@@ -17,7 +17,8 @@ def user_help():
         + "!top\n\n"
         + "!pending\n\n"
         + "!remind\n\n"
-        + "!status"
+        + "!status\n\n"
+        + "!lfg"
         + "**"
     ))
     emsg.add_field(name="Description", inline=True, value=(
@@ -33,12 +34,13 @@ def user_help():
         + "see the top players in the league\n\n"
         + "list your pending unconfirmed matches\n\n"
         + "remind players to confirm your pending matches\n\n"
-        + "show the status of the given match"
+        + "show the status of the given match\n\n"
+        + "add or remove yourself from the ranked-lfg queue"
     ))
     return emsg
 
 def admin_help():
-    emsg = discord.Embed(title="Admin Help", color=YELLOW)
+    emsg = discord.Embed(title="Admin Help")
     emsg.add_field(name="Command", inline=True, value=(
         "**"
         + "!add_user\n\n"
