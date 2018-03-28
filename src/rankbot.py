@@ -463,12 +463,19 @@ class Isperia(discord.Client):
     @server
     @admin
     async def reset(self, msg):
-        self.db.reset_scores(msg.server.id)
-        self.db.reset_matches(msg.server.id)
-        emsg = discord.Embed(description=(
-            "All registered players have had their scores reset and "
-             + "all match records have been cleared."))
+        emsg = discord.Embed(description="Are you sure you want to reset? (Y/n)")
         await self.send_embed(msg.channel, emsg)
+        response = await self.wait_for_message(author=msg.author)
+        if response.content == "Y":
+            self.db.reset_scores(msg.server.id)
+            self.db.reset_matches(msg.server.id)
+            emsg = discord.Embed(description=(
+                "All registered players have had their scores reset and "
+                + "all match records have been cleared."))
+            await self.send_embed(msg.channel, emsg)
+        else:
+            emsg = discord.Embed(description="Reset has been cancelled")
+            await self.send_embed(msg.channel, emsg)
 
     @server
     @admin
