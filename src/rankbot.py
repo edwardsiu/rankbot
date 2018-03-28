@@ -6,7 +6,9 @@ import discord
 from functools import wraps
 import hashids
 from pymongo import MongoClient, DESCENDING
+from src.colors import *
 from src import database
+from src import help_cmds
 from src import status_codes as stc
 
 
@@ -29,6 +31,18 @@ def server(func):
         await func(self, msg)
     return wrapper
 
+def registered(func):
+    @wraps(func)
+    async def wrapper(self, msg):
+        if not self.db.find_member(msg.author.id, msg.server.id):
+            emsg = discord.Embed(color=RED, description=(
+                "{} is not a registered player".format(msg.author.name)
+            ))
+            await self.send_embed(msg.channel, emsg)
+            return
+        await func(self, msg)
+    return wrapper
+
 def test_cmd(func):
     @wraps(func)
     async def wrapper(self, msg):
@@ -44,7 +58,7 @@ commands = [
     # these commands must be used in a server
     "log", "register", "confirm", "deny",
     "pending", "status", "top", "score", "describe", 
-    "who", "remind",
+    "players", "remind",
 
     # these commands must be used in a server and can only be called by an admin
     "set_admin", "override", "disputed", "reset",
@@ -57,11 +71,10 @@ class Isperia(discord.Client):
         self.token = token
         self.MAX_MSG_LEN = 2000
         self.client_id = config["client_id"]
-        self.league_name = config["league_name"]
-        self.players = config["players"]
         self.commands = commands
         self.mode = stc.OPERATION
         self.hasher = hashids.Hashids(salt="cEDH league")
+        self.lfgq = {}
         self.logger = logging.getLogger('discord')
         self.logger.setLevel(logging.INFO)
         handler = logging.handlers.RotatingFileHandler(
@@ -87,8 +100,11 @@ class Isperia(discord.Client):
         self.logger.info('Logged in as {}'.format(self.user.name))
 
     async def on_server_join(self, server):
-        await self.say("Please create a role and assign that role as the league "
-                    +   "admin using !set_admin `role name`", server.owner)
+        emsg = discord.Embed(description=(
+            "Please create a role and assign that role as the league "
+            + "admin using !set_admin `role name`"
+        ))
+        await self.send_embed(server.owner, emsg)
 
     async def on_server_remove(self, server):
         self.db.drop_database(str(server.id))
@@ -103,6 +119,21 @@ class Isperia(discord.Client):
         self.logger.info("Saying: {}".format(msg).encode("ascii", "ignore"))
         await self.send_typing(channel)
         await self.send_message(channel, msg)
+
+    async def send_help(self, channel, embedded_msg):
+        embedded_msg.color = YELLOW
+        await self.send_typing(channel)
+        await self.send_message(channel, embed=embedded_msg)
+
+    async def send_error(self, channel, embedded_msg):
+        embedded_msg.color = RED
+        await self.send_typing(channel)
+        await self.send_message(channel, embed=embedded_msg)
+    
+    async def send_embed(self, channel, embedded_msg):
+        embedded_msg.color = BLUE
+        await self.send_typing(channel)
+        await self.send_message(channel, embed=embedded_msg)
 
     async def on_message(self, msg):
         if msg.author == self.user:
@@ -119,69 +150,47 @@ class Isperia(discord.Client):
     async def help(self, msg):
         user = msg.author
         if len(msg.content.split()) == 1:
-            await self.say(
-                ("Commands:\n"
-                 +   "```!help        -   show command list\n\n"
-                 +   "!addme       -   get invite link to add Isperia\n\n"
-                 +   "!register    -   register to the {}\n\n".format(self.league_name)
-                 +   "!who         -   list the names of every registered player\n\n"
-                 +   "!log         -   log a match result\n"
-                 +   "                 type '!help log' for more info\n\n"
-                 +   "!confirm     -   confirm the most recent match result\n"
-                 +   "                 or a specified game id\n\n"
-                 +   "!deny        -   dispute the most recent match result\n"
-                 +   "                 or a specified game id\n\n"
-                 +   "!score       -   check your league score card\n\n"
-                 +   "!describe    -   league stats\n\n"
-                 +   "!top         -   see the top players in the league\n\n"
-                 +   "!pending     -   list your pending matches\n\n"
-                 +   "!remind      -   send a mention to all players who haven't\n"
-                 +   "                 confirmed your pending matches\n\n"
-                 +   "!status      -   show the status of a match (must include game id)```"),
-                user)
+            embedded_msg = help_cmds.user_help()
+            await self.send_help(user, embedded_msg)
             if self.__is_admin(msg):
-                await self.say(
-                    ("Admin Commands:\n"
-                     +   "```!add_user    -   register the mentioned user\n\n"
-                     +   "!rm_user     -   unregister the mentioned user\n\n"
-                     +   "!reset       -   reset all points and remove all matches\n\n"
-                     +   "!set_admin   -   set the mentioned role as league admin\n\n"
-                     +   "!disputed    -   list all disputed matches\n\n"
-                     +   "!override    -   include game_id and 'accept'\n"
-                     +   "                 or 'remove' to resolve dispute```"),
-                    user)
+                embedded_msg = help_cmds.admin_help()
+                await self.send_help(user, embedded_msg)
         else:
-            await self.say(("To log a match result, type: \n"
-                            + "```!log @player1 @player2 @player3```\n"
-                            + "where players are the losers of the match, and the "
-                            + "winner is the user calling the log command.\n"
-                            + "There must be exactly {} losers to log the match.".format(
-                                self.players-1)),
-                           user)
+            tokens = msg.content.split()
+            embedded_msg = help_cmds.get_help_detail(tokens[1])
+            if embedded_msg:
+                await self.send_help(msg.channel, embedded_msg)
+            else:
+                embed = discord.Embed(description="No help found for that command")
+                await self.send_error(msg.channel, embedded_msg)
 
     async def addme(self, msg):
         await self.say("https://discordapp.com/oauth2/authorize?client_id={}&scope=bot&permissions=0".format(
-            self.client_id), msg.author)
+            self.client_id), msg.channel)
 
     @server
     async def register(self, msg):
         # check if user is already registered
         user = msg.author
+        emsg = discord.Embed()
         if self.db.add_member(user, msg.server.id):
-            await self.say("Registered {} to the {}".format(
-                user.mention, self.league_name), msg.channel)
+            emsg.description = "Registered {} to the {} league".format(user.name, msg.server.name)
+            await self.send_embed(msg.channel, emsg)
         else:
-            await self.say("{} is already registered".format(user.mention), msg.channel)
+            emsg.description = "{} is already registered".format(user.name)
+            await self.send_error(msg.channel, emsg)
+
 
     @server
     async def unregister(self, msg):
         user = msg.author
+        emsg = discord.Embed()
         if not self.db.delete_member(user, msg.server.id):
-            await self.say("{} is not previously registered".format(
-                user.mention), msg.channel)
+            emsg.description = "{} is not previously registered".format(user.name)
+            await self.send_error(msg.channel, emsg)
         else:
-            await self.say("{} has been unregistered from the {}".format(
-                user.mention, self.league_name), msg.channel)
+            emsg.description = "{} has been unregistered from the {} league".format(user.name, msg.server.name)
+            await self.send_embed(msg.channel, emsg)
 
     @server
     async def log(self, msg):
@@ -189,23 +198,24 @@ class Isperia(discord.Client):
         losers = msg.mentions
         players = [winner] + losers
         # verify that all players are registered players
+        emsg = discord.Embed()
         for user in players:
             if not self.db.find_member(user.id, msg.server.id):
-                await self.say("{} is not a registered player".format(
-                    user.mention), msg.channel)
+                emsg.description = "{} is not a registered player".format(user.name)
+                await self.send_error(msg.channel, emsg)
                 return
 
-        if len(losers) != (self.players-1):
-            await self.say("There must be exactly {} players to log a result.".format(
-                self.players), msg.channel)
+        if len(losers) != 3:
+            emsg.description = "There must be exactly 3 players to log a result."
+            await self.send_error(msg.channel, emsg)
             return
 
         game_id = self.create_pending_game(msg, winner, players)
-        await self.say("Match has been logged and awaiting confirmation from "
-            +   ("{} "*len(losers) + "\n").format(*[u.mention for u in losers])
-            +   "Game ID: **{}**\n".format(game_id)
-            +   "To **confirm** this record, say: `!confirm`\n"
-            +   "To **deny** this record, say: `!deny`", msg.channel)
+        emsg.title = "Game id: {}".format(game_id)
+        emsg.description = ("Match has been logged and awaiting confirmation from "
+            + "{}\n".format(" ".join([u.mention for u in losers]))
+            + "Please `!confirm` or `!deny` this record.")
+        await self.send_embed(msg.channel, emsg)
 
     def create_pending_game(self, msg, winner, players):
         game_id = self.db.get_game_id(self.hasher, msg.id, msg.server.id)
@@ -214,13 +224,14 @@ class Isperia(discord.Client):
         return game_id
 
     @server
+    @registered
     async def confirm(self, msg):
         user = msg.author
         player = self.db.find_member(user.id, msg.server.id)
-        if not player:
-            return
+        emsg = discord.Embed()
         if not player["pending"]:
-            await self.say("You have no pending games to confirm", msg.channel)
+            emsg.description = "You have no pending games to confirm"
+            await self.send_error(msg.channel, emsg)
             return
 
         if len(msg.content.split()) < 2:
@@ -230,34 +241,40 @@ class Isperia(discord.Client):
 
         pending_game = self.db.find_match(game_id, msg.server.id)
         if not pending_game:
-            await self.say("No matching game id found", msg.channel)
+            emsg.description = "Match `{}` not found".format(game_id)
+            await self.send_error(msg.channel, emsg)
             return
         if user.id not in pending_game["players"]:
+            emsg.description = "Only participants can confirm a match"
+            await self.send_error(msg.channel, emsg)
             return
         if pending_game["players"][user.id] == stc.UNCONFIRMED:
             self.db.confirm_player(user.id, game_id, msg.server.id)
-            await self.say("Received confirmation from {}".format(
-                user.mention), msg.channel)
+            emsg.description = "Received confirmation from {}".format(user.name)
+            await self.send_embed(msg.channel, emsg)
             delta = self.db.check_match_status(game_id, msg.server.id)
             if not delta:
                 return
             await self.show_delta(game_id, delta, msg.channel)
         else:
-            await self.say("You have already confirmed this match", msg.channel)
+            emsg.description = "You have already confirmed this match"
+            await self.send_error(msg.channel, emsg)
 
     async def show_delta(self, game_id, delta, channel):
-        await self.say("Match {} has been accepted.\n".format(game_id)
-                    +  "```{}```".format(", ".join(
-                    ["{0}: {1:+}".format(i["player"], i["change"]) for i in delta])), channel)
+        emsg = discord.Embed(title="Game id: {}".format(game_id))
+        emsg.description = ("Match has been accepted.\n"
+            +  ", ".join(["`{0}: {1:+}`".format(i["player"], i["change"]) for i in delta]))
+        await self.send_embed(channel, emsg)
 
     @server
+    @registered
     async def deny(self, msg):
         user = msg.author
         player = self.db.find_member(user.id, msg.server.id)
-        if not player:
-            return
+        emsg = discord.Embed()
         if not player["pending"]:
-            await self.say("You have no pending games to confirm", msg.channel)
+            emsg.description = "You have no pending games to deny"
+            await self.send_error(msg.channel, emsg)
             return
 
         if len(msg.content.split()) < 2:
@@ -267,20 +284,25 @@ class Isperia(discord.Client):
 
         pending_game = self.db.find_match(game_id, msg.server.id)
         if not pending_game:
-            await self.say("No matching game id found", msg.channel)
+            emsg.description = "Match `{}` not found".format(game_id)
+            await self.send_error(msg.channel, emsg)
             return
         if user.id not in pending_game["players"]:
+            emsg.description = "Only participants can deny a match"
+            await self.send_error(msg.channel, emsg)
             return
         if pending_game["status"] == stc.ACCEPTED:
-            await self.say("Cannot deny a confirmed match", msg.channel)
+            emsg.description = "Cannot deny an accepted match"
+            await self.send_error(msg.channel, emsg)
             return
         if pending_game["status"] == stc.PENDING:
             self.db.set_match_status(stc.DISPUTED, game_id, msg.server.id)
             if pending_game["players"][user.id] == stc.CONFIRMED:
                 self.db.unconfirm_player(user.id, game_id, msg.server.id)
         admin_role = self.db.get_admin_role(msg.server)
-        await self.say("Match `{}` has been marked as **disputed** {}".format(
-                        game_id, admin_role.mention), msg.channel)
+        emsg.description = "{} Match `{}` has been marked as **disputed**".format(
+            admin_role.mention, game_id)
+        await self.send_error(msg.channel, emsg)
 
     @server
     async def score(self, msg):
@@ -289,73 +311,79 @@ class Isperia(discord.Client):
         else:
             users = msg.mentions
         for user in users:
+            emsg = discord.Embed()
             member = self.db.find_member(user.id, msg.server.id)
             if not member:
-                return
+                emsg.description = "{} is not a registered player".format(user.name)
+                await self.send_error(msg.channel, emsg)
+                continue
             if not member["accepted"]:
                 win_percent = 0.0
             else:
                 win_percent = 100*float(member["wins"])/member["accepted"]
-            await self.say(
-                "```Player: {}\n".format(user.name)
-            +   "Points: {}\n".format(member["points"])
-            +   "Wins:   {}\n".format(member["wins"])
-            +   "Losses: {}\n".format(member["losses"])
-            +   "Win %:  {0:.3f}```".format(win_percent)
-                , msg.channel)
+            emsg.title = user.name
+            emsg.add_field(name="--------", inline=True, value=(
+                "**Points\nWins\nLosses\nWin %**"
+            ))
+            emsg.add_field(name="--------", inline=True, value=(
+                "{}\n{}\n{}\n{:.3f}%".format(
+                    member["points"], member["wins"], member["losses"], win_percent)
+            ))
+            await self.send_embed(msg.channel, emsg)
 
     @server
     async def describe(self, msg):
+        emsg = discord.Embed()
         pending, accepted = self.db.count_matches(msg.server.id)
         num_members = self.db.count_members(msg.server.id)
-        await self.say(
-            ("There are {} registered players in the {}\n".format(
-                num_members, self.league_name)
-             + "Confirmed match results: {}\n".format(accepted)
-             + "Pending match results: {}\n".format(pending)),
-            msg.channel)
+        emsg = discord.Embed(title="{} League".format(msg.server.name), description=(
+            "There are {} registered players in the {} league\n".format(
+                num_members, msg.server.name)
+            + "Total confirmed matches played: {}\n".format(accepted)
+            + "Total unconfirmed matches: {}\n".format(pending)))
+        await self.send_embed(msg.channel, emsg)
 
     @server
     async def pending(self, msg):
         user = msg.author
+        emsg = discord.Embed()
         pending_matches = self.db.find_player_pending(user.id, msg.server.id)
         if not pending_matches:
-            await self.say("You have no pending match records.", msg.channel)
+            emsg.description = "You have no pending match records"
+            await self.send_embed(msg.channel, emsg)
             return
-        pending_list = "List of game ids awaiting confirmation:\n```{}```".format(
-            "\n".join(["{}: {}".format(match["game_id"], match["players"][user.id]) for match in pending_matches])
+        pending_list = "List of game ids awaiting confirmation:\n{}".format(
+            "\n".join(["**{}**: {}".format(match["game_id"], match["players"][user.id]) for match in pending_matches])
         )
-        await self.say(pending_list, msg.channel)
-        await self.say("To check the status of a pending match, say: `!status game_id`\n"
-                    +   "To confirm a pending match, say: `!confirm game_id`\n"
-                    +   "To deny a pending match, say: `!deny game_id`", msg.channel)
+        emsg.title = "Pending Matches"
+        emsg.description = ("\n".join(
+            ["**{}**: {}".format(match["game_id"], match["players"][user.id]) for match in pending_matches])
+            + "\n\nActions: `!status [game id]` `!confirm [game id]` `!deny [game id]`")
+        await self.send_embed(msg.channel, emsg)
 
     @server
     async def status(self, msg):
+        emsg = discord.Embed()
         if len(msg.content.split()) < 2:
-            await self.say("Please include a game id", msg.channel)
+            emsg.description = "Please include a game id"
+            await self.send_error(msg.channel, emsg)
             return
         game_id = msg.content.split()[1]
         match = self.db.find_match(game_id, msg.server.id)
         if not match:
-            await self.say("No match found for game id {}".format(game_id),
-                           msg.channel)
+            emsg.description = "Match `{}` not found".format(game_id)
+            await self.send_error(msg.channel, emsg)
             return
         winner = self.db.find_member(match["winner"], msg.server.id)
         players = [self.db.find_member(pid, msg.server.id) for pid in match["players"]]
-        status_text = ("```Game id: {}\n".format(match["game_id"])
-                +   "Status: {}\n".format(match["status"])
-                +   "Winner: {}\n".format(winner["user"])
-                +   "Players:\n{}".format(
-                    "\n".join(
-                        ["   {}: {}".format(
-                            player["user"], match["players"][player["user_id"]]
-                        ) for player in players]
-                    )
-                )
-                +   "```"
+        emsg.title = "Game id: {}".format(game_id)
+        emsg.description = (
+            "Status: {}\n".format(match["status"])
+            + "Winner: {}\n".format(winner["user"])
+            + "Players:\n{}".format(
+                "\n".join(["   {}: {}".format(u["user"], match["players"][u["user_id"]]) for u in players]))
         )
-        await self.say(status_text, msg.channel)
+        await self.send_embed(msg.channel, emsg)
 
     @server
     async def top(self, msg):
@@ -368,32 +396,38 @@ class Isperia(discord.Client):
             channel = msg.author
         else:
             channel = msg.channel
+        emsg = discord.Embed()
         top_members = self.db.find_top_players(limit, msg.server.id)
-        await self.say("Top Players:\n{}".format(
-            '\n'.join(["{}. {} with {} points".format(ix + 1, member['user'], member['points'])
+        emsg.title = "Top Players"
+        emsg.description = "\n".join(["{}. **{}** with {} points".format(ix + 1, member['user'], member['points'])
                        for ix, member in enumerate(top_members)])
-        ), channel)
+        await self.send_embed(msg.channel, emsg)
 
     @server
-    async def who(self, msg):
+    async def players(self, msg):
         members = self.db.find_all_members(msg.server.id)
-        await self.say("```{}```".format(
-            ", ".join([member["user"] for member in members])
-        ), msg.channel)
+        member_names = [member["user"] for member in members]
+        emsg = discord.Embed(title="Registered Players")
+        emsg.description = ", ".join(member_names)
+        await self.send_embed(msg.channel, emsg)
 
     @server
+    @registered
     async def remind(self, msg):
         user = msg.author
         pending = self.db.find_player_pending(user.id, msg.server.id)
         for match in pending:
+            emsg = discord.Embed()
             unconfirmed = [discord.utils.get(msg.server.members, id=user_id).mention
                 for user_id in match["players"] if match["players"][user_id] != stc.CONFIRMED
             ]
-            await self.say("{} Please confirm match **{}** by saying: `!confirm {}`".format(
-                " ".join(unconfirmed), match["game_id"], match["game_id"]
-            ), msg.channel)
+            emsg.title = "Game id: {}".format(match["game_id"])
+            emsg.description = "{}\nPlease confirm this match by saying: `!confirm {}`".format(
+                " ".join(unconfirmed), match["game_id"])
+            await self.send_embed(msg.channel, emsg)
 
     @server
+    @registered
     async def lfg(self, msg):
         pass
 
@@ -402,26 +436,31 @@ class Isperia(discord.Client):
     async def reset(self, msg):
         self.db.reset_scores(msg.server.id)
         self.db.reset_matches(msg.server.id)
-        await self.say(
-            ("All registered players have had their scores reset and "
-             + "all match records have been cleared."), msg.channel)
+        emsg = discord.Embed(description=(
+            "All registered players have had their scores reset and "
+             + "all match records have been cleared."))
+        await self.send_embed(msg.channel, emsg)
 
     @server
     @admin
     async def set_admin(self, msg):
+        emsg = discord.Embed()
         if not msg.role_mentions:
-            await self.say("Please mention a role to set as league admin role", msg.channel)
+            emsg.description = "Please mention a role to set as league admin role"
+            await self.send_error(msg.channel, emsg)
             return
         role = msg.role_mentions[0]
         self.db.set_admin_role(role.name, msg.server.id)
-        await self.say("{} are now the league admins".format(role.mention), msg.channel)
+        emsg.description = "{} are now the league admins".format(role.mention)
+        await self.send_embed(msg.channel, emsg)
 
     @server
     @admin
     async def override(self, msg):
+        emsg = discord.Embed()
         if len(msg.content.split()) != 3:
-            await self.say("Please include game id to override and the override status:\n"
-                        +  "`!override game_id status`", msg.channel)
+            emsg.description = "Please include the game id and override action. See `!help override` for more info."
+            await self.send_error(msg.channel, emsg)
             return
         try:
             cmd, game_id, status = msg.content.split()
@@ -429,20 +468,24 @@ class Isperia(discord.Client):
             return
         match = self.db.find_match(game_id, msg.server.id)
         if not match:
-            await self.say("No match with indicated game id found", msg.channel)
+            emsg.description = "Match `{}` not found".format(game_id)
+            await self.send_error(msg.channel, emsg)
             return
         if match["status"] == stc.ACCEPTED:
-            await self.say("Cannot override an accepted match", msg.channel)
+            emsg.description = "Cannot override an accepted match"
+            await self.send_error(msg.channel, emsg)
             return
         if status.lower() not in ["accept", "remove"]:
-            await self.say("Override status can only be `accept` or `remove`", msg.channel)
+            emsg.description = "Override action can only be `accept` or `remove`"
+            await self.send_error(msg.channel, emsg)
             return
         for player_id in match["players"]:
             self.db.remove_pending_match(player_id, game_id, msg.server.id)
         self.logger.info("Overriding game {} with {}".format(game_id, status))
         if status.lower() == "remove":
             self.db.delete_match(game_id, msg.server.id)
-            await self.say("Match {} has been removed".format(game_id), msg.channel)
+            emsg.description = "Match {} has been removed".format(game_id)
+            await self.send_embed(msg.channel, emsg)
         else:
             self.db.confirm_all_players(match["players"], game_id, msg.server.id)
             delta = self.db.check_match_status(game_id, msg.server.id)
@@ -454,24 +497,28 @@ class Isperia(discord.Client):
     @admin
     async def disputed(self, msg):
         disputed_matches = self.db.find_matches({"status": stc.DISPUTED}, msg.server.id)
+        emsg = discord.Embed()
         if not disputed_matches.count():
-            await self.say("No disputed matches found", msg.channel)
+            emsg.description = "No disputed matches found"
+            await self.send_embed(msg.channel, emsg)
             return
-        await self.say(
-            "List of disputed matches:\n```{}```".format(
-                "\n".join([match["game_id"] for match in disputed_matches])), msg.channel)
-        await self.say(
-            "To resolve a dispute, say: `!override game_id accept/remove`",
-            msg.channel)
+        emsg.title = "Disputed Matches"
+        emsg.description = ("\n".join([match["game_id"] for match in disputed_matches])
+            + "\nTo resolve a dispute, say `!override [game id] [action]`\n"
+            + "See `!help override` for more info")
+        await self.send_embed(msg.channel, emsg)
 
     @admin
     async def test(self, msg):
+        emsg = discord.Embed()
         if self.mode == stc.OPERATION:
             self.mode = stc.TEST
-            await self.say("Switched to testing mode", msg.channel)
+            emsg.description = "Switched to testing mode"
+            await self.send_embed(msg.channel, emsg)
         else:
             self.mode = stc.OPERATION
-            await self.say("Switched to normal mode", msg.channel)
+            emsg.description = "Switched to normal mode"
+            await self.send_embed(msg.channel, emsg)
 
     @server
     @admin
@@ -480,11 +527,14 @@ class Isperia(discord.Client):
         if not users:
             return
         for user in users:
+            emsg = discord.Embed()
             if self.db.add_member(user, msg.server.id):
-                await self.say("Registered {} to the {}".format(
-                    user.mention, self.league_name), msg.channel)
+                emsg.description = "Registered {} to the {} league".format(
+                    user.mention, msg.server.name)
+                await self.send_embed(msg.channel, emsg)
             else:
-                await self.say("{} is already registered".format(user.mention), msg.channel)
+                emsg.description = "{} is already registered".format(user.name)
+                await self.send_error(msg.channel, emsg)
 
     @server
     @admin
@@ -493,6 +543,11 @@ class Isperia(discord.Client):
         if not users:
             return
         for user in users:
+            emsg = discord.Embed()
             if self.db.delete_member(user, msg.server.id):
-                await self.say("Unregistered {} from the {}".format(
-                    user.mention, self.league_name), msg.channel)
+                emsg.description = "Unregistered {} from the {} league".format(
+                    user.name, msg.server.name)
+                await self.send_embed(msg.channel, emsg)
+            else:
+                emsg.description = "{} is not a registered player".format(user.name)
+                await self.send_error(msg.channel, emsg)
