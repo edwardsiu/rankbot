@@ -131,8 +131,8 @@ class Isperia(discord.Client):
         await self.send_typing(channel)
         await self.send_message(channel, embed=embedded_msg)
     
-    async def send_embed(self, channel, embedded_msg):
-        embedded_msg.color = BLUE
+    async def send_embed(self, channel, embedded_msg, color=BLUE):
+        embedded_msg.color = color
         await self.send_typing(channel)
         await self.send_message(channel, embed=embedded_msg)
 
@@ -323,14 +323,12 @@ class Isperia(discord.Client):
             else:
                 win_percent = 100*float(member["wins"])/member["accepted"]
             emsg.title = user.name
-            emsg.add_field(name="--------", inline=True, value=(
-                "**Points\nWins\nLosses\nWin %**"
-            ))
-            emsg.add_field(name="--------", inline=True, value=(
-                "{}\n{}\n{}\n{:.3f}%".format(
-                    member["points"], member["wins"], member["losses"], win_percent)
-            ))
-            await self.send_embed(msg.channel, emsg)
+            emsg.add_field(name="Points", inline=True, value=str(member["points"]))
+            emsg.add_field(name="Wins", inline=True, value=str(member["wins"]))
+            emsg.add_field(name="Losses", inline=True, value=str(member["losses"]))
+            emsg.add_field(name="Win %", inline=True,
+                           value="{:.3f}%".format(win_percent))
+            await self.send_embed(msg.channel, emsg, color=GREEN)
 
     @server
     async def describe(self, msg):
