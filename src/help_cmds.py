@@ -84,6 +84,18 @@ def help_log(token):
     )
     return help_detail("log", usage, description)
 
+def help_score(token):
+    usage = "`{0}score`\n`{0}score @user1 @user2 ...`".format(token)
+    description = (
+        "Displays the score card of the given user, or the current user if no user "
+        + "is mentioned. The score card contains the user's league points, total wins, "
+        + "total losses, and win percentage. League points are calculated as follows: \n"
+        + "\t1. Each registered player starts with 1000 points.\n"
+        + "\t2. Losers of a match each lose 1% of their current points, rounded up.\n"
+        + "\t3. Winner of a match gains the sum of the points lost by the losers."
+    )
+    return help_detail("score", usage, description)
+
 def help_override(token):
     usage = "`{}override game_id action`\nValid actions are `accept` and `remove`".format(token)
     description = (
