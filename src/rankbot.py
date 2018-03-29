@@ -327,6 +327,11 @@ class Isperia(discord.Client):
             else:
                 win_percent = 100*float(member["wins"])/member["accepted"]
             emsg.title = user.name
+            if not user.avatar_url:
+                avatar_url = user.default_avatar_url
+            else:
+                avatar_url = user.avatar_url
+            emsg.set_thumbnail(url=avatar_url)
             emsg.add_field(name="Points", inline=True, value=str(member["points"]))
             emsg.add_field(name="Wins", inline=True, value=str(member["wins"]))
             emsg.add_field(name="Losses", inline=True, value=str(member["losses"]))
