@@ -84,17 +84,77 @@ def help_log(token):
     )
     return help_detail("log", usage, description)
 
+def help_confirm(token):
+    usage = "`{0}confirm`\n`{0}confirm [game id]`".format(token)
+    description = (
+        "Confirm a match with the given game id. If no game id is given, confirms "
+        + "the most recent unconfirmed match. All match results logged with the "
+        + "`{}log` command must be confirmed by all players for the result to be ".format(token)
+        + "accepted."
+    )
+    return help_detail("confirm", usage, description)
+
+def help_deny(token):
+    usage = "`{0}deny`\n`{0}deny [game id]`".format(token)
+    description = (
+        "Dispute a match with the given game id. If no game id is given, disputes "
+        + "the most recent unconfirmed match. A match marked as `DISPUTED` cannot be "
+        + "resolved except by a league admin."
+    )
+    return help_detail("deny", usage, description)
+
 def help_score(token):
     usage = "`{0}score`\n`{0}score @user1 @user2 ...`".format(token)
     description = (
-        "Displays the score card of the given user, or the current user if no user "
+        "Displays the score card for the given user(s), or the current user if no user "
         + "is mentioned. The score card contains the user's league points, total wins, "
-        + "total losses, and win percentage. League points are calculated as follows: \n"
+        + "total losses, and win percentage. League points are calculated as follows: \n\n"
         + "\t1. Each registered player starts with 1000 points.\n"
         + "\t2. Losers of a match each lose 1% of their current points, rounded up.\n"
         + "\t3. Winner of a match gains the sum of the points lost by the losers."
     )
     return help_detail("score", usage, description)
+
+def help_top(token):
+    usage = "`{0}top`\n`{0}top [n players]`".format(token)
+    description = (
+        "Displays the top n players in the league by points. If n is not specified, "
+        + "the top 10 players will be shown instead. Players that have not played any "
+        + "matches will not be included in the leaderboard."
+    )
+    return help_detail("top", usage, description)
+
+def help_remind(token):
+    usage = "`{}remind`".format(token)
+    description = (
+        "Pings players that need to confirm/deny a pending match in your pending queue."
+    )
+    return help_detail("remind", usage, description)
+
+def help_status(token):
+    usage = "`{}status [game id]`".format(token)
+    description = (
+        "Shows details about the match with the given game id, including the match status, "
+        + "winner, players, and each players' confirmation status."
+    )
+    return help_detail("status", usage, description)
+
+def help_lfg(token):
+    usage = "`{}lfg`".format(token)
+    description = (
+        "Add yourself to the lfg queue or remove yourself from the lfg queue if you are "
+        + "already on it. Displays the players in the lfg queue. When the queue hits 4 "
+        + "players, ping all 4 players to notify them of a pod."
+    )
+    return help_detail("lfg", usage, description)
+
+def help_reset(token):
+    usage = "`{}reset`".format(token)
+    description = (
+        "Resets all points to the default and clears all match results. Asks for "
+        + "confirmation before resetting."
+    )
+    return help_reset("reset", usage, description)
 
 def help_override(token):
     usage = "`{}override game_id action`\nValid actions are `accept` and `remove`".format(token)

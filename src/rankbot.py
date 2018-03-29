@@ -162,7 +162,7 @@ class Isperia(discord.Client):
             if embedded_msg:
                 await self.send_help(msg.channel, embedded_msg)
             else:
-                embed = discord.Embed(description="No help found for that command")
+                embedded_msg = discord.Embed(description="No help entry found for **{}**".format(tokens[1]))
                 await self.send_error(msg.channel, embedded_msg)
 
     async def addme(self, msg):
