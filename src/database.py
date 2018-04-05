@@ -208,6 +208,8 @@ class RankDB(MongoClient):
     def check_match_status(self, game_id, server_id):
         match = self.find_match(game_id, server_id)
         players = match["players"]
+        if match["status"] == stc.ACCEPTED:
+            return None
         for player in players:
             if players[player] == stc.UNCONFIRMED:
                 return None
