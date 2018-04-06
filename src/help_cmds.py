@@ -1,5 +1,4 @@
 import discord
-from src.colors import *
 
 def user_help(token):
     emsg = discord.Embed(title="Help")

@@ -360,9 +360,6 @@ class Isperia(discord.Client):
             emsg.description = "You have no pending match records"
             await self.send_embed(msg.channel, emsg)
             return
-        pending_list = "List of game ids awaiting confirmation:\n{}".format(
-            "\n".join(["**{}**: {}".format(match["game_id"], match["players"][user.id]) for match in pending_matches])
-        )
         emsg.title = "Pending Matches"
         emsg.description = ("\n".join(
             ["**{}**: {}".format(match["game_id"], match["players"][user.id]) for match in pending_matches])
@@ -402,7 +399,7 @@ class Isperia(discord.Client):
             limit = int(limit)
         except:
             limit = 10
-        if limit > 32:
+        if limit > 64:
             channel = msg.author
         else:
             channel = msg.channel
@@ -411,7 +408,7 @@ class Isperia(discord.Client):
         emsg.title = "Top Players"
         emsg.description = "\n".join(["{}. **{}** with {} points".format(ix + 1, member['user'], member['points'])
                        for ix, member in enumerate(top_members)])
-        await self.send_embed(msg.channel, emsg)
+        await self.send_embed(channel, emsg)
 
     @server
     async def players(self, msg):
