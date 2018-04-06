@@ -14,6 +14,7 @@ def user_help(token):
         + "{}deny\n\n".format(token)
         + "{}score\n\n".format(token)
         + "{}top\n\n".format(token)
+        + "{}most\n\n".format(token)
         + "{}pending\n\n".format(token)
         + "{}remind\n\n".format(token)
         + "{}status\n\n".format(token)
@@ -31,7 +32,8 @@ def user_help(token):
         + "confirm the most recent match result\n\n"
         + "dispute the most recent match result\n\n"
         + "show your score card\n\n"
-        + "see the top players in the league\n\n"
+        + "see the top players in the league by points\n\n"
+        + "see the top players in the league by matches\n\n"
         + "list your pending unconfirmed matches\n\n"
         + "remind players to confirm your pending matches\n\n"
         + "show the status of the given match\n\n"
@@ -122,6 +124,15 @@ def help_top(token):
         + "matches will not be included in the leaderboard."
     )
     return help_detail("top", usage, description)
+
+def help_most(token):
+    usage = "`{0}most`\n`{0}most [n players]`".format(token)
+    description = (
+        "Displays the top n players in the league by matches played. If n is not specified, "
+        + "the top 10 players will be shown instead. Players that have not played any "
+        + "matches will not be included in the leaderboard."
+    )
+    return help_detail("most", usage, description)
 
 def help_remind(token):
     usage = "`{}remind`".format(token)

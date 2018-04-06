@@ -57,7 +57,7 @@ commands = [
 
     # these commands must be used in a server
     "log", "register", "confirm", "deny",
-    "pending", "status", "top", "score", "describe", 
+    "pending", "status", "top", "most", "score", "describe", 
     "players", "remind", "lfg",
 
     # these commands must be used in a server and can only be called by an admin
@@ -404,9 +404,27 @@ class Isperia(discord.Client):
         else:
             channel = msg.channel
         emsg = discord.Embed()
-        top_members = self.db.find_top_players(limit, msg.server.id)
-        emsg.title = "Top Players"
+        top_members = self.db.find_top_players(limit, msg.server.id, 'points')
+        emsg.title = "Top Players by Score"
         emsg.description = "\n".join(["{}. **{}** with {} points".format(ix + 1, member['user'], member['points'])
+                       for ix, member in enumerate(top_members)])
+        await self.send_embed(channel, emsg)
+
+    @server
+    async def most(self, msg):
+        try:
+            cmd, limit = msg.content.split()
+            limit = int(limit)
+        except:
+            limit = 10
+        if limit > 64:
+            channel = msg.author
+        else:
+            channel = msg.channel
+        emsg = discord.Embed()
+        top_members = self.db.find_top_players(limit, msg.server.id, 'accepted')
+        emsg.title = "Top Players by Matches"
+        emsg.description = "\n".join(["{}. **{}** with {} matches".format(ix + 1, member['user'], member['accepted'])
                        for ix, member in enumerate(top_members)])
         await self.send_embed(channel, emsg)
 
@@ -593,3 +611,19 @@ class Isperia(discord.Client):
             else:
                 emsg.description = "**{}** is not a registered player".format(user.name)
                 await self.send_error(msg.channel, emsg)
+
+    @server
+    @admin
+    async def ban(self, msg):
+        users = msg.mentions
+        if not users:
+            return
+        pass
+
+    @server
+    @admin
+    async def unban(self, msg):
+        users = msg.mentions
+        if not users:
+            return
+        pass
