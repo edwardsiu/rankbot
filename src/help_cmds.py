@@ -154,7 +154,7 @@ def help_reset(token):
         "Resets all points to the default and clears all match results. Asks for "
         + "confirmation before resetting."
     )
-    return help_reset("reset", usage, description)
+    return help_detail("reset", usage, description)
 
 def help_override(token):
     usage = "`{}override game_id action`\nValid actions are `accept` and `remove`".format(token)
