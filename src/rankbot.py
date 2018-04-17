@@ -386,13 +386,19 @@ class Isperia(discord.Client):
         players = [self.db.find_member(pid, msg.server.id) for pid in match["players"]]
         emsg.title = "Game id: {}".format(game_id)
         date = datetime.fromtimestamp(match["timestamp"])
-        emsg.description = (
-            "Date: {}\n".format(date.strftime("%Y-%m-%d"))
-            + "Status: {}\n".format(match["status"])
-            + "Winner: {}\n".format(winner["user"])
-            + "Players:\n{}".format(
-                "\n".join(["   {}: {}".format(u["user"], match["players"][u["user_id"]]) for u in players]))
-        )
+        confirm_emoji = u'\U00002705'
+        unconfirm_emoji = u'\U0000274C'
+        trophy_emoji = u'\U0001F3C6'
+        emoji_type = {stc.CONFIRMED: confirm_emoji, stc.UNCONFIRMED: unconfirm_emoji}
+        player_strings = []
+        for player in players:
+            status_msg = u"{} {}".format(emoji_type[match["players"][player["user_id"]]], player["user"])
+            if player["user_id"] == winner["user_id"]:
+                status_msg += u" " + trophy_emoji
+            player_strings.append(status_msg)
+        emsg.add_field(name="Date", inline=True, value=date.strftime("%Y-%m-%d"))
+        emsg.add_field(name="Status", inline=True, value=match["status"])
+        emsg.add_field(name="Players", inline=True, value=("\n".join(player_strings)))
         await self.send_embed(msg.channel, emsg)
 
     @server

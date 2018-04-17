@@ -128,7 +128,7 @@ def help_top(token):
 def help_all(token):
     usage = "`{0}all`\n`{0}all [wins|games|points]`".format(token)
     description = (
-        "Displays the all players in the league by points, wins, or games played. "
+        "Displays all players in the league by points, wins, or games played. "
         + "If a category is not specified, ranking by points will be shown. "
         + "Players that have not played any matches will not be included in the leaderboard."
     )
