@@ -401,11 +401,11 @@ class Isperia(discord.Client):
             unit = "points"
             key = "points"
         else:
-            if tokens[2] == "wins":
+            if tokens[1] == "wins":
                 emsg.title = "Top Players by Wins"
                 unit = "wins"
                 key = "wins"
-            elif tokens[2] == "games":
+            elif tokens[1] == "games":
                 emsg.title = "Top Players by Total Played"
                 unit = "games"
                 key = "accepted"
@@ -427,11 +427,11 @@ class Isperia(discord.Client):
             unit = "points"
             key = "points"
         else:
-            if tokens[2] == "wins":
+            if tokens[1] == "wins":
                 emsg.title = "Player Rankings by Wins"
                 unit = "wins"
                 key = "wins"
-            elif tokens[2] == "games":
+            elif tokens[1] == "games":
                 emsg.title = "Player Rankings by Total Played"
                 unit = "games"
                 key = "accepted"
