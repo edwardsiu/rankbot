@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 import logging.handlers
 
@@ -384,8 +385,10 @@ class Isperia(discord.Client):
         winner = self.db.find_member(match["winner"], msg.server.id)
         players = [self.db.find_member(pid, msg.server.id) for pid in match["players"]]
         emsg.title = "Game id: {}".format(game_id)
+        date = datetime.fromtimestamp(match["timestamp"])
         emsg.description = (
-            "Status: {}\n".format(match["status"])
+            "Date: {}\n".format(date.strftime("%Y-%m-%d"))
+            + "Status: {}\n".format(match["status"])
             + "Winner: {}\n".format(winner["user"])
             + "Players:\n{}".format(
                 "\n".join(["   {}: {}".format(u["user"], match["players"][u["user_id"]]) for u in players]))
