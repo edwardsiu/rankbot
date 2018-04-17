@@ -238,7 +238,7 @@ class RankDB(MongoClient):
         gains = 0
         delta = []
         for player in losers:
-            modifier = int(round(0.05 * (player["points"] - winner["points"])))
+            modifier = int(round(0.07 * (player["points"] - winner["points"])))
             loss = 10 + modifier
             if loss < 3:
                 loss = 3

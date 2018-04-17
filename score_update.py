@@ -2,8 +2,8 @@ from src import database
 from pymongo import MongoClient, ASCENDING
 from src import status_codes as stc
 
-#server_id = "113555415446413312"
-server_id = "390254034289819669"
+server_id = "113555415446413312"
+#server_id = "390254034289819669"
 
 def update_score(match):
     members = db.get_members(server_id)
@@ -14,7 +14,7 @@ def update_score(match):
     gains = 0
     delta = []
     for player in losers:
-        modifier = int(round(0.05 * (player["points"] - winner["points"])))
+        modifier = int(round(0.07 * (player["points"] - winner["points"])))
         loss = 10 + modifier
         if loss < 3:
             loss = 3
