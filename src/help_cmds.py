@@ -109,10 +109,10 @@ def help_score(token):
     description = (
         "Displays the score card for the given user(s), or the current user if no user "
         + "is mentioned. The score card contains the user's league points, total wins, "
-        + "total losses, and win percentage. League points are calculated as follows: \n\n"
-        + "\t1. Each registered player starts with 1000 points.\n"
-        + "\t2. Losers of a match each lose 1% of their current points, rounded up.\n"
-        + "\t3. Winner of a match gains the sum of the points lost by the losers."
+        + "total losses, and win percentage. League point changes are calculated based "
+        + "on the score difference between the winner and each loser, such that losing "
+        + "to someone worse than you causes a greater loss in points while losing to "
+        + "someone with a higher score than you causes a lesser loss in points.\n\n"
     )
     return help_detail("score", usage, description)
 

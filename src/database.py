@@ -1,4 +1,3 @@
-from math import ceil
 from time import time
 
 import discord
@@ -239,7 +238,13 @@ class RankDB(MongoClient):
         gains = 0
         delta = []
         for player in losers:
-            loss = ceil(player["points"] / 100)
+            modifier = int(round(0.07 * (player["points"] - winner["points"])))
+            loss = 10 + modifier
+            if loss < 3:
+                loss = 3
+            elif loss > 17:
+                loss = 17
+            #loss = ceil(player["points"] / 100)
             gains += loss
             members.update_one(
                 {"user_id": player["user_id"]},
