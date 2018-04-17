@@ -57,7 +57,7 @@ commands = [
 
     # these commands must be used in a server
     "log", "register", "confirm", "deny",
-    "pending", "status", "top", "most", "score", "describe", 
+    "pending", "status", "top", "all", "score", "describe", 
     "players", "remind", "lfg",
 
     # these commands must be used in a server and can only be called by an admin
@@ -394,40 +394,56 @@ class Isperia(discord.Client):
 
     @server
     async def top(self, msg):
-        try:
-            cmd, limit = msg.content.split()
-            limit = int(limit)
-        except:
-            limit = 10
-        if limit > 64:
-            channel = msg.author
-        else:
-            channel = msg.channel
+        tokens = msg.content.split()
         emsg = discord.Embed()
-        top_members = self.db.find_top_players(limit, msg.server.id, 'points')
-        emsg.title = "Top Players by Score"
-        emsg.description = "\n".join(["{}. **{}** with {} points".format(ix + 1, member['user'], member['points'])
-                       for ix, member in enumerate(top_members)])
-        await self.send_embed(channel, emsg)
+        if len(tokens) == 1:
+            emsg.title = "Top Players by Points"
+            unit = "points"
+            key = "points"
+        else:
+            if tokens[2] == "wins":
+                emsg.title = "Top Players by Wins"
+                unit = "wins"
+                key = "wins"
+            elif tokens[2] == "games":
+                emsg.title = "Top Players by Total Played"
+                unit = "games"
+                key = "accepted"
+            else:
+                emsg.title = "Top Players by Points"
+                unit = "points"
+                key = "points"
+        members = self.db.find_top_players(10, msg.server.id, key)
+        emsg.description = "\n".join(["{}. **{}** with {} {}".format(ix + 1, member['user'], member[key], unit)
+                                      for ix, member in enumerate(members)])
+        await self.send_embed(msg.channel, emsg)
 
     @server
-    async def most(self, msg):
-        try:
-            cmd, limit = msg.content.split()
-            limit = int(limit)
-        except:
-            limit = 10
-        if limit > 64:
-            channel = msg.author
-        else:
-            channel = msg.channel
+    async def all(self, msg):
+        tokens = msg.content.split()
         emsg = discord.Embed()
-        top_members = self.db.find_top_players(limit, msg.server.id, 'accepted')
-        emsg.title = "Top Players by Matches"
-        emsg.description = "\n".join(["{}. **{}** with {} matches".format(ix + 1, member['user'], member['accepted'])
-                       for ix, member in enumerate(top_members)])
-        await self.send_embed(channel, emsg)
-
+        if len(tokens) == 1:
+            emsg.title = "Player Rankings by Points"
+            unit = "points"
+            key = "points"
+        else:
+            if tokens[2] == "wins":
+                emsg.title = "Player Rankings by Wins"
+                unit = "wins"
+                key = "wins"
+            elif tokens[2] == "games":
+                emsg.title = "Player Rankings by Total Played"
+                unit = "games"
+                key = "accepted"
+            else:
+                emsg.title = "Player Rankings by Points"
+                unit = "points"
+                key = "points"
+        members = self.db.find_top_players(0, msg.server.id, key)
+        emsg.description = "\n".join(["{}. **{}** with {} {}".format(ix + 1, member['user'], member[key], unit)
+                                      for ix, member in enumerate(members)])
+        await self.send_embed(msg.channel, emsg)
+        
     @server
     async def players(self, msg):
         members = self.db.find_all_members(msg.server.id)

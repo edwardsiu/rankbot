@@ -14,7 +14,7 @@ def user_help(token):
         + "{}deny\n\n".format(token)
         + "{}score\n\n".format(token)
         + "{}top\n\n".format(token)
-        + "{}most\n\n".format(token)
+        + "{}all\n\n".format(token)
         + "{}pending\n\n".format(token)
         + "{}remind\n\n".format(token)
         + "{}status\n\n".format(token)
@@ -32,8 +32,8 @@ def user_help(token):
         + "confirm the most recent match result\n\n"
         + "dispute the most recent match result\n\n"
         + "show your score card\n\n"
-        + "see the top players in the league by points\n\n"
-        + "see the top players in the league by matches\n\n"
+        + "see the top players in the league\n\n"
+        + "see the full player rankings in the league\n\n"
         + "list your pending unconfirmed matches\n\n"
         + "remind players to confirm your pending matches\n\n"
         + "show the status of the given match\n\n"
@@ -117,22 +117,22 @@ def help_score(token):
     return help_detail("score", usage, description)
 
 def help_top(token):
-    usage = "`{0}top`\n`{0}top [n players]`".format(token)
+    usage = "`{0}top`\n`{0}top [wins|games|points]`".format(token)
     description = (
-        "Displays the top n players in the league by points. If n is not specified, "
-        + "the top 10 players will be shown instead. Players that have not played any "
-        + "matches will not be included in the leaderboard."
+        "Displays the top 10 players in the league by points, wins, or games played. "
+        + "If a category is not specified, ranking by points will be shown. Players that "
+        + "have not played any matches will not be included in the leaderboard."
     )
     return help_detail("top", usage, description)
 
-def help_most(token):
-    usage = "`{0}most`\n`{0}most [n players]`".format(token)
+def help_all(token):
+    usage = "`{0}all`\n`{0}all [wins|games|points]`".format(token)
     description = (
-        "Displays the top n players in the league by matches played. If n is not specified, "
-        + "the top 10 players will be shown instead. Players that have not played any "
-        + "matches will not be included in the leaderboard."
+        "Displays the all players in the league by points, wins, or games played. "
+        + "If a category is not specified, ranking by points will be shown. "
+        + "Players that have not played any matches will not be included in the leaderboard."
     )
-    return help_detail("most", usage, description)
+    return help_detail("all", usage, description)
 
 def help_remind(token):
     usage = "`{}remind`".format(token)
@@ -167,7 +167,7 @@ def help_reset(token):
     return help_detail("reset", usage, description)
 
 def help_override(token):
-    usage = "`{}override game_id action`\nValid actions are `accept` and `remove`".format(token)
+    usage = "`{}override [game_id] [accept|remove]`".format(token)
     description = (
         "League admins can resolve a disputed match via the override command. "
         + "To override a match, the admin must indicate the game id. A list of disputed "
