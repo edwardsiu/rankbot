@@ -12,14 +12,10 @@ def update_score(match):
         db.find_member(player, server_id)
         for player in match["players"] if player != match["winner"]]
     gains = 0
-    delta = []
     for player in losers:
-        modifier = int(round(0.07 * (player["points"] - winner["points"])))
-        loss = 10 + modifier
-        if loss < 3:
-            loss = 3
-        elif loss > 17:
-            loss = 17
+        avg_opponent_score = (sum([i["points"] for i in losers if i != player]) + winner["points"])/3.0
+        score_diff = player["points"] - avg_opponent_score
+        loss = int(round(14.0/(1+1.03**(-score_diff)) + 3))
         gains += loss
         members.update_one(
             {"user_id": player["user_id"]},
