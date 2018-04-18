@@ -531,7 +531,7 @@ class Isperia(discord.Client):
             emsg = discord.Embed()
             emsg.title = "{}'s Recent Matches".format(player.name)
             emsg.add_field(name="Date", inline=True, value=("\n\n".join(game_dates)))
-            emsg.add_field(name="Game id", inline=True, value=("\n\n".join(game_ids)))
+            emsg.add_field(name="Game Id", inline=True, value=("\n\n".join(game_ids)))
             emsg.add_field(name="Result", inline=True, value=("\n\n".join(game_status)))
             await self.send_embed(msg.channel, emsg)
             if losses == 5:
