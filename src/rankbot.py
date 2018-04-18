@@ -59,7 +59,7 @@ commands = [
     # these commands must be used in a server
     "log", "register", "confirm", "deny",
     "pending", "status", "top", "all", "score", "describe", 
-    "players", "remind", "lfg",
+    "players", "remind", "lfg", "recent",
 
     # these commands must be used in a server and can only be called by an admin
     "set_admin", "override", "disputed", "reset",
@@ -312,7 +312,7 @@ class Isperia(discord.Client):
 
     @server
     async def score(self, msg):
-        if len(msg.content.split()) < 2:
+        if len(msg.mentions) == 0:
             users = [msg.author]
         else:
             users = msg.mentions
@@ -503,6 +503,41 @@ class Isperia(discord.Client):
                                              for user in self.lfgq[msg.server.id]]))
             ))
             await self.send_embed(msg.channel, emsg)
+
+    @server
+    @registered
+    async def recent(self, msg):
+        user = msg.author
+        if len(msg.mentions) == 0:
+            players = [user]
+        else:
+            players = msg.mentions
+        for player in players:
+            matches = self.db.find_recent_player_matches(player.id, 5, msg.server.id)
+            if not matches:
+                continue
+            game_dates = []
+            game_ids = []
+            game_status = []
+            losses = 0
+            for match in matches:
+                if match["winner"] == player.id:
+                    game_status.append("`WIN`")
+                else:
+                    game_status.append("`LOSE`")
+                    losses += 1
+                game_ids.append("`{}`".format(match["game_id"]))
+                game_dates.append("`{}`".format(datetime.fromtimestamp(match["timestamp"]).strftime("%Y-%m-%d")))
+            emsg = discord.Embed()
+            emsg.title = "{}'s Recent Matches".format(player.name)
+            emsg.add_field(name="Date", inline=True, value=("\n\n".join(game_dates)))
+            emsg.add_field(name="Game id", inline=True, value=("\n\n".join(game_ids)))
+            emsg.add_field(name="Result", inline=True, value=("\n\n".join(game_status)))
+            await self.send_embed(msg.channel, emsg)
+            if losses == 5:
+                emsg = discord.Embed()
+                emsg.description = "Press `F` to pay respects."
+                await self.send_embed(msg.channel, emsg, color=RED)
             
 
     @server

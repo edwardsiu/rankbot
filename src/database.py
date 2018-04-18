@@ -151,6 +151,10 @@ class RankDB(MongoClient):
         matches = self.get_matches(server_id)
         return matches.find(match_filter)
 
+    def find_recent_player_matches(self, user_id, limit, server_id):
+        matches = self.get_matches(server_id)
+        return matches.find({"players.{}".format(user_id): {"$exists": True}}, limit=limit, sort=[("timestamp", DESCENDING)])
+
     def find_player_pending(self, user_id, server_id):
         player = self.find_member(user_id, server_id)
         if not player:

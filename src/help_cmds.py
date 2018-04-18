@@ -17,6 +17,7 @@ def user_help(token):
         + "{}all\n\n".format(token)
         + "{}pending\n\n".format(token)
         + "{}remind\n\n".format(token)
+        + "{}recent\n\n".format(token)
         + "{}status\n\n".format(token)
         + "{}lfg".format(token)
         + "**"
@@ -36,6 +37,7 @@ def user_help(token):
         + "see the full player rankings in the league\n\n"
         + "list your pending unconfirmed matches\n\n"
         + "remind players to confirm your pending matches\n\n"
+        + "show the last 5 matches and their result\n\n"
         + "show the status of the given match\n\n"
         + "add or remove yourself from the ranked-lfg queue"
     ))
@@ -148,6 +150,14 @@ def help_status(token):
         + "winner, players, and each players' confirmation status."
     )
     return help_detail("status", usage, description)
+
+def help_recent(token):
+    usage = "`{0}recent`\n`{0}recent @user1 @user2 ...`".format(token)
+    description = (
+        "Show your last 5 matches and their result. If there are mentioned users, show "
+        + "their last 5 matches instead."
+    )
+    return help_detail("recent", usage, description)
 
 def help_lfg(token):
     usage = "`{}lfg`".format(token)
