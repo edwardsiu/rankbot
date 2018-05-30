@@ -59,7 +59,7 @@ commands = [
     # these commands must be used in a server
     "log", "register", "confirm", "deny",
     "pending", "status", "top", "all", "score", "describe", 
-    "players", "remind", "lfg", "recent",
+    "players", "remind", "lfg", "recent", "deck",
 
     # these commands must be used in a server and can only be called by an admin
     "set_admin", "override", "disputed", "reset",
@@ -538,7 +538,18 @@ class Isperia(discord.Client):
                 emsg = discord.Embed()
                 emsg.description = "Press `F` to pay respects."
                 await self.send_embed(msg.channel, emsg, color=RED)
-            
+
+    @server
+    @registered
+    async def deck(self, msg):
+        user = msg.author
+        emsg = discord.Embed()
+        if len(msg.content[6:]) < 1:
+            emsg.description = "Please include a deck name."
+            await self.send_embed(msg.channel, emsg, color=RED)
+            return
+        deck_name = msg.content[6:].strip()
+        
 
     @server
     @admin
