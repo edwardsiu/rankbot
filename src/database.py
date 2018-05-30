@@ -82,7 +82,7 @@ class RankDB(MongoClient):
 
     def find_top_players(self, limit, server_id, key):
         members = self.get_members(server_id)
-        return members.find({"accepted": {"$gt": 0}}, limit=limit, sort=[(key, DESCENDING)])
+        return members.find({"accepted": {"$gt": 4}}, limit=limit, sort=[(key, DESCENDING)])
 
     def add_pending_match(self, user_id, game_id, server_id):
         members = self.get_members(server_id)

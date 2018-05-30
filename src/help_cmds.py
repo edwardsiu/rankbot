@@ -123,7 +123,7 @@ def help_top(token):
     description = (
         "Displays the top 10 players in the league by points, wins, or games played. "
         + "If a category is not specified, ranking by points will be shown. Players that "
-        + "have not played any matches will not be included in the leaderboard."
+        + "have played less than 5 matches will not be included in the leaderboard."
     )
     return help_detail("top", usage, description)
 
@@ -132,7 +132,7 @@ def help_all(token):
     description = (
         "Displays all players in the league by points, wins, or games played. "
         + "If a category is not specified, ranking by points will be shown. "
-        + "Players that have not played any matches will not be included in the leaderboard."
+        + "Players that have played less than 5 matches will not be included in the leaderboard."
     )
     return help_detail("all", usage, description)
 
