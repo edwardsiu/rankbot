@@ -15,7 +15,7 @@ def update_score(match):
     for player in losers:
         avg_opponent_score = (sum([i["points"] for i in losers if i != player]) + winner["points"])/3.0
         score_diff = player["points"] - avg_opponent_score
-        loss = int(round(2.0/(1+1.0065**(-score_diff)) + 4))
+        loss = int(round(12.0/(1+1.0065**(-score_diff)) + 4))
         gains += loss
         members.update_one(
             {"user_id": player["user_id"]},
