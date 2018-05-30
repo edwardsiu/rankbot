@@ -244,7 +244,7 @@ class RankDB(MongoClient):
         for player in losers:
             avg_opponent_score = (sum([i["points"] for i in losers if i != player]) + winner["points"])/3.0
             score_diff = player["points"] - avg_opponent_score
-            loss = int(round(14.0/(1+1.03**(-score_diff)) + 3))
+            loss = int(round(6.0/(1+1.025**(-score_diff)) + 7))
             gains += loss
             members.update_one(
                 {"user_id": player["user_id"]},
