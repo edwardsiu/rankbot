@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 import logging
 import logging.handlers
 
@@ -9,6 +10,7 @@ import hashids
 from pymongo import MongoClient, DESCENDING
 from src.colors import *
 from src import database
+from src.emojis import *
 from src import help_cmds
 from src import status_codes as stc
 
@@ -59,7 +61,7 @@ commands = [
     # these commands must be used in a server
     "log", "register", "confirm", "deny",
     "pending", "status", "top", "all", "score", "describe", 
-    "players", "remind", "lfg", "recent", "react",
+    "players", "remind", "lfg", "recent", "deck",
 
     # these commands must be used in a server and can only be called by an admin
     "set_admin", "override", "disputed", "reset",
@@ -86,6 +88,7 @@ class Isperia(discord.Client):
             '%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
         self.logger.addHandler(handler)
         self.db = database.RankDB(config["mongodb_host"], config["mongodb_port"])
+        self._load_decks()
 
     def __is_admin(self, msg):
         user = msg.author
@@ -97,6 +100,15 @@ class Isperia(discord.Client):
         if self.db.is_admin(user_roles, msg.server.id):
             return True
         return False
+
+    def _load_decks(self):
+        with open("config/decks.json", "r") as infile:
+            self.decks = json.load(infile)
+        self.deck_nicknames = {}
+        for category in self.decks:
+            for deck in category["decks"]:
+                for nickname in deck["nicknames"]:
+                    self.deck_nicknames[nickname] = deck["name"]
 
     async def on_ready(self):
         self.logger.info('Logged in as {}'.format(self.user.name))
@@ -374,6 +386,8 @@ class Isperia(discord.Client):
             emsg.add_field(name="Losses", inline=True, value=str(member["losses"]))
             emsg.add_field(name="Win %", inline=True,
                            value="{:.3f}%".format(win_percent))
+            if "deck" in member:
+                emsg.add_field(name="Last Played Deck", inline=True, value=member["deck"])
             await self.send_embed(msg.channel, emsg, color=GREEN)
 
     @server
@@ -400,7 +414,7 @@ class Isperia(discord.Client):
         emsg.title = "Pending Matches"
         emsg.description = ("\n".join(
             ["**{}**: {}".format(match["game_id"], match["players"][user.id]) for match in pending_matches])
-            + "\n\nActions: `{0}status [game id]` `{0}confirm [game id]` `{0}deny [game id]`".format(
+            + "\n\nActions: `{0}status [game id]` | `{0}confirm [game id]` | `{0}deny [game id]`".format(
                 self.command_token
             ))
         await self.send_embed(msg.channel, emsg)
@@ -422,14 +436,15 @@ class Isperia(discord.Client):
         players = [self.db.find_member(pid, msg.server.id) for pid in match["players"]]
         emsg.title = "Game id: {}".format(game_id)
         date = datetime.fromtimestamp(match["timestamp"])
-        confirm_emoji = u'\U00002705'
-        unconfirm_emoji = u'\U0000274C'
-        trophy_emoji = u'\U0001F3C6'
         emoji_type = {stc.CONFIRMED: confirm_emoji, stc.UNCONFIRMED: unconfirm_emoji}
         player_strings = []
         for player in players:
+            if "decks" in match and match["decks"][player["user_id"]]:
+                deck_name = match["decks"][player["user_id"]]
+            else:
+                deck_name = "Unspecified"
             status_msg = u"{} {}: {}".format(emoji_type[match["players"][player["user_id"]]], 
-                player["user"], match["decks"][player["user_id"]])
+                player["user"], deck_name)
             if player["user_id"] == winner["user_id"]:
                 status_msg += u" " + trophy_emoji
             player_strings.append(status_msg)
@@ -574,7 +589,44 @@ class Isperia(discord.Client):
             if losses == 5:
                 emsg = discord.Embed()
                 emsg.description = "Press `F` to pay respects."
-                await self.send_embed(msg.channel, emsg, color=RED)      
+                await self.send_embed(msg.channel, emsg, color=RED)
+
+    @server
+    @registered
+    async def deck(self, msg):
+        emsg = discord.Embed()
+        tokens = msg.content.split()
+        if len(tokens) > 1:
+            deck_name = " ".join(msg.content.split()[1:])
+            deck_name_lowered = deck_name.lower()
+            if deck_name_lowered in self.deck_nicknames:
+                official_name = self.deck_nicknames[deck_name_lowered]
+                self.db.set_deck(msg.author.id, official_name, msg.server.id)
+                emsg.description = "Deck set to {} for **{}**".format(
+                   official_name, msg.author.name
+                )
+                await self.send_embed(msg.channel, emsg)
+                return
+            else:
+                emsg.description = ("**{}** is not a recognized deck.\n".format(deck_name)
+                    + "React with {} to see a list of all decks.".format(info_emoji))
+                bot_msg = await self.send_error(msg.channel, emsg)
+                await self.add_reaction(bot_msg, info_emoji)
+                resp = await self.wait_for_reaction(info_emoji, user=msg.author, timeout=10.0, message=bot_msg)
+                if not resp:
+                    return
+                else:
+                    await self.delete_message(bot_msg)
+        await self._show_decks(msg)
+
+    async def _show_decks(self, msg):
+        emsg = discord.Embed()
+        emsg.title = "Registered Decks"
+        for category in self.decks:
+            category_decks = [deck["name"] for deck in category["decks"]]
+            emsg.add_field(name=category["color"], inline=True, value=("\n".join(category_decks)))
+        await self.send_embed(msg.channel, emsg)
+        
 
     @server
     @admin

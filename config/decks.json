@@ -1,0 +1,330 @@
+[
+    {
+        "color": "Blue",
+        "decks": [
+            {
+                "name": "Baral Control",
+                "nicknames": [
+                    "baral",
+                    "baral control"
+                ]
+            },
+            {
+                "name": "JVP Storm",
+                "nicknames": [
+                    "jvp",
+                    "jvp tide",
+                    "jvp storm"
+                ]
+            },
+            {
+                "name": "Chain Veil Teferi",
+                "nicknames": [
+                    "cvt",
+                    "teferi",
+                    "chain veil teferi"
+                ]
+            }
+        ]
+    },
+    {
+        "color": "Black",
+        "decks": [
+            {
+                "name": "Sidisi ANF",
+                "nicknames": [
+                    "sidisi anf",
+                    "b sidisi",
+                    "bidisi"
+                ]
+            }
+        ]
+    },
+    {
+        "color": "Red",
+        "decks": [
+            {
+                "name": "Godo",
+                "nicknames": [
+                    "godo"
+                ]
+            }
+        ]
+    },
+    {
+        "color": "Green",
+        "decks": [
+            {
+                "name": "Selvala Brostorm",
+                "nicknames": [
+                    "selvala",
+                    "selvala brostorm"
+                ]
+            },
+            {
+                "name": "Yisan",
+                "nicknames": [
+                    "yisan"
+                ]
+            }
+        ]
+    },
+    {
+        "color": "Azorius",
+        "decks": [
+            {
+                "name": "GAAIV Control",
+                "nicknames": [
+                    "gaaiv",
+                    "grand arbiter",
+                    "gaaiv control"
+                ]
+            }
+        ]
+    },
+    {
+        "color": "Selesnya",
+        "decks": [
+            {
+                "name": "Captain Sisay",
+                "nicknames": [
+                    "sisay",
+                    "captain sisay",
+                    "paradox sisay"
+                ]
+            }
+        ]
+    },
+    {
+        "color": "Izzet",
+        "decks": [
+            {
+                "name": "Jhoira",
+                "nicknames": [
+                    "jhoira"
+                ]
+            },
+            {
+                "name": "Keranos Control",
+                "nicknames": [
+                    "keranos",
+                    "keranos control",
+                    "keranos blue moon"
+                ]
+            }
+        ]
+    },
+    {
+        "color": "Simic",
+        "decks": [
+            {
+                "name": "Edric Flying Men",
+                "nicknames": [
+                    "edric",
+                    "edric flying men",
+                    "edric turns"
+                ]
+            },
+            {
+                "name": "Momir Hackball",
+                "nicknames": [
+                    "momir",
+                    "hackball",
+                    "momir hackball"
+                ]
+            },
+            {
+                "name": "Rashmi Control",
+                "nicknames": [
+                    "rashmi",
+                    "rashmi control"
+                ]
+            }
+        ]
+    },
+    {
+        "color": "Rakdos",
+        "decks": [
+            {
+                "name": "Doomsday Grenzo",
+                "nicknames": [
+                    "grenzo",
+                    "doomsday grenzo",
+                    "dd grenzo"
+                ]
+            }
+        ]
+    },
+    {
+        "color": "Golgari",
+        "decks": [
+            {
+                "name": "Gitrog",
+                "nicknames": [
+                    "gitrog"
+                ]
+            },
+            {
+                "name": "Varolz Hulk",
+                "nicknames": [
+                    "varolz",
+                    "varolz hulk"
+                ]
+            }
+        ]
+    },
+    {
+        "color": "Gruul",
+        "decks": [
+            {
+                "name": "Ruric Thar",
+                "nicknames": [
+                    "ruric thar",
+                    "ruric"
+                ]
+            }
+        ]
+    },
+    {
+        "color": "Esper",
+        "decks": [
+            {
+                "name": "Doomsday Zur",
+                "nicknames": [
+                    "dd zur",
+                    "doomsday zur"
+                ]
+            },
+            {
+                "name": "Shimmer Zur",
+                "nicknames": [
+                    "shimmer zur",
+                    "zur storm"
+                ]
+            },
+            {
+                "name": "Consultation Zur",
+                "nicknames": [
+                    "man zur",
+                    "consultation zur",
+                    "consult zur"
+                ]
+            },
+            {
+                "name": "Zur Control",
+                "nicknames": [
+                    "zur control",
+                    "control zur"
+                ]
+            }
+        ]
+    },
+    {
+        "color": "Grixis",
+        "decks": [
+            {
+                "name": "Kess Storm",
+                "nicknames": [
+                    "kess",
+                    "kess storm"
+                ]
+            },
+            {
+                "name": "Consultation Kess",
+                "nicknames": [
+                    "consultation kess",
+                    "consult kess"
+                ]
+            },
+            {
+                "name": "Jeleva Storm",
+                "nicknames": [
+                    "jeleva",
+                    "jeleva storm"
+                ]
+            }
+        ]
+    },
+    {
+        "color": "4 Color",
+        "decks": [
+            {
+                "name": "Tymna Tana Blood Pod",
+                "nicknames": [
+                    "blood pod",
+                    "tymna tana blood pod"
+                ]
+            },
+            {
+                "name": "Tymna Kraum MAN",
+                "nicknames": [
+                    "tymna kraum man"
+                ]
+            },
+            {
+                "name": "Thrasios Tymna MAN",
+                "nicknames": [
+                    "thrasios tymna man",
+                    "thras tymna man"
+                ]
+            },
+            {
+                "name": "Razakats",
+                "nicknames": [
+                    "razakats"
+                ]
+            },
+            {
+                "name": "Razahulk",
+                "nicknames": [
+                    "razahulk",
+                    "flashakats"
+                ]
+            },
+            {
+                "name": "Breakfast Hulk",
+                "nicknames": [
+                    "breakfast hulk"
+                ]
+            },
+            {
+                "name": "Hulkweaver",
+                "nicknames": [
+                    "hulkweaver"
+                ]
+            },
+            {
+                "name": "4c Varolz",
+                "nicknames": [
+                    "4c varolz"
+                ]
+            },
+            {
+                "name": "Thrasios Scepter Storm",
+                "nicknames": [
+                    "thrasios scepter storm",
+                    "paradox thrasios"
+                ]
+            }
+        ]
+    },
+    {
+        "color": "5 Color",
+        "decks": [
+            {
+                "name": "Food Chain Tazri",
+                "nicknames": [
+                    "fct",
+                    "fc tazri",
+                    "food chain tazri"
+                ]
+            },
+            {
+                "name": "Tazri Hulk",
+                "nicknames": [
+                    "tazri hulk"
+                ]
+            }
+        ]
+    }
+]

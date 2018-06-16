@@ -48,6 +48,8 @@ class RankDB(MongoClient):
             return False
         return setting["admin"] in user_roles
 
+
+    # Player methods
     def add_member(self, user, server_id):
         members = self.get_members(server_id)
         if not self.find_member(user.id, server_id):
@@ -58,7 +60,8 @@ class RankDB(MongoClient):
                 "pending": [],
                 "accepted": 0,
                 "wins": 0,
-                "losses": 0
+                "losses": 0,
+                "deck": ""
             }
             members.insert_one(data)
             return True
@@ -84,6 +87,8 @@ class RankDB(MongoClient):
         members = self.get_members(server_id)
         return members.find({"accepted": {"$gt": 4}}, limit=limit, sort=[(key, DESCENDING)])
 
+
+    # Match methods
     def add_pending_match(self, user_id, game_id, server_id):
         members = self.get_members(server_id)
         members.update_one(
@@ -270,3 +275,16 @@ class RankDB(MongoClient):
         )
         delta.append({"player": winner["user"], "change": gains})
         return delta
+
+    
+    # Deck methods
+    def set_deck(self, user_id, deck_name, server_id):
+        members = self.get_members(server_id)
+        members.update_one(
+            {"user_id": user_id},
+            {
+                "$set": {
+                    "deck": deck_name
+                }
+            }
+        )
