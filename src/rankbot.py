@@ -59,7 +59,7 @@ commands = [
     # these commands must be used in a server
     "log", "register", "confirm", "deny",
     "pending", "status", "top", "all", "score", "describe", 
-    "players", "remind", "lfg", "recent",
+    "players", "remind", "lfg", "recent", "react",
 
     # these commands must be used in a server and can only be called by an admin
     "set_admin", "override", "disputed", "reset",
@@ -125,17 +125,20 @@ class Isperia(discord.Client):
     async def send_help(self, channel, embedded_msg):
         embedded_msg.color = YELLOW
         await self.send_typing(channel)
-        await self.send_message(channel, embed=embedded_msg)
+        msg = await self.send_message(channel, embed=embedded_msg)
+        return msg
 
     async def send_error(self, channel, embedded_msg):
         embedded_msg.color = RED
         await self.send_typing(channel)
-        await self.send_message(channel, embed=embedded_msg)
+        msg = await self.send_message(channel, embed=embedded_msg)
+        return msg
     
     async def send_embed(self, channel, embedded_msg, color=BLUE):
         embedded_msg.color = color
         await self.send_typing(channel)
-        await self.send_message(channel, embed=embedded_msg)
+        msg = await self.send_message(channel, embed=embedded_msg)
+        return msg
 
     async def on_message(self, msg):
         if msg.author == self.user:
@@ -208,14 +211,14 @@ class Isperia(discord.Client):
                 return
 
         if len(losers) != 3:
-            emsg.description = "There must be exactly 3 players to log a result."
+            emsg.description = "There must be exactly 3 other players to log a result."
             await self.send_error(msg.channel, emsg)
             return
 
         game_id = self.create_pending_game(msg, winner, players)
         emsg.title = "Game id: {}".format(game_id)
         emsg.description = ("Match has been logged and awaiting confirmation from "
-            + "{}\n".format(" ".join([u.mention for u in losers]))
+            + "{}\n".format(" ".join([u.mention for u in players]))
             + "Please `{0}confirm` or `{0}deny` this record.".format(self.command_token))
         await self.send_embed(msg.channel, emsg)
 
@@ -224,6 +227,45 @@ class Isperia(discord.Client):
         # create a pending game record in the database for players
         self.db.add_match(game_id, winner, players, msg.server.id)
         return game_id
+
+    async def _confirm_deck(self, game_id, player, msg):
+        emsg = discord.Embed()
+        emsg.title = "Game id: {}".format(game_id)
+        if "deck" not in player:
+            emsg.description = ("No deck specified for **{}**. ".format(msg.author.name)
+                + "Set your deck with the `{}deck` command, ".format(self.command_token)
+                + "then type `{}confirm` again.".format(self.command_token))
+            await self.send_error(msg.channel, emsg)
+            return False
+        else:
+            emsg.description = ("{} Was **{}** the deck you piloted?\n".format(msg.author.mention, player["deck"])
+                + "React to this message with a 👍 or a 👎")
+            bot_msg = await self.send_embed(msg.channel, emsg)
+            await self.add_reaction(bot_msg, "👍")
+            await self.add_reaction(bot_msg, "👎")
+            resp = await self.wait_for_reaction(["👍", "👎"], user=msg.author, message=bot_msg)
+            await self.delete_message(bot_msg)
+            if resp.reaction.emoji == "👍":
+                return True
+            else:
+                emsg = discord.Embed()
+                emsg.description = ("Set your deck with the `{}deck` command, ".format(self.command_token)
+                    + "then type `{}confirm` again.".format(self.command_token))
+                await self.send_embed(msg.channel, emsg)
+                return False
+
+    async def _confirm_player(self, game_id, msg):
+        player = self.db.find_member(msg.author.id, msg.server.id)
+        if not await self._confirm_deck(game_id, player, msg):
+            return
+        emsg = discord.Embed()
+        self.db.confirm_player(player["deck"], msg.author.id, game_id, msg.server.id)
+        emsg.description = "Received confirmation from **{}**".format(msg.author.name)
+        await self.send_embed(msg.channel, emsg)
+        delta = self.db.check_match_status(game_id, msg.server.id)
+        if not delta:
+            return
+        await self.show_delta(game_id, delta, msg.channel)
 
     @server
     @registered
@@ -251,13 +293,7 @@ class Isperia(discord.Client):
             await self.send_error(msg.channel, emsg)
             return
         if pending_game["players"][user.id] == stc.UNCONFIRMED:
-            self.db.confirm_player(user.id, game_id, msg.server.id)
-            emsg.description = "Received confirmation from **{}**".format(user.name)
-            await self.send_embed(msg.channel, emsg)
-            delta = self.db.check_match_status(game_id, msg.server.id)
-            if not delta:
-                return
-            await self.show_delta(game_id, delta, msg.channel)
+            await self._confirm_player(game_id, msg)
         else:
             emsg.description = "You have already confirmed this match"
             await self.send_error(msg.channel, emsg)
@@ -392,7 +428,8 @@ class Isperia(discord.Client):
         emoji_type = {stc.CONFIRMED: confirm_emoji, stc.UNCONFIRMED: unconfirm_emoji}
         player_strings = []
         for player in players:
-            status_msg = u"{} {}".format(emoji_type[match["players"][player["user_id"]]], player["user"])
+            status_msg = u"{} {}: {}".format(emoji_type[match["players"][player["user_id"]]], 
+                player["user"], match["decks"][player["user_id"]])
             if player["user_id"] == winner["user_id"]:
                 status_msg += u" " + trophy_emoji
             player_strings.append(status_msg)
@@ -537,8 +574,7 @@ class Isperia(discord.Client):
             if losses == 5:
                 emsg = discord.Embed()
                 emsg.description = "Press `F` to pay respects."
-                await self.send_embed(msg.channel, emsg, color=RED)
-            
+                await self.send_embed(msg.channel, emsg, color=RED)      
 
     @server
     @admin

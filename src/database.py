@@ -130,9 +130,9 @@ class RankDB(MongoClient):
             "status": stc.PENDING,
             "winner": winner.id,
             "players": {u.id: stc.UNCONFIRMED for u in players},
+            "decks": {u.id: "" for u in players},
             "timestamp": time()
         }
-        pending_record["players"][winner.id] = stc.CONFIRMED
         matches.insert_one(pending_record)
         for player in players:
             self.add_pending_match(player.id, game_id, server_id)
@@ -179,12 +179,15 @@ class RankDB(MongoClient):
             }
         )
 
-    def confirm_player(self, user_id, game_id, server_id):
+    def confirm_player(self, deck_name, user_id, game_id, server_id):
         matches = self.get_matches(server_id)
         matches.update_one(
             {"game_id": game_id},
             {
-                "$set": {"players.{}".format(user_id): stc.CONFIRMED}
+                "$set": {
+                    "players.{}".format(user_id): stc.CONFIRMED,
+                    "decks.{}".format(user_id): deck_name
+                }
             }
         )
 
@@ -204,7 +207,7 @@ class RankDB(MongoClient):
         matches.update_one(
             {"game_id": game_id},
             {
-                "$set": {"players.{}".format(user_id): stc.CONFIRMED}
+                "$set": {"players.{}".format(user_id): stc.UNCONFIRMED}
             }
         )
 
