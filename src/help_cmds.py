@@ -172,7 +172,8 @@ def help_deck(token):
     usage = "`{0}deck`\n`{0}deck [deck name]`".format(token)
     description = (
         "Set your last played deck to `deck name`. Short hand names are allowed. If no "
-        + "deck name is specified, a list of all tracked decks will be shown."
+        + "deck name is specified, a list of all tracked decks will be shown. "
+        + "Use `rogue` as the deck name if the deck is not one of the registered decks."
     )
     return help_detail("deck", usage, description)
 
