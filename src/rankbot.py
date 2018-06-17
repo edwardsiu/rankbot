@@ -613,8 +613,9 @@ class Isperia(discord.Client):
                     + "React with {} to see a list of all decks.".format(info_emoji))
                 bot_msg = await self.send_error(msg.channel, emsg)
                 await self.add_reaction(bot_msg, info_emoji)
-                resp = await self.wait_for_reaction(info_emoji, user=msg.author, timeout=5.0, message=bot_msg)
+                resp = await self.wait_for_reaction(info_emoji, user=msg.author, timeout=10.0, message=bot_msg)
                 if not resp:
+                    await self.remove_reaction(bot_msg, info_emoji, self.user)
                     return
                 else:
                     await self.delete_message(bot_msg)
@@ -628,7 +629,7 @@ class Isperia(discord.Client):
         option_emojis = [white_emoji, blue_emoji, black_emoji, red_emoji, green_emoji, thumbs_up_emoji]
         for i in option_emojis:
             await self.add_reaction(bot_msg, i)
-        selected_colors = []
+        selected_colors = set()
         while True:
             resp = await self.wait_for_reaction(option_emojis, user=msg.author, timeout=10.0, message=bot_msg)
             if not resp:
@@ -641,12 +642,13 @@ class Isperia(discord.Client):
                 await self._show_decks_for_colors(selected_colors, msg)
                 return
             else:
-                selected_colors.append(resp.reaction.emoji)
+                selected_colors.add(resp.reaction.emoji)
 
     async def _show_decks_for_colors(self, selected_colors, msg):
-        for i, c in enumerate(selected_colors):
-            selected_colors[i] = color_emojis[c]
-        color_str = "".join(sorted(selected_colors))
+        color_list = []
+        for c in selected_colors:
+            color_list.append(color_emojis[c])
+        color_str = "".join(sorted(color_list))
         emsg = discord.Embed()
         for category in self.decks:
             if category["colors"] == color_str:
