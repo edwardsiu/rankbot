@@ -82,7 +82,7 @@ def help_log(token):
     usage = "`{}log @player1 @player2 @player3`".format(token)
     description = (
         "Logs a match result into the league. The winner of the match must be the one to log "
-        + "the result, and mention exactly 3 losers. Upon logging the result, each loser must "
+        + "the result, and mention exactly 3 losers. Upon logging the result, each player must "
         + "confirm the match result via the `{0}confirm` command, or dispute it via `{0}deny`.".format(token)
     )
     return help_detail("log", usage, description)
@@ -167,6 +167,14 @@ def help_lfg(token):
         + "players, ping all 4 players to notify them of a pod."
     )
     return help_detail("lfg", usage, description)
+
+def help_deck(token):
+    usage = "`{0}deck`\n`{0}deck [deck name]`".format(token)
+    description = (
+        "Set your last played deck to `deck name`. Short hand names are allowed. If no "
+        + "deck name is specified, a list of all tracked decks will be shown."
+    )
+    return help_detail("deck", usage, description)
 
 def help_reset(token):
     usage = "`{}reset`".format(token)
