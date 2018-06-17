@@ -443,7 +443,7 @@ class Isperia(discord.Client):
             if "decks" in match and match["decks"][player["user_id"]]:
                 deck_name = match["decks"][player["user_id"]]
             else:
-                deck_name = "Unspecified"
+                deck_name = "???"
             status_msg = u"{} {}: {}".format(emoji_type[match["players"][player["user_id"]]], 
                 player["user"], deck_name)
             if player["user_id"] == winner["user_id"]:
