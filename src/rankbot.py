@@ -109,6 +109,8 @@ class Isperia(discord.Client):
             for deck in category["decks"]:
                 for nickname in deck["nicknames"]:
                     self.deck_nicknames[nickname] = deck["name"]
+        self.deck_nicknames["rogue"] = "Rogue"
+        self.deck_nicknames["other"] = "Rogue"
 
     async def on_ready(self):
         self.logger.info('Logged in as {}'.format(self.user.name))
@@ -639,7 +641,8 @@ class Isperia(discord.Client):
                 return
             if resp.reaction.emoji == thumbs_up_emoji:
                 await self.delete_message(bot_msg)
-                await self._show_decks_for_colors(selected_colors, msg)
+                if len(selected_colors) > 0:
+                    await self._show_decks_for_colors(selected_colors, msg)
                 return
             else:
                 selected_colors.add(resp.reaction.emoji)
