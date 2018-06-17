@@ -1,6 +1,7 @@
 [
     {
-        "color": "Blue",
+        "color_name": "Blue",
+        "colors": "U",
         "decks": [
             {
                 "name": "Baral Control",
@@ -28,7 +29,8 @@
         ]
     },
     {
-        "color": "Black",
+        "color_name": "Black",
+        "colors": "B",
         "decks": [
             {
                 "name": "Sidisi ANF",
@@ -41,7 +43,8 @@
         ]
     },
     {
-        "color": "Red",
+        "color_name": "Red",
+        "colors": "R",
         "decks": [
             {
                 "name": "Godo",
@@ -52,7 +55,8 @@
         ]
     },
     {
-        "color": "Green",
+        "color_name": "Green",
+        "colors": "G",
         "decks": [
             {
                 "name": "Selvala Brostorm",
@@ -70,7 +74,8 @@
         ]
     },
     {
-        "color": "Azorius",
+        "color_name": "Azorius",
+        "colors": "UW",
         "decks": [
             {
                 "name": "GAAIV Control",
@@ -83,7 +88,8 @@
         ]
     },
     {
-        "color": "Selesnya",
+        "color_name": "Selesnya",
+        "colors": "GW",
         "decks": [
             {
                 "name": "Captain Sisay",
@@ -96,7 +102,8 @@
         ]
     },
     {
-        "color": "Izzet",
+        "color_name": "Izzet",
+        "colors": "RU",
         "decks": [
             {
                 "name": "Jhoira",
@@ -115,7 +122,8 @@
         ]
     },
     {
-        "color": "Simic",
+        "color_name": "Simic",
+        "colors": "GU",
         "decks": [
             {
                 "name": "Edric Flying Men",
@@ -143,7 +151,8 @@
         ]
     },
     {
-        "color": "Rakdos",
+        "color_name": "Rakdos",
+        "colors": "BR",
         "decks": [
             {
                 "name": "Doomsday Grenzo",
@@ -156,7 +165,8 @@
         ]
     },
     {
-        "color": "Golgari",
+        "color_name": "Golgari",
+        "colors": "BG",
         "decks": [
             {
                 "name": "Gitrog",
@@ -174,7 +184,8 @@
         ]
     },
     {
-        "color": "Gruul",
+        "color_name": "Gruul",
+        "colors": "GR",
         "decks": [
             {
                 "name": "Ruric Thar",
@@ -186,7 +197,8 @@
         ]
     },
     {
-        "color": "Esper",
+        "color_name": "Esper",
+        "colors": "BUW",
         "decks": [
             {
                 "name": "Doomsday Zur",
@@ -220,7 +232,8 @@
         ]
     },
     {
-        "color": "Grixis",
+        "color_name": "Grixis",
+        "colors": "BRU",
         "decks": [
             {
                 "name": "Kess Storm",
@@ -246,7 +259,8 @@
         ]
     },
     {
-        "color": "4 Color",
+        "color_name": "Sans Blue",
+        "colors": "WBRG",
         "decks": [
             {
                 "name": "Tymna Tana Blood Pod",
@@ -254,13 +268,13 @@
                     "blood pod",
                     "tymna tana blood pod"
                 ]
-            },
-            {
-                "name": "Tymna Kraum MAN",
-                "nicknames": [
-                    "tymna kraum man"
-                ]
-            },
+            }
+        ]
+    },
+    {
+        "color_name": "Sans Red",
+        "colors": "BGUW",
+        "decks": [
             {
                 "name": "Thrasios Tymna MAN",
                 "nicknames": [
@@ -300,16 +314,46 @@
                 ]
             },
             {
-                "name": "Thrasios Scepter Storm",
+                "name": "Thrasios Tymna Scepter Storm",
                 "nicknames": [
-                    "thrasios scepter storm",
-                    "paradox thrasios"
+                    "thrasios tymna scepter storm"
                 ]
             }
         ]
     },
     {
-        "color": "5 Color",
+        "color_name": "Sans Green",
+        "colors": "GRUW",
+        "decks": [
+            {
+                "name": "Tymna Kraum MAN",
+                "nicknames": [
+                    "tymna kraum man"
+                ]
+            }
+        ]
+    },
+    {
+        "color_name": "Sans White",
+        "colors": "BGRU",
+        "decks": [
+            {
+                "name": "Thrasios Vial Scepter Storm",
+                "nicknames": [
+                    "thrasios vial scepter storm"
+                ]
+            },
+            {
+                "name": "Yidris Storm",
+                "nicknames": [
+                    "yidris storm"
+                ]
+            }
+        ]
+    },
+    {
+        "color_name": "5 color",
+        "colors": "BGRUW",
         "decks": [
             {
                 "name": "Food Chain Tazri",

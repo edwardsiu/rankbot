@@ -250,12 +250,13 @@ class Isperia(discord.Client):
             await self.send_error(msg.channel, emsg)
             return False
         else:
-            emsg.description = ("{} Was **{}** the deck you piloted?\n".format(msg.author.mention, player["deck"])
-                + "React to this message with a 👍 or a 👎")
+            emsg.description = ("{} Was **{}** the deck you piloted?\n".format(msg.author.mention, player["deck"]))
             bot_msg = await self.send_embed(msg.channel, emsg)
             await self.add_reaction(bot_msg, "👍")
             await self.add_reaction(bot_msg, "👎")
-            resp = await self.wait_for_reaction(["👍", "👎"], user=msg.author, message=bot_msg)
+            resp = await self.wait_for_reaction(["👍", "👎"], user=msg.author, timeout=60.0, message=bot_msg)
+            if not resp:
+                return False
             await self.delete_message(bot_msg)
             if resp.reaction.emoji == "👍":
                 return True
@@ -612,7 +613,7 @@ class Isperia(discord.Client):
                     + "React with {} to see a list of all decks.".format(info_emoji))
                 bot_msg = await self.send_error(msg.channel, emsg)
                 await self.add_reaction(bot_msg, info_emoji)
-                resp = await self.wait_for_reaction(info_emoji, user=msg.author, timeout=10.0, message=bot_msg)
+                resp = await self.wait_for_reaction(info_emoji, user=msg.author, timeout=5.0, message=bot_msg)
                 if not resp:
                     return
                 else:
@@ -622,11 +623,49 @@ class Isperia(discord.Client):
     async def _show_decks(self, msg):
         emsg = discord.Embed()
         emsg.title = "Registered Decks"
+        emsg.description = "Select a color combination."
+        bot_msg = await self.send_embed(msg.channel, emsg)
+        option_emojis = [white_emoji, blue_emoji, black_emoji, red_emoji, green_emoji, thumbs_up_emoji]
+        for i in option_emojis:
+            await self.add_reaction(bot_msg, i)
+        selected_colors = []
+        while True:
+            resp = await self.wait_for_reaction(option_emojis, user=msg.author, timeout=10.0, message=bot_msg)
+            if not resp:
+                await self.delete_message(bot_msg)
+                if len(selected_colors) > 0:
+                    await self._show_decks_for_colors(selected_colors, msg)
+                return
+            if resp.reaction.emoji == thumbs_up_emoji:
+                await self.delete_message(bot_msg)
+                await self._show_decks_for_colors(selected_colors, msg)
+                return
+            else:
+                selected_colors.append(resp.reaction.emoji)
+
+    async def _show_decks_for_colors(self, selected_colors, msg):
+        for i, c in enumerate(selected_colors):
+            selected_colors[i] = color_emojis[c]
+        color_str = "".join(sorted(selected_colors))
+        emsg = discord.Embed()
         for category in self.decks:
-            category_decks = [deck["name"] for deck in category["decks"]]
-            emsg.add_field(name=category["color"], inline=True, value=("\n".join(category_decks)))
+            if category["colors"] == color_str:
+                emsg.title = "{} Decks".format(category["color_name"])
+                category_decks = [deck["name"] for deck in category["decks"]]
+                emsg.description = "\n".join(category_decks)
+                bot_msg = await self.send_embed(msg.channel, emsg)
+                await self.add_reaction(bot_msg, return_emoji)
+                resp = await self.wait_for_reaction(return_emoji, user=msg.author, timeout=10.0, message=bot_msg)
+                if not resp:
+                    await self.remove_reaction(bot_msg, return_emoji, self.user)
+                    return
+                else:
+                    await self.delete_message(bot_msg)
+                    await self._show_decks(msg)
+                    return
+                    
+        emsg.description = "No {} decks found.".format(color_str)
         await self.send_embed(msg.channel, emsg)
-        
 
     @server
     @admin
