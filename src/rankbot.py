@@ -19,10 +19,12 @@ def admin(func):
     @wraps(func)
     async def wrapper(self, msg):
         user = msg.author
+        if (user.id == self.owner or user.id == msg.server.owner.id):
+            return await func(self, msg)
         user_roles = [role.name for role in user.roles]
-        if not self.db.is_admin(user_roles, msg.server.id) and user.id != msg.server.owner.id:
-            return
-        await func(self, msg)
+        if self.db.is_admin(user_roles, msg.server.id):
+            return await func(self, msg)
+        return
     return wrapper
 
 
@@ -74,6 +76,7 @@ class Isperia(discord.Client):
         self.token = token
         self.MAX_MSG_LEN = 2000
         self.client_id = config["client_id"]
+        self.owner = config["owner"]
         self.commands = commands
         self.command_token = "$"
         self.mode = stc.OPERATION
