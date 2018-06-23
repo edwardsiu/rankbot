@@ -25,6 +25,12 @@
                     "teferi",
                     "chain veil teferi"
                 ]
+            },
+            {
+                "name": "Azami",
+                "nicknames": [
+                    "azami"
+                ]
             }
         ]
     },
@@ -97,6 +103,14 @@
                     "sisay",
                     "captain sisay",
                     "paradox sisay"
+                ]
+            },
+            {
+                "name": "Gaddok Teeg Midrange",
+                "nicknames": [
+                    "gaddok teeg midrange",
+                    "gaddok teeg",
+                    "teeg"
                 ]
             }
         ]
@@ -250,6 +264,12 @@
                 ]
             },
             {
+                "name": "Kess Twin",
+                "nicknames": [
+                    "kess twin"
+                ]
+            },
+            {
                 "name": "Jeleva Storm",
                 "nicknames": [
                     "jeleva",
@@ -316,7 +336,9 @@
             {
                 "name": "Thrasios Tymna Scepter Storm",
                 "nicknames": [
-                    "thrasios tymna scepter storm"
+                    "thrasios tymna scepter storm",
+                    "thras tymna scepter",
+                    "scepter thrasios"
                 ]
             }
         ]
@@ -330,6 +352,13 @@
                 "nicknames": [
                     "tymna kraum man"
                 ]
+            },
+            {
+                "name": "Tymna Kraum Bearweaver",
+                "nicknames": [
+                    "tymna kraum bearweaver",
+                    "bearweaver"
+                ]
             }
         ]
     },
@@ -340,13 +369,20 @@
             {
                 "name": "Thrasios Vial Scepter Storm",
                 "nicknames": [
-                    "thrasios vial scepter storm"
+                    "thrasios vial scepter storm",
+                    "thras vial scepter"
                 ]
             },
             {
                 "name": "Yidris Storm",
                 "nicknames": [
                     "yidris storm"
+                ]
+            },
+            {
+                "name": "Lightning Druid",
+                "nicknames": [
+                    "lightning druid"
                 ]
             }
         ]

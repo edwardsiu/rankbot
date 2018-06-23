@@ -2,6 +2,7 @@ from datetime import datetime
 import json
 import logging
 import logging.handlers
+import re
 
 import asyncio
 import discord
@@ -104,6 +105,11 @@ class Isperia(discord.Client):
             return True
         return False
 
+    def _transform_deck_nickname(self, deck_name):
+        sorted_name = "".join(sorted(deck_name.lower()))
+        letters_only = re.search("([a-z]*)$", sorted_name).group()
+        return letters_only
+
     def _load_decks(self):
         with open("config/decks.json", "r") as infile:
             self.decks = json.load(infile)
@@ -111,9 +117,7 @@ class Isperia(discord.Client):
         for category in self.decks:
             for deck in category["decks"]:
                 for nickname in deck["nicknames"]:
-                    self.deck_nicknames[nickname] = deck["name"]
-        self.deck_nicknames["rogue"] = "Rogue"
-        self.deck_nicknames["other"] = "Rogue"
+                    self.deck_nicknames[self._transform_deck_nickname(nickname)] = deck["name"]
 
     async def on_ready(self):
         self.logger.info('Logged in as {}'.format(self.user.name))
@@ -603,10 +607,10 @@ class Isperia(discord.Client):
         emsg = discord.Embed()
         tokens = msg.content.split()
         if len(tokens) > 1:
-            deck_name = " ".join(msg.content.split()[1:])
-            deck_name_lowered = deck_name.lower()
-            if deck_name_lowered in self.deck_nicknames:
-                official_name = self.deck_nicknames[deck_name_lowered]
+            input_deck_name = msg.content[6:]
+            deck_nickname_id = self._transform_deck_nickname(input_deck_name)
+            if deck_nickname_id in self.deck_nicknames:
+                official_name = self.deck_nicknames[deck_nickname_id]
                 self.db.set_deck(msg.author.id, official_name, msg.server.id)
                 emsg.description = "Deck set to {} for **{}**".format(
                    official_name, msg.author.name
@@ -614,16 +618,11 @@ class Isperia(discord.Client):
                 await self.send_embed(msg.channel, emsg)
                 return
             else:
-                emsg.description = ("**{}** is not a recognized deck.\n".format(deck_name)
-                    + "React with {} to see a list of all decks.".format(info_emoji))
-                bot_msg = await self.send_error(msg.channel, emsg)
-                await self.add_reaction(bot_msg, info_emoji)
-                resp = await self.wait_for_reaction(info_emoji, user=msg.author, timeout=10.0, message=bot_msg)
-                if not resp:
-                    await self.remove_reaction(bot_msg, info_emoji, self.user)
-                    return
-                else:
-                    await self.delete_message(bot_msg)
+                emsg.description = ("**{}** is not a recognized deck.\n".format(input_deck_name)
+                    + "Defaulting to Rogue. Enter `{}deck` to see the available decks".format(self.command_token))
+                self.db.set_deck(msg.author.id, "Rogue", msg.server.id)
+                await self.send_embed(msg.channel, emsg)
+                return
         await self._show_decks(msg)
 
     async def _show_decks(self, msg):
