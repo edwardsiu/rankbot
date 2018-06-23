@@ -1,67 +1,79 @@
 import discord
 
+def add_token(token, s):
+    return "{}{}".format(token, s)
+
 def user_help(token):
-    emsg = discord.Embed(title="Help")
-    emsg.add_field(name="Command", inline=True, value=(
-        "**"
-        + "{}help\n\n".format(token)
-        + "{}addme\n\n".format(token)
-        + "{}register\n\n".format(token)
-        + "{}players\n\n".format(token)
-        + "{}describe\n\n".format(token)
-        + "{}log\n\n".format(token)
-        + "{}confirm\n\n".format(token)
-        + "{}deny\n\n".format(token)
-        + "{}score\n\n".format(token)
-        + "{}top\n\n".format(token)
-        + "{}all\n\n".format(token)
-        + "{}pending\n\n".format(token)
-        + "{}remind\n\n".format(token)
-        + "{}recent\n\n".format(token)
-        + "{}status\n\n".format(token)
-        + "{}lfg".format(token)
-        + "**"
+    emsg = discord.Embed(title="Command Help")
+    emsg.add_field(name="{}help".format(token), inline=False, value=(
+        "Show the command list. `{}help [command]` for detail\n\n".format(token)
     ))
-    emsg.add_field(name="Description", inline=True, value=(
-        "show the command list. `{}help [command]` for detail\n\n".format(
-            token)
-        + "get an invite link to add Isperia\n\n"
-        + "register to the server league\n\n"
-        + "list the name of all players in the league\n\n"
-        + "show details about the league\n\n"
-        + "log a match result\n\n"
-        + "confirm the most recent match result\n\n"
-        + "dispute the most recent match result\n\n"
-        + "show your score card\n\n"
-        + "see the top players in the league\n\n"
-        + "see the full player rankings in the league\n\n"
-        + "list your pending unconfirmed matches\n\n"
-        + "remind players to confirm your pending matches\n\n"
-        + "show the last 5 matches and their result\n\n"
-        + "show the status of the given match\n\n"
-        + "add or remove yourself from the ranked-lfg queue"
+    emsg.add_field(name="{}addme".format(token), inline=False, value=(
+        "Get an invite link to add Isperia"
+    ))
+    emsg.add_field(name="{}register".format(token), inline=False, value=(
+        "Register to the server ranked league"
+    ))
+    emsg.add_field(name="{}log".format(token), inline=False, value=(
+        "Log a match result into the ranked system"
+    ))
+    emsg.add_field(name="{}confirm".format(token), inline=False, value=(
+        "Verify the most recent match result"
+    ))
+    emsg.add_field(name="{}deny".format(token), inline=False, value=(
+        "Dispute the most recent match result"
+    ))
+    emsg.add_field(name="{}status".format(token), inline=False, value=(
+        "Check the details of the most recent match"
+    ))
+    emsg.add_field(name="{}pending".format(token), inline=False, value=(
+        "List your pending unconfirmed matches"
+    ))
+    emsg.add_field(name="{}remind".format(token), inline=False, value=(
+        "Remind players to confirm your pending matches"
+    ))
+    emsg.add_field(name="{}top".format(token), inline=False, value=(
+        "List the top players in the league"
+    ))
+    emsg.add_field(name="{}all".format(token), inline=False, value=(
+        "See the full player rankings"
+    ))
+    emsg.add_field(name="{}score".format(token), inline=False, value=(
+        "Show your ranked score card"
+    ))
+    emsg.add_field(name="{}recent".format(token), inline=False, value=(
+        "Show your last 5 match results"
+    ))
+    emsg.add_field(name="{}describe".format(token), inline=False, value=(
+        "Show an overview of the league"
+    ))
+    emsg.add_field(name="{}players".format(token), inline=False, value=(
+        "List the names of all registered players"
+    ))
+    emsg.add_field(name="{}lfg".format(token), inline=False, value=(
+        "Add or remove yourself from the looking-for-game queue"
     ))
     return emsg
 
 def admin_help(token):
-    emsg = discord.Embed(title="Admin Help")
-    emsg.add_field(name="Command", inline=True, value=(
-        "**"
-        + "{}add_user\n\n".format(token)
-        + "{}rm_user\n\n".format(token)
-        + "{}reset\n\n".format(token)
-        + "{}set_admin\n\n".format(token)
-        + "{}disputed\n\n".format(token)
-        + "{}override".format(token)
-        + "**"
+    emsg = discord.Embed(title="Admin Command Help")
+    emsg.add_field(name="{}add_user".format(token), inline=False, value=(
+        "Register the mentioned user to the league"
     ))
-    emsg.add_field(name="Description", inline=True, value=(
-        "register the mentioned user\n\n"
-        + "unregister the mentioned user\n\n"
-        + "reset all points and remove all matches\n\n"
-        + "set the mentioned role as the league admin role\n\n"
-        + "list all disputed matches\n\n"
-        + "resolve a disputed match"
+    emsg.add_field(name="{}rm_user".format(token), inline=False, value=(
+        "Unregister the mentioned user from the league"
+    ))
+    emsg.add_field(name="{}reset".format(token), inline=False, value=(
+        "Reset all points and remove all matches"
+    ))
+    emsg.add_field(name="{}set_admin".format(token), inline=False, value=(
+        "Set the mentioned role as the league admin role"
+    ))
+    emsg.add_field(name="{}disputed".format(token), inline=False, value=(
+        "List all disputed matches"
+    ))
+    emsg.add_field(name="{}override".format(token), inline=False, value=(
+        "Resolve a disputed match"
     ))
     return emsg
 
