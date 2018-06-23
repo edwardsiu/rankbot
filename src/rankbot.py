@@ -93,11 +93,11 @@ class Isperia(discord.Client):
         self.db = database.RankDB(config["mongodb_host"], config["mongodb_port"])
         self._load_decks()
 
-    def __is_admin(self, msg):
+    def _is_admin(self, msg):
         user = msg.author
         if not msg.server:
             return False
-        if user.id == msg.server.owner.id:
+        if (user.id == self.owner or user.id == msg.server.owner.id):
             return True
         user_roles = [role.name for role in user.roles]
         if self.db.is_admin(user_roles, msg.server.id):
@@ -174,7 +174,7 @@ class Isperia(discord.Client):
         if len(msg.content.split()) == 1:
             embedded_msg = help_cmds.user_help(self.command_token)
             await self.send_help(user, embedded_msg)
-            if self.__is_admin(msg):
+            if self._is_admin(msg):
                 embedded_msg = help_cmds.admin_help(self.command_token)
                 await self.send_help(user, embedded_msg)
         else:
