@@ -64,7 +64,8 @@ commands = [
     # these commands must be used in a server
     "log", "register", "confirm", "deny",
     "pending", "status", "top", "all", "score", "describe", 
-    "players", "remind", "lfg", "recent", "deck",
+    "players", "remind", "lfg", "recent", 
+    "set_deck", "list_deck", "deck",
 
     # these commands must be used in a server and can only be called by an admin
     "set_admin", "override", "disputed", "reset",
@@ -169,6 +170,7 @@ class Isperia(discord.Client):
             return
 
         cmd = text.split()[0][1:]
+        cmd = cmd.replace("-","_")
         if cmd in self.commands:
             cmd_to_run = getattr(self, cmd)
             await cmd_to_run(msg)
@@ -603,11 +605,11 @@ class Isperia(discord.Client):
 
     @server
     @registered
-    async def deck(self, msg):
+    async def set_deck(self, msg):
         emsg = discord.Embed()
         tokens = msg.content.split()
         if len(tokens) > 1:
-            input_deck_name = msg.content[6:]
+            input_deck_name = " ".join(tokens[1:])
             deck_nickname_id = self._transform_deck_nickname(input_deck_name)
             if deck_nickname_id in self.deck_nicknames:
                 official_name = self.deck_nicknames[deck_nickname_id]
@@ -617,59 +619,59 @@ class Isperia(discord.Client):
                 )
                 await self.send_embed(msg.channel, emsg)
                 return
-            else:
-                emsg.description = ("**{}** is not a recognized deck.\n".format(input_deck_name)
-                    + "Defaulting to Rogue. Enter `{}deck` to see the available decks".format(self.command_token))
-                self.db.set_deck(msg.author.id, "Rogue", msg.server.id)
-                await self.send_embed(msg.channel, emsg)
-                return
-        await self._show_decks(msg)
+        emsg.description = ("**{}** is not a recognized deck.\n".format(input_deck_name)
+            + "Defaulting to Rogue. Enter `{}deck` to see the available decks".format(self.command_token))
+        self.db.set_deck(msg.author.id, "Rogue", msg.server.id)
+        await self.send_embed(msg.channel, emsg)
 
-    async def _show_decks(self, msg):
+    @server
+    async def deck(self, msg):
+        emsg = discord.Embed()
+        if len(msg.mentions) == 0:
+            users = [msg.author]
+        else:
+            users = msg.mentions
+        for user in users:
+            emsg = discord.Embed()
+            member = self.db.find_member(user.id, msg.server.id)
+            if not member:
+                emsg.description = "**{}** is not a registered player".format(user.name)
+                await self.send_error(msg.channel, emsg)
+                continue
+            emsg.title = user.name
+            if "deck" in member:
+                emsg.description = "Last played deck: {}".format(member["deck"])
+            else:
+                emsg.description = "No deck found"
+            await self.send_embed(msg.channel, emsg)
+        
+    async def list_deck(self, msg):
+        tokens = msg.content.split()
+        if len(tokens) == 1:
+            emsg = discord.Embed()
+            emsg.title = "Registered Decks"
+            for category in self.decks:
+                emsg.add_field(name=category["color_name"], inline=False,
+                    value=("\n".join([i["name"] for i in category["decks"]])))
+            await self.send_embed(msg.channel, emsg)
+        else:
+            await self._show_decks(msg, tokens[1])
+
+    async def _show_decks(self, msg, colors):
         emsg = discord.Embed()
         emsg.title = "Registered Decks"
-        emsg.description = "Select a color combination."
-        bot_msg = await self.send_embed(msg.channel, emsg)
-        option_emojis = [white_emoji, blue_emoji, black_emoji, red_emoji, green_emoji, thumbs_up_emoji]
-        for i in option_emojis:
-            await self.add_reaction(bot_msg, i)
-        selected_colors = set()
-        while True:
-            resp = await self.wait_for_reaction(option_emojis, user=msg.author, timeout=10.0, message=bot_msg)
-            if not resp:
-                await self.delete_message(bot_msg)
-                if len(selected_colors) > 0:
-                    await self._show_decks_for_colors(selected_colors, msg)
-                return
-            if resp.reaction.emoji == thumbs_up_emoji:
-                await self.delete_message(bot_msg)
-                if len(selected_colors) > 0:
-                    await self._show_decks_for_colors(selected_colors, msg)
-                return
-            else:
-                selected_colors.add(resp.reaction.emoji)
+        color_str = "".join(sorted(colors.upper()))
+        await self._show_decks_for_colors(color_str, msg)
 
-    async def _show_decks_for_colors(self, selected_colors, msg):
-        color_list = []
-        for c in selected_colors:
-            color_list.append(color_emojis[c])
-        color_str = "".join(sorted(color_list))
+    async def _show_decks_for_colors(self, color_str, msg):
         emsg = discord.Embed()
         for category in self.decks:
             if category["colors"] == color_str:
                 emsg.title = "{} Decks".format(category["color_name"])
                 category_decks = [deck["name"] for deck in category["decks"]]
                 emsg.description = "\n".join(category_decks)
-                bot_msg = await self.send_embed(msg.channel, emsg)
-                await self.add_reaction(bot_msg, return_emoji)
-                resp = await self.wait_for_reaction(return_emoji, user=msg.author, timeout=10.0, message=bot_msg)
-                if not resp:
-                    await self.remove_reaction(bot_msg, return_emoji, self.user)
-                    return
-                else:
-                    await self.delete_message(bot_msg)
-                    await self._show_decks(msg)
-                    return
+                await self.send_embed(msg.channel, emsg)
+                return
                     
         emsg.description = "No {} decks found.".format(color_str)
         await self.send_embed(msg.channel, emsg)
