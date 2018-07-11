@@ -45,6 +45,12 @@
                     "b sidisi",
                     "bidisi"
                 ]
+            },
+            {
+                "name": "Sidisi Razaketh",
+                "nicknames": [
+                    "sidisi razaketh"
+                ]
             }
         ]
     },
@@ -56,6 +62,12 @@
                 "name": "Godo",
                 "nicknames": [
                     "godo"
+                ]
+            },
+            {
+                "name": "Neheb Redstuff",
+                "nicknames": [
+                    "neheb redstuff"
                 ]
             }
         ]
@@ -160,6 +172,13 @@
                 "nicknames": [
                     "rashmi",
                     "rashmi control"
+                ]
+            },
+            {
+                "name": "Tatyova Stax",
+                "nicknames": [
+                    "tatyova",
+                    "tatyova stax"
                 ]
             }
         ]
@@ -404,6 +423,20 @@
                 "name": "Tazri Hulk",
                 "nicknames": [
                     "tazri hulk"
+                ]
+            },
+            {
+                "name": "Najeela Tempo",
+                "nicknames": [
+                    "najeela",
+                    "najeela tempo",
+                    "nah man"
+                ]
+            },
+            {
+                "name": "Scion Reanimator",
+                "nicknames": [
+                    "scion reanimator"
                 ]
             }
         ]
