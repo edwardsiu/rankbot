@@ -53,6 +53,15 @@ def user_help(token):
     emsg.add_field(name="{}lfg".format(token), inline=False, value=(
         "Add or remove yourself from the looking-for-game queue"
     ))
+    emsg.add_field(name="{}deck".format(token), inline=False, value=(
+        "Show your last played deck"
+    ))
+    emsg.add_field(name="{}set-deck".format(token), inline=False, value=(
+        "Set your last played deck"
+    ))
+    emsg.add_field(name="{}list-deck".format(token), inline=False, value=(
+        "Show all registered decks that are being tracked"
+    ))
     return emsg
 
 def admin_help(token):
@@ -84,7 +93,7 @@ def help_detail(command, usage, description):
     return emsg
 
 def get_help_detail(command, token):
-    name = "help_{}".format(command)
+    name = "help_{}".format(command.replace("-","_"))
     if name in globals():
         emsg = globals()[name](token)
         return emsg
@@ -181,13 +190,31 @@ def help_lfg(token):
     return help_detail("lfg", usage, description)
 
 def help_deck(token):
-    usage = "`{0}deck`\n`{0}deck [deck name]`".format(token)
+    usage = "`{0}deck`\n`{0}deck @user1 @user2 ...`".format(token)
     description = (
-        "Set your last played deck to `deck name`. Short hand names are allowed. If no "
-        + "deck name is specified, a list of all tracked decks will be shown. "
-        + "Use `rogue` as the deck name if the deck is not one of the registered decks."
+        "Show the last played deck of the mentioned players, or your own last played deck "
+        + "if no players are mentioned."
     )
     return help_detail("deck", usage, description)
+
+def help_set_deck(token):
+    usage = "`{}set-deck [deck name]`".format(token)
+    description = (
+        "Set your last played deck to `deck name`. Short hand names are allowed. If no "
+        + "deck name is specified or the deck is not a recognized deck, the deck will "
+        + "default to Rogue."
+    )
+    return help_detail("set-deck", usage, description)
+
+def help_list_deck(token):
+    usage = "`{0}list-deck`\n`{0}list-deck [color combo]`".format(token)
+    description = (
+        "Show a list of all registered decks tracked by Isperia. If a color combination "
+        + "is specified, shows a list of decks with the given color combination. "
+        + "Otherwise, a list of all decks will be displayed. Color combinations should "
+        + "be in WUBRG format."
+    )
+    return help_detail("list-deck", usage, description)
 
 def help_reset(token):
     usage = "`{}reset`".format(token)
