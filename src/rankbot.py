@@ -611,6 +611,14 @@ class Isperia(discord.Client):
         if len(tokens) > 1:
             input_deck_name = " ".join(tokens[1:])
             deck_nickname_id = self._transform_deck_nickname(input_deck_name)
+            # Special case the rogue deck
+            if deck_nickname_id == self._transform_deck_nickname("rogue"):
+                self.db.set_deck(msg.author.id, "Rogue", msg.server.id)
+                emsg.description = "Deck set to Rogue for **{}**".format(
+                    msg.author.name
+                )
+                await self.send_embed(msg.channel, emsg)
+                return
             if deck_nickname_id in self.deck_nicknames:
                 official_name = self.deck_nicknames[deck_nickname_id]
                 self.db.set_deck(msg.author.id, official_name, msg.server.id)
