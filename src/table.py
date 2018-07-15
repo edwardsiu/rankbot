@@ -22,7 +22,7 @@ def make_row(row, max_widths):
             tokens = str_e.split()
             ntokens = len(tokens)
             divider = ceil(ntokens/2)
-            second_row_list.append("↳" + " ".join(tokens[divider:]))
+            second_row_list.append("↳ " + " ".join(tokens[divider:]))
             row[i] = " ".join(tokens[:divider])
             need_second_row = True
         else:
