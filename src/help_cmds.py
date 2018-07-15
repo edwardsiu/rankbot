@@ -220,10 +220,10 @@ def help_list_deck(token):
     return help_detail("list-deck", usage, description)
 
 def help_stat_deck(token):
-    usage = "`{0}stat-deck`\n`{0}stat-deck [wins|winrate|popularity]".format(token)
+    usage = "`{0}stat-deck`\n`{0}stat-deck [wins|winrate|popularity]`".format(token)
     description = (
-        "Show match statistics of decks tracked by Isperia. The default sort is by total "
-        + "games played. Wins will sort by total wins. Winrate sorts by win %. Popularity "
+        "Show match statistics of decks tracked by Isperia. The default sort is by deck "
+        + "meta share. Wins will sort by total wins. Winrate sorts by win %. Popularity "
         + "sorts by number of unique players playing the deck."
     )
     return help_detail("stat-deck", usage, description)

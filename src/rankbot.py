@@ -66,7 +66,7 @@ commands = [
     "log", "register", "confirm", "deny",
     "pending", "status", "top", "all", "score", "describe", 
     "players", "remind", "lfg", "recent", 
-    "set_deck", "list_deck", "deck", "stat_deck"
+    "set_deck", "list_deck", "deck", "stat_deck",
 
     # these commands must be used in a server and can only be called by an admin
     "set_admin", "override", "disputed", "reset",
@@ -694,33 +694,39 @@ class Isperia(discord.Client):
 
         tokens = msg.content.split()
         deck_tracking_start_date = 1529132400
-        emsg = discord.Embed()
         if self.deck_data["unsynced"]:
             matches = self.db.find_matches({"timestamp": {"$gt": deck_tracking_start_date}}, msg.server.id)
-            self.deck_data["data"] = utils.process_match_stats(matches)
+            if matches:
+                self.deck_data["data"] = utils.process_match_stats(matches)
             self.deck_data["unsynced"] = False
+        if not self.deck_data["data"]:
+            emsg = discord.Embed()
+            emsg.description = "No matches found."
+            await self.send_error(msg.channel, emsg)
+            return
         # Sort by games played
         if len(tokens) == 1:
-            emsg.title = "Deck Stats (Games Played)"
+            title = "Deck Stats (Sorted by Meta Share)"
             sorted_data = utils.sort_by_entries(self.deck_data["data"])
         # Sort by total wins
         elif tokens[1].lower() == "wins":
-            emsg.title = "Deck Stats (Total Wins)"
+            title = "Deck Stats (Sorted by Total Wins)"
             sorted_data = utils.sort_by_wins(self.deck_data["data"])
         # sort by win %
         elif tokens[1].lower() == "winrate":
-            emsg.title = "Deck Stats (Win %)"
+            title = "Deck Stats (Sorted by Win %)"
             sorted_data = utils.sort_by_winrate(self.deck_data["data"])
         # sort by popularity
         elif tokens[1].lower() == "popularity":
-            emsg.title = "Deck Stats (Popularity)"
+            title = "Deck Stats (Sorted by Popularity)"
             sorted_data = utils.sort_by_unique_players(self.deck_data["data"])
         # default to games played
         else:
-            emsg.title = "Deck Stats (Games Played)"
+            title = "Deck Stats (Sorted by Meta Share)"
             sorted_data = utils.sort_by_entries(self.deck_data["data"])
-        emsg.description = utils.make_deck_table(sorted_data)
-        await self.send_embed(msg.channel, emsg)
+        text_table = utils.make_deck_table(sorted_data)
+        text_table = "```" + title + "\n" + text_table + "```"
+        await self.send_message(msg.channel, text_table)
 
     async def _show_decks(self, msg, colors):
         emsg = discord.Embed()

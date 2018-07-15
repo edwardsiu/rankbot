@@ -16,6 +16,8 @@ def process_match_stats(matches):
                     "players": {player},
                     "wins": 0
                 }
+                if not deck_name:
+                    decks[deck_name]["deck_name"] = "Unknown"
         winning_player = match["winner"]
         winning_deck = match["decks"][winning_player]
         decks[winning_deck]["wins"] += 1
@@ -23,16 +25,16 @@ def process_match_stats(matches):
     return list_decks
 
 def sort_by_entries(data):
-    return sorted(data, lambda deck: deck["entries"], reverse=True)
+    return sorted(data, key=lambda deck: deck["entries"], reverse=True)
 
 def sort_by_wins(data):
-    return sorted(data, lambda deck: deck["wins"], reverse=True)
+    return sorted(data, key=lambda deck: deck["wins"], reverse=True)
 
 def sort_by_winrate(data):
-    return sorted(data, lambda deck: float(deck["wins"])/deck["entries"], reverse=True)
+    return sorted(data, key=lambda deck: float(deck["wins"])/deck["entries"], reverse=True)
 
 def sort_by_unique_players(data):
-    return sorted(data, lambda deck: deck["players"], reverse=True)
+    return sorted(data, key=lambda deck: len(deck["players"]), reverse=True)
 
 def make_deck_table(data):
     headings = ["Deck", "Games", "Wins", "Win %", "# Pilots", "Meta %"]
@@ -50,4 +52,4 @@ def make_deck_table(data):
             "{:.3f}%".format(100*deck["entries"]/total_entries)
         ]
         rows.append(row)
-    return "```" + table.make_table(headings, rows) + "```"
+    return table.make_table(headings, rows)
