@@ -62,6 +62,9 @@ def user_help(token):
     emsg.add_field(name="{}list-deck".format(token), inline=False, value=(
         "Show all registered decks that are being tracked"
     ))
+    emsg.add_field(name="{}stat-deck".format(token), inline=False, value=(
+        "Show tracked deck statistics"
+    ))
     return emsg
 
 def admin_help(token):
@@ -215,6 +218,15 @@ def help_list_deck(token):
         + "be in WUBRG format."
     )
     return help_detail("list-deck", usage, description)
+
+def help_stat_deck(token):
+    usage = "`{0}stat-deck`\n`{0}stat-deck [wins|winrate|popularity]".format(token)
+    description = (
+        "Show match statistics of decks tracked by Isperia. The default sort is by total "
+        + "games played. Wins will sort by total wins. Winrate sorts by win %. Popularity "
+        + "sorts by number of unique players playing the deck."
+    )
+    return help_detail("stat-deck", usage, description)
 
 def help_reset(token):
     usage = "`{}reset`".format(token)

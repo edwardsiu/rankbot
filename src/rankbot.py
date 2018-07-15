@@ -14,6 +14,7 @@ from src import database
 from src.emojis import *
 from src import help_cmds
 from src import status_codes as stc
+from src import utils
 
 
 def admin(func):
@@ -65,7 +66,7 @@ commands = [
     "log", "register", "confirm", "deny",
     "pending", "status", "top", "all", "score", "describe", 
     "players", "remind", "lfg", "recent", 
-    "set_deck", "list_deck", "deck",
+    "set_deck", "list_deck", "deck", "stat_deck"
 
     # these commands must be used in a server and can only be called by an admin
     "set_admin", "override", "disputed", "reset",
@@ -94,6 +95,7 @@ class Isperia(discord.Client):
         self.logger.addHandler(handler)
         self.db = database.RankDB(config["mongodb_host"], config["mongodb_port"])
         self._load_decks()
+        self.deck_data = {"data": None, "unsynced": True}
 
     def _is_admin(self, msg):
         user = msg.author
@@ -326,6 +328,8 @@ class Isperia(discord.Client):
         emsg = discord.Embed(title="Game id: {}".format(game_id))
         emsg.description = ("Match has been accepted.\n"
             +  ", ".join(["`{0}: {1:+}`".format(i["player"], i["change"]) for i in delta]))
+        # next time the stat-deck command is called, it will refetch the data
+        self.deck_data["unsynced"] = True
         await self.send_embed(channel, emsg)
 
     @server
@@ -606,6 +610,10 @@ class Isperia(discord.Client):
     @server
     @registered
     async def set_deck(self, msg):
+        """Set the user's last played deck to the given deck name.
+        Rogue is a placeholder deck name for an unregistered deck.
+        Unrecognized deck names default to Rogue."""
+
         emsg = discord.Embed()
         tokens = msg.content.split()
         if len(tokens) > 1:
@@ -634,6 +642,9 @@ class Isperia(discord.Client):
 
     @server
     async def deck(self, msg):
+        """Display the user's last played deck. Display the mentioned users' last played
+        deck if the message contains mentions."""
+
         emsg = discord.Embed()
         if len(msg.mentions) == 0:
             users = [msg.author]
@@ -654,6 +665,9 @@ class Isperia(discord.Client):
             await self.send_embed(msg.channel, emsg)
         
     async def list_deck(self, msg):
+        """Show a list of all registered decks by color combination. If a color combination
+        is specified, filter the results by that color combination."""
+
         tokens = msg.content.split()
         if len(tokens) == 1:
             emsg = discord.Embed()
@@ -664,6 +678,49 @@ class Isperia(discord.Client):
             await self.send_embed(msg.channel, emsg)
         else:
             await self._show_decks(msg, tokens[1])
+
+    async def stat_deck(self, msg):
+        """Display statistics about tracked decks.
+        Statistics shown are:
+            1. Games played
+            2. Total Wins
+            3. Win %
+            4. Popularity (number of unique players)
+            5. Pod % (Games played/total matches)
+        Default (no args): show all decks sorted by games played
+        wins: show all decks sorted by total wins
+        winrate: show all decks sorted by winrate
+        players: show all decks sorted by popularity (unique players)"""
+
+        tokens = msg.content.split()
+        deck_tracking_start_date = 1529132400
+        emsg = discord.Embed()
+        if self.deck_data["unsynced"]:
+            matches = self.db.find_matches({"timestamp": {"$gt": deck_tracking_start_date}}, msg.server.id)
+            self.deck_data["data"] = utils.process_match_stats(matches)
+            self.deck_data["unsynced"] = False
+        # Sort by games played
+        if len(tokens) == 1:
+            emsg.title = "Deck Stats (Games Played)"
+            sorted_data = utils.sort_by_entries(self.deck_data["data"])
+        # Sort by total wins
+        elif tokens[1].lower() == "wins":
+            emsg.title = "Deck Stats (Total Wins)"
+            sorted_data = utils.sort_by_wins(self.deck_data["data"])
+        # sort by win %
+        elif tokens[1].lower() == "winrate":
+            emsg.title = "Deck Stats (Win %)"
+            sorted_data = utils.sort_by_winrate(self.deck_data["data"])
+        # sort by popularity
+        elif tokens[1].lower() == "popularity":
+            emsg.title = "Deck Stats (Popularity)"
+            sorted_data = utils.sort_by_unique_players(self.deck_data["data"])
+        # default to games played
+        else:
+            emsg.title = "Deck Stats (Games Played)"
+            sorted_data = utils.sort_by_entries(self.deck_data["data"])
+        emsg.description = utils.make_deck_table(sorted_data)
+        await self.send_embed(msg.channel, emsg)
 
     async def _show_decks(self, msg, colors):
         emsg = discord.Embed()
