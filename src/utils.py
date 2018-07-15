@@ -52,4 +52,8 @@ def make_deck_table(data):
             "{:.3f}%".format(100*deck["entries"]/total_entries)
         ]
         rows.append(row)
-    return table.make_table(headings, rows)
+    tables = []
+    table_height = 10
+    for i in range(0, len(data), table_height):
+        tables.append(table.make_table(headings, rows[i:i+table_height]))
+    return tables

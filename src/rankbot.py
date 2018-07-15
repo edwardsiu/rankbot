@@ -724,9 +724,10 @@ class Isperia(discord.Client):
         else:
             title = "Deck Stats (Sorted by Meta Share)"
             sorted_data = utils.sort_by_entries(self.deck_data["data"])
-        text_table = utils.make_deck_table(sorted_data)
-        text_table = "```" + title + "\n" + text_table + "```"
-        await self.send_message(msg.channel, text_table)
+        text_tables = utils.make_deck_table(sorted_data)
+        for text_table in text_tables:
+            text_table = "```" + title + "\n" + text_table + "```"
+            await self.send_message(msg.channel, text_table)
 
     async def _show_decks(self, msg, colors):
         emsg = discord.Embed()
