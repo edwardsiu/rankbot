@@ -20,10 +20,9 @@ def make_row(row, max_widths):
         str_e = str(e)
         if len(str_e) > max_widths[i]:
             tokens = str_e.split()
-            print(tokens)
             ntokens = len(tokens)
             divider = ceil(ntokens/2)
-            second_row_list.append(" ".join(tokens[divider:]))
+            second_row_list.append("↳" + " ".join(tokens[divider:]))
             row[i] = " ".join(tokens[:divider])
             need_second_row = True
         else:
