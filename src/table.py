@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from math import ceil
 E_H = "═"
 E_V = "║"
 C_TL = "╔"
@@ -13,7 +14,25 @@ D_C = "╬"
 
 def make_row(row, max_widths):
     columns = len(row)
-    return E_V + E_V.join(["{}".format(row[i]).ljust(max_widths[i]) for i in range(columns)]) + E_V
+    second_row_list = []
+    need_second_row = False
+    for i, e in enumerate(row):
+        str_e = str(e)
+        if len(str_e) > max_widths[i]:
+            tokens = str_e.split()
+            print(tokens)
+            ntokens = len(tokens)
+            divider = ceil(ntokens/2)
+            second_row_list.append(" ".join(tokens[divider:]))
+            row[i] = " ".join(tokens[:divider])
+            need_second_row = True
+        else:
+            second_row_list.append("")
+    first_row = E_V + E_V.join(["{}".format(row[i]).ljust(max_widths[i]) for i in range(columns)]) + E_V
+    if need_second_row:
+        second_row = E_V + E_V.join(["{}".format(second_row_list[i]).ljust(max_widths[i]) for i in range(columns)]) + E_V
+        return first_row + "\n" + second_row
+    return first_row
 
 def make_table(headings, rows):
     max_widths = []
@@ -21,7 +40,10 @@ def make_table(headings, rows):
     columns = len(headings)
     for col in range(columns):
         lengths = [len(str(row[col])) for row in all_data]
-        max_widths.append(max(lengths) + 1)
+        max_len = max(lengths)
+        if max_len > 17:
+            max_len = 17
+        max_widths.append(max_len + 1)
     top_edge = C_TL + D_T.join([E_H * width for width in max_widths]) + C_TR
     header = make_row(headings, max_widths)
     divider = D_L + D_C.join([E_H * width for width in max_widths]) + D_R
