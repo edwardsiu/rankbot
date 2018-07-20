@@ -106,6 +106,19 @@
         ]
     },
     {
+        "color_name": "Dimir",
+        "colors": "UB",
+        "decks": [
+            {
+                "name": "Circu Scepter Storm",
+                "nicknames": [
+                    "circu scepter storm",
+                    "circu"
+                ]
+            }
+        ]
+    },
+    {
         "color_name": "Selesnya",
         "colors": "GW",
         "decks": [
@@ -298,6 +311,39 @@
         ]
     },
     {
+        "color_name": "Bant",
+        "colors": "WUG",
+        "decks": [
+            {
+                "name": "Derevi Stax",
+                "nicknames": [
+                    "derevi",
+                    "derevi stax"
+                ]
+            }
+        ]
+    },
+    {
+        "color_name": "Mardu",
+        "colors": "WBR",
+        "decks": [
+            {
+                "name": "Kaalia Swingy Swangies",
+                "nicknames": [
+                    "kaalia",
+                    "kaalia swingy swangies"
+                ]
+            },
+            {
+                "name": "Marchesa Stax",
+                "nicknames": [
+                    "marduchesa",
+                    "marchesa stax"
+                ]
+            }
+        ]
+    },
+    {
         "color_name": "Sans Blue",
         "colors": "WBRG",
         "decks": [
@@ -306,6 +352,13 @@
                 "nicknames": [
                     "blood pod",
                     "tymna tana blood pod"
+                ]
+            },
+            {
+                "name": "Tymna Tana Hulk",
+                "nicknames": [
+                    "tnt hulk",
+                    "tymna tana hulk"
                 ]
             }
         ]
