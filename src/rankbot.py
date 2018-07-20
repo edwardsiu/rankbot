@@ -119,6 +119,7 @@ class Isperia(discord.Client):
             self.decks = json.load(infile)
         self.deck_nicknames = {}
         for category in self.decks:
+            category["colors"] = "".join(sorted(category["colors"]))
             for deck in category["decks"]:
                 for nickname in deck["nicknames"]:
                     self.deck_nicknames[self._transform_deck_nickname(nickname)] = deck["name"]
