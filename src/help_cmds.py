@@ -59,10 +59,10 @@ def user_help(token):
     emsg.add_field(name="{}set-deck".format(token), inline=False, value=(
         "Set your last played deck"
     ))
-    emsg.add_field(name="{}list-deck".format(token), inline=False, value=(
+    emsg.add_field(name="{}list-decks".format(token), inline=False, value=(
         "Show all registered decks that are being tracked"
     ))
-    emsg.add_field(name="{}stat-deck".format(token), inline=False, value=(
+    emsg.add_field(name="{}stat-decks".format(token), inline=False, value=(
         "Show tracked deck statistics"
     ))
     return emsg
@@ -209,24 +209,24 @@ def help_set_deck(token):
     )
     return help_detail("set-deck", usage, description)
 
-def help_list_deck(token):
-    usage = "`{0}list-deck`\n`{0}list-deck [color combo]`".format(token)
+def help_list_decks(token):
+    usage = "`{0}list-decks`\n`{0}list-decks [color combo]`".format(token)
     description = (
         "Show a list of all registered decks tracked by Isperia. If a color combination "
         + "is specified, shows a list of decks with the given color combination. "
         + "Otherwise, a list of all decks will be displayed. Color combinations should "
         + "be in WUBRG format."
     )
-    return help_detail("list-deck", usage, description)
+    return help_detail("list-decks", usage, description)
 
-def help_stat_deck(token):
-    usage = "`{0}stat-deck`\n`{0}stat-deck [wins|winrate|popularity]`".format(token)
+def help_stat_decks(token):
+    usage = "`{0}stat-decks`\n`{0}stat-decks [wins|winrate|popularity]`".format(token)
     description = (
         "Show match statistics of decks tracked by Isperia. The default sort is by deck "
         + "meta share. Wins will sort by total wins. Winrate sorts by win %. Popularity "
         + "sorts by number of unique players playing the deck."
     )
-    return help_detail("stat-deck", usage, description)
+    return help_detail("stat-decks", usage, description)
 
 def help_reset(token):
     usage = "`{}reset`".format(token)

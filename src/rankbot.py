@@ -67,7 +67,7 @@ commands = [
     "log", "register", "confirm", "deny",
     "pending", "status", "top", "all", "score", "describe", 
     "players", "remind", "lfg", "recent", 
-    "set_deck", "list_deck", "deck", "stat_deck",
+    "set_deck", "list_decks", "deck", "stat_decks",
 
     # these commands must be used in a server and can only be called by an admin
     "set_admin", "override", "disputed", "reset",
@@ -257,9 +257,9 @@ class Isperia(discord.Client):
     async def _confirm_deck(self, game_id, player, msg):
         emsg = discord.Embed()
         emsg.title = "Game id: {}".format(game_id)
-        if "deck" not in player:
+        if "deck" not in player or not player["deck"]:
             emsg.description = ("No deck specified for **{}**. ".format(msg.author.name)
-                + "Set your deck with the `{}deck` command, ".format(self.command_token)
+                + "Set your deck with the `{}set-deck` command, ".format(self.command_token)
                 + "then type `{}confirm` again.".format(self.command_token))
             await self.send_error(msg.channel, emsg)
             return False
@@ -665,7 +665,7 @@ class Isperia(discord.Client):
                 emsg.description = "No deck found"
             await self.send_embed(msg.channel, emsg)
         
-    async def list_deck(self, msg):
+    async def list_decks(self, msg):
         """Show a list of all registered decks by color combination. If a color combination
         is specified, filter the results by that color combination."""
 
@@ -680,7 +680,7 @@ class Isperia(discord.Client):
         else:
             await self._show_decks(msg, tokens[1])
 
-    async def stat_deck(self, msg):
+    async def stat_decks(self, msg):
         """Display statistics about tracked decks.
         Statistics shown are:
             1. Games played
