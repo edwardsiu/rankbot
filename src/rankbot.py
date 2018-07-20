@@ -378,7 +378,7 @@ class Isperia(discord.Client):
         await self.send_error(msg.channel, emsg)
 
     def _get_favorite_deck(self, user, server_id):
-        matches = self.db.find_recent_player_matches(user.id, limit=20, server_id=server_id)
+        matches = self.db.find_recent_player_matches(user.id, limit=10, server_id=server_id)
         user_decks = {}
         for match in matches:
             if "decks" in match:
