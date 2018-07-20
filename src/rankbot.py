@@ -3,6 +3,7 @@ from datetime import datetime
 import json
 import logging
 import logging.handlers
+import operator
 import re
 
 import asyncio
@@ -376,6 +377,21 @@ class Isperia(discord.Client):
             mention, game_id)
         await self.send_error(msg.channel, emsg)
 
+    def _get_favorite_deck(self, user, server_id):
+        matches = self.db.find_recent_player_matches(user.id, limit=20, server_id=server_id)
+        user_decks = {}
+        for match in matches:
+            if "decks" in match:
+                deck_name = match["decks"][user.id]
+                if deck_name and deck_name in user_decks:
+                    user_decks[deck_name] += 1
+                else:
+                    user_decks[deck_name] = 1
+        if user_decks:
+            return max(user_decks.items(), key=operator.itemgetter(1))[0]
+        else:
+            return None
+
     @server
     async def score(self, msg):
         if len(msg.mentions) == 0:
@@ -405,7 +421,8 @@ class Isperia(discord.Client):
             emsg.add_field(name="Win %", inline=True,
                            value="{:.3f}%".format(win_percent))
             if "deck" in member and member["deck"]:
-                emsg.add_field(name="Last Played Deck", inline=True, value=member["deck"])
+                favorite_deck = self._get_favorite_deck(user, msg.server.id)
+                emsg.add_field(name="Favorite Deck", inline=True, value=favorite_deck)
             await self.send_embed(msg.channel, emsg, color=GREEN)
 
     @server
