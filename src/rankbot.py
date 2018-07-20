@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from datetime import datetime
 import json
 import logging
@@ -402,7 +403,7 @@ class Isperia(discord.Client):
             emsg.add_field(name="Losses", inline=True, value=str(member["losses"]))
             emsg.add_field(name="Win %", inline=True,
                            value="{:.3f}%".format(win_percent))
-            if "deck" in member:
+            if "deck" in member and member["deck"]:
                 emsg.add_field(name="Last Played Deck", inline=True, value=member["deck"])
             await self.send_embed(msg.channel, emsg, color=GREEN)
 
