@@ -69,16 +69,16 @@ def user_help(token):
 
 def admin_help(token):
     emsg = discord.Embed(title="Admin Command Help")
-    emsg.add_field(name="{}add_user".format(token), inline=False, value=(
+    emsg.add_field(name="{}add-user".format(token), inline=False, value=(
         "Register the mentioned user to the league"
     ))
-    emsg.add_field(name="{}rm_user".format(token), inline=False, value=(
+    emsg.add_field(name="{}rm-user".format(token), inline=False, value=(
         "Unregister the mentioned user from the league"
     ))
     emsg.add_field(name="{}reset".format(token), inline=False, value=(
         "Reset all points and remove all matches"
     ))
-    emsg.add_field(name="{}set_admin".format(token), inline=False, value=(
+    emsg.add_field(name="{}set-admin".format(token), inline=False, value=(
         "Set the mentioned role as the league admin role"
     ))
     emsg.add_field(name="{}disputed".format(token), inline=False, value=(
