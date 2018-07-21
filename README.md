@@ -1,8 +1,7 @@
 # rankbot
 Simple discord bot to track records for cEDH ranked matches.
 
-Requirements:
-
+## Requirements
 |Package|Version|
 |---|---|
 |aiohttp|1.0.5|
@@ -19,5 +18,9 @@ Requirements:
 |websockets|3.4|
 |wheel|0.30.0|
 
-This bot uses MongoDB to store data.
-A configuration file in config/bot.yaml stores the bot token and MongoDB connection information.
+## Testing
+Create a local mongodb instance and create a bot application via Discord.
+Copy the Client Id and Client Secret into the bot.yml file. A sample configuration file can be found in config/.
+From the rankbot directory, call:  
+```python run.py```
+
