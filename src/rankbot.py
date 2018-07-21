@@ -655,7 +655,7 @@ class Isperia(discord.Client):
                 await self.send_embed(msg.channel, emsg)
                 return
         emsg.description = ("**{}** is not a recognized deck.\n".format(input_deck_name)
-            + "Defaulting to Rogue. Enter `{}list-deck` to see the available decks".format(self.command_token))
+            + "Defaulting to Rogue. Enter `{}list-decks` to see the available decks".format(self.command_token))
         self.db.set_deck(msg.author.id, "Rogue", msg.server.id)
         await self.send_embed(msg.channel, emsg)
 
