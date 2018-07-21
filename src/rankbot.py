@@ -698,6 +698,7 @@ class Isperia(discord.Client):
         else:
             await self._show_decks(msg, tokens[1])
 
+    @server
     async def stat_decks(self, msg):
         """Display statistics about tracked decks.
         Statistics shown are:
