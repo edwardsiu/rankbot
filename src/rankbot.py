@@ -728,25 +728,30 @@ class Isperia(discord.Client):
         if len(tokens) == 1:
             title = "Deck Stats (Sorted by Meta Share)"
             sorted_data = utils.sort_by_entries(self.deck_data["data"])
+            sort_column = "meta"
         # Sort by total wins
         elif tokens[1].lower() == "wins":
             title = "Deck Stats (Sorted by Total Wins)"
             sorted_data = utils.sort_by_wins(self.deck_data["data"])
+            sort_column = "wins"
         # sort by win %
         elif tokens[1].lower() == "winrate":
             title = "Deck Stats (Sorted by Win %)"
             sorted_data = utils.sort_by_winrate(self.deck_data["data"])
+            sort_column = "winrate"
         # sort by popularity
         elif tokens[1].lower() == "popularity":
             title = "Deck Stats (Sorted by Popularity)"
             sorted_data = utils.sort_by_unique_players(self.deck_data["data"])
+            sort_column = "popularity"
         # default to games played
         else:
             title = "Deck Stats (Sorted by Meta Share)"
             sorted_data = utils.sort_by_entries(self.deck_data["data"])
-        text_tables = utils.make_deck_table(sorted_data)
+            sort_column = "meta"
+        text_tables = utils.make_deck_table(sorted_data, sort_column)
         for text_table in text_tables:
-            text_table = "```" + title + "\n" + text_table + "```"
+            text_table = "```ini\n" + "{}\n".format(title) + text_table + "```"
             await self.send_message(msg.channel, text_table)
 
     async def _show_decks(self, msg, colors):

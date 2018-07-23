@@ -36,8 +36,17 @@ def sort_by_winrate(data):
 def sort_by_unique_players(data):
     return sorted(data, key=lambda deck: len(deck["players"]), reverse=True)
 
-def make_deck_table(data):
-    headings = ["Deck", "Games", "Wins", "Win %", "# Pilots", "Meta %"]
+def make_deck_table(data, sort_column):
+    if sort_column == "meta":
+        column = 5
+    elif sort_column == "wins":
+        column = 2
+    elif sort_column == "winrate":
+        column = 3
+    else:
+        column = 4
+    headings = ["Deck", "Games", "Wins", "Win %", "Pilots", "Meta %"]
+    headings[column] = "[{}]".format(headings[column])
     rows = []
     total_entries = 0
     for deck in data:
@@ -47,13 +56,13 @@ def make_deck_table(data):
             deck["deck_name"],
             deck["entries"],
             deck["wins"],
-            "{:.3f}%".format(100*deck["wins"]/deck["entries"]),
+            "{:.2f}%".format(100*deck["wins"]/deck["entries"]),
             len(deck["players"]),
-            "{:.3f}%".format(100*deck["entries"]/total_entries)
+            "{:.2f}%".format(100*deck["entries"]/total_entries)
         ]
         rows.append(row)
     tables = []
     table_height = 10
     for i in range(0, len(data), table_height):
-        tables.append(table.make_table(headings, rows[i:i+table_height]))
+        tables.append(table.make_table(headings, rows[i:i+table_height], column))
     return tables
