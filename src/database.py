@@ -1,4 +1,4 @@
-from time import time
+import time
 
 import discord
 from pymongo import MongoClient, DESCENDING
@@ -7,19 +7,19 @@ from src import status_codes as stc
 """PRECOND: All messages that are to be processed are received in a server rather than DM"""
 
 class RankDB(MongoClient):
-    def get_db(self, server_id):
-        return self[server_id]
+    def get_db(self, guild_id):
+        return self[str(guild_id)]
 
-    def get_members(self, server_id):
-        db = self.get_db(server_id)
+    def get_members(self, guild_id):
+        db = self.get_db(guild_id)
         return db.members
 
-    def get_matches(self, server_id):
-        db = self.get_db(server_id)
+    def get_matches(self, guild_id):
+        db = self.get_db(guild_id)
         return db.matches
 
-    def get_server(self, server_id):
-        db = self.get_db(server_id)
+    def get_server(self, guild_id):
+        db = self.get_db(guild_id)
         return db.server
 
     def set_admin_role(self, role_name, server_id):
@@ -50,12 +50,12 @@ class RankDB(MongoClient):
 
 
     # Player methods
-    def add_member(self, user, server_id):
-        members = self.get_members(server_id)
-        if not self.find_member(user.id, server_id):
+    def add_member(self, user, guild):
+        members = self.get_members(guild.id)
+        if not self.find_member(user, guild):
             data = {
-                "user": user.name,
-                "user_id": user.id,
+                "name": user.name,  # string
+                "user_id": user.id, # int (was string)
                 "points": 1000,
                 "pending": [],
                 "accepted": 0,
@@ -75,9 +75,9 @@ class RankDB(MongoClient):
         members = self.get_members(server_id)
         return members.find_one_and_delete({"user_id": user.id})
 
-    def find_member(self, user_id, server_id):
-        members = self.get_members(server_id)
-        return members.find_one({"user_id": user_id})
+    def find_member(self, user, guild):
+        members = self.get_members(guild.id)
+        return members.find_one({"user_id": user.id})
 
     def find_all_members(self, server_id):
         members = self.get_members(server_id)
@@ -136,29 +136,29 @@ class RankDB(MongoClient):
             "winner": winner.id,
             "players": {u.id: stc.UNCONFIRMED for u in players},
             "decks": {u.id: "" for u in players},
-            "timestamp": time()
+            "timestamp": time.time()
         }
         matches.insert_one(pending_record)
         for player in players:
             self.add_pending_match(player.id, game_id, server_id)
 
-    def delete_match(self, game_id, server_id):
-        members = self.get_members(server_id)
+    def delete_match(self, game_id, guild):
+        members = self.get_members(guild.id)
         members.update_many({"pending": game_id},{"$pull":{"pending": game_id}})
-        matches = self.get_matches(server_id)
+        matches = self.get_matches(guild.id)
         matches.delete_one({"game_id": game_id})
 
-    def find_match(self, game_id, server_id):
-        matches = self.get_matches(server_id)
+    def find_match(self, game_id, guild):
+        matches = self.get_matches(guild.id)
         return matches.find_one({"game_id": game_id})
 
-    def find_matches(self, match_filter, server_id):
-        matches = self.get_matches(server_id)
-        return matches.find(match_filter)
+    def find_matches(self, query, guild, limit=None):
+        matches = self.get_matches(guild.id)
+        return matches.find(query, limit=limit, sort=[("timestamp", DESCENDING)])
 
-    def find_recent_player_matches(self, user_id, limit, server_id):
-        matches = self.get_matches(server_id)
-        return matches.find({"players.{}".format(user_id): {"$exists": True}}, limit=limit, sort=[("timestamp", DESCENDING)])
+    def find_member_matches(self, member, guild, limit=None):
+        return self.find_matches(
+            {"players.{}".format(member["user_id"]): {"$exists": True}}, guild, limit)
 
     def find_player_pending(self, user_id, server_id):
         player = self.find_member(user_id, server_id)

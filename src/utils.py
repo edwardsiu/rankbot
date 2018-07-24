@@ -1,4 +1,39 @@
 from src import table
+import re
+
+DEFAULT_LIMIT = 10
+
+# message processing
+def get_target_users(ctx):
+    """Returns the users the command should be applied to. Commands that apply to users
+    generally apply to the mentioned users, or if no users are mentioned, applies 
+    to the author of the message."""
+
+    if len(ctx.message.mentions):
+        return ctx.message.mentions
+    return [ctx.message.author]
+
+def get_avatar(user):
+    if not user.avatar_url:
+        return user.default_avatar_url
+    return user.avatar_url
+
+def get_limit(ctx):
+    """Returns the number of elements to fetch from the database.
+    Limit is based on the first arg of the command context."""
+
+    if not len(ctx.args):
+        return DEFAULT_LIMIT
+    arg = ctx.args[0]
+    if arg.isdigit():
+        return int(re.match(r"\d*", arg).group())
+    elif arg.lower() == "all":
+        return None
+    else:
+        return DEFAULT_LIMIT
+
+def code_block(string):
+    return "```" + string + "```"
 
 # deck data processing
 def process_match_stats(matches):
