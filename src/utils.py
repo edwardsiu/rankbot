@@ -18,13 +18,13 @@ def get_avatar(user):
         return user.default_avatar_url
     return user.avatar_url
 
-def get_limit(ctx):
+def get_limit(args):
     """Returns the number of elements to fetch from the database.
     Limit is based on the first arg of the command context."""
 
-    if not len(ctx.args):
+    if not len(args):
         return DEFAULT_LIMIT
-    arg = ctx.args[0]
+    arg = args[0]
     if arg.isdigit():
         return int(re.match(r"\d*", arg).group())
     elif arg.lower() == "all":

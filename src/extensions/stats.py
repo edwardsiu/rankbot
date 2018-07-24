@@ -2,6 +2,9 @@ import discord
 from discord.ext import commands
 import re
 
+from src import checks
+from src import embed
+from src import status_codes as stc
 from src import table
 from src import utils
 
@@ -11,90 +14,84 @@ class Stats():
         self.deck_tracking_start_date = 1529132400
 
     @commands.group()
+    @commands.guild_only()
     async def info(self, ctx):
-        if not self.bot.is_in_server(ctx):
-            return
+        matches_collection = self.bot.db.get_matches(ctx.message.guild.id)
+        pending = matches_collection.count({"status": stc.PENDING})
+        accepted = matches_collection.count({"status": stc.ACCEPTED})
+        members_collection = self.bot.db.get_members(ctx.message.guild.id)
+        nmembers = members_collection.count()
 
-        emsg = discord.Embed()
-        pending, accepted = self.bot.db.count_matches(ctx.message.server.id)
-        num_members = self.bot.db.count_members(ctx.message.server.id)
-        emsg.title="{} League".format(ctx.message.server.name)
-        emsg.add_field(name="Players", inline=True, value=str(num_members))
-        emsg.add_field(name="Games Played", inline=True, value=str(accepted))
-        emsg.add_field(name="Unconfirmed Games", inline=True, value=str(pending))
-        emsg.add_field(name="Link", inline=True, value=(
-            "https://discordapp.com/oauth2/authorize?client_id={}&scope=bot&permissions=0".format(self.bot.client_id)
-        ))
-        await self.bot.send_embed(ctx.message.channel, emsg)
+        emsg = embed.info(title="{} League".format(ctx.message.guild.name)) \
+                    .add_field(name="Players", value=str(nmembers)) \
+                    .add_field(name="Games Played", value=str(accepted)) \
+                    .add_field(name="Unconfirmed Games", value=str(pending)) \
+                    .add_field(name="Link", value=(
+            "https://discordapp.com/oauth2/authorize?client_id={}&scope=bot&permissions=0".format(self.bot.client_id))
+        )
+        await ctx.send(embed=emsg)
         
 
     @commands.group()
+    @commands.guild_only()
     async def top(self, ctx):
-        if not self.bot.is_in_server(ctx):
-            return
-
         if ctx.invoked_subcommand is None:
             limit = utils.DEFAULT_LIMIT
-            players = self.bot.db.find_top_players(limit, ctx.message.server.id, "points")
-            emsg = discord.Embed()
-            emsg.description = "\n".join(["{}. **{}** with {} points".format(ix + 1, player['user'], player['points'])
+            players = self.bot.db.find_top_members_by("points", ctx.message.guild, limit=limit)
+            emsg = embed.msg(
+                title = "Top Players by Points",
+                description = "\n".join(["{}. **{}** with {} points".format(ix + 1, player['name'], player['points'])
                                       for ix, player in enumerate(players)])
-            await self.bot.send_embed(ctx.message.channel, emsg)
+            )
+            await ctx.send(embed=emsg)
 
     @top.command(name='wins')
-    async def _top_wins(self, ctx):
-        if not self.bot.is_in_server(ctx):
-            return
-        
-        limit = utils.get_limit(ctx)
-        players = self.bot.db.find_top_players(limit, ctx.message.server.id, "wins")
-        emsg = discord.Embed()
-        emsg.title = "Top Players by Points"
-        emsg.description = "\n".join(["{}. **{}** with {} wins".format(ix + 1, player['user'], player['wins'])
+    async def _top_wins(self, ctx, *args):
+        limit = utils.get_limit(args)
+        players = self.bot.db.find_top_members_by("wins", ctx.message.guild, limit=limit)
+        emsg = embed.msg(
+            title = "Top Players by Total Wins",
+            description = "\n".join(["{}. **{}** with {} wins".format(ix + 1, player['name'], player['wins'])
                                       for ix, player in enumerate(players)])
-        await self.bot.send_embed(ctx.message.channel, emsg)
+        )
+        await ctx.send(embed=emsg)
 
 
     @top.command(name='games')
-    async def _top_games(self, ctx):
-        if not self.bot.is_in_server(ctx):
-            return
-        
-        limit = utils.get_limit(ctx)
-        players = self.bot.db.find_top_players(limit, ctx.message.server.id, "games")
-        emsg = discord.Embed()
-        emsg.title = "Top Players by Games Played"
-        emsg.description = "\n".join(["{}. **{}** with {} games".format(ix + 1, player['user'], player['accepted'])
+    async def _top_games(self, ctx, *args):
+        limit = utils.get_limit(args)
+        players = self.bot.db.find_top_members_by("accepted", ctx.message.guild, limit=limit)
+        emsg = embed.msg(
+            title = "Top Players by Games Played",
+            description = "\n".join(["{}. **{}** with {} games".format(ix + 1, player['name'], player['accepted'])
                                       for ix, player in enumerate(players)])
-        await self.bot.send_embed(ctx.message.channel, emsg)
+        )
+        await ctx.send(embed=emsg)
 
     @top.command(name='points')
-    async def _top_points(self, ctx):
-        if not self.bot.is_in_server(ctx):
-            return
-        
-        limit = utils.get_limit(ctx)
-        players = self.bot.db.find_top_players(limit, ctx.message.server.id, "points")
-        emsg = discord.Embed()
-        emsg.title = "Top Players by Points"
-        emsg.description = "\n".join(["{}. **{}** with {} points".format(ix + 1, player['user'], player['points'])
+    async def _top_points(self, ctx, *args):
+        limit = utils.get_limit(args)
+        players = self.bot.db.find_top_members_by("points", ctx.message.guild, limit=limit)
+        emsg = embed.msg(
+            title = "Top Players by Points",
+            description = "\n".join(["{}. **{}** with {} points".format(ix + 1, player['name'], player['points'])
                                       for ix, player in enumerate(players)])
-        await self.bot.send_embed(ctx.message.channel, emsg)
+        )
+        await ctx.send(embed=emsg)
 
 
     @commands.group()
+    @commands.guild_only()
     async def stats(self, ctx):
-        if not self.bot.is_in_server(ctx):
-            return
-
         if ctx.invoked_subcommand is None:
-            emsg = discord.Embed()
-            emsg.description = "Not enough args. Enter `{}help stats` for more info."
-            await self.bot.send_error(ctx.message.channel, emsg)
+            emsg = embed.error(
+                description = "Not enough args. Enter `{}help stats` for more info."
+            )
+            await ctx.send(embed=emsg)
             return
 
     def _make_deck_table(self, table_title, data):
-        headings = ["Deck", "Games", "Wins", "Win %", "# Pilots", "Meta %"]
+        columns = ["Deck", "Games", "Wins", "Win %", "# Pilots", "Meta %"]
         rows = []
         total_entries = 0
         for deck in data:

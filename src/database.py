@@ -67,10 +67,6 @@ class RankDB(MongoClient):
             return True
         return False
 
-    def count_members(self, server_id):
-        members = self.get_members(server_id)
-        return members.count()
-
     def delete_member(self, user, server_id):
         members = self.get_members(server_id)
         return members.find_one_and_delete({"user_id": user.id})
@@ -79,13 +75,13 @@ class RankDB(MongoClient):
         members = self.get_members(guild.id)
         return members.find_one({"user_id": user.id})
 
-    def find_all_members(self, server_id):
-        members = self.get_members(server_id)
-        return members.find()
+    def find_members(self, query, guild, limit=None):
+        members = self.get_members(guild.id)
+        return members.find(query, limit=limit)
 
-    def find_top_players(self, limit, server_id, key):
-        members = self.get_members(server_id)
-        return members.find({"accepted": {"$gt": 4}}, limit=limit, sort=[(key, DESCENDING)])
+    def find_top_members_by(self, sort_key, guild, limit=None):
+        members = self.get_members(guild.id)
+        return members.find({"accepted": {"$gt": 4}}, limit=limit, sort=[(sort_key, DESCENDING)])
 
 
     # Match methods
