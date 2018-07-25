@@ -18,35 +18,28 @@ class RankDB(MongoClient):
         db = self.get_db(guild_id)
         return db.matches
 
-    def get_server(self, guild_id):
+    def get_guild(self, guild_id):
         db = self.get_db(guild_id)
         return db.server
 
-    def set_admin_role(self, role_name, server_id):
-        server_settings = self.get_server(server_id)
-        if not server_settings.find_one({}):
-            server_settings.insert_one({"admin": role_name})
+    def set_admin_role(self, role_name, guild):
+        settings_collection = self.get_guild(guild.id)
+        if not settings_collection.find_one({}):
+            settings_collection.insert_one({"admin": role_name})
         else:
-            server_settings.update_one(
+            settings_collection.update_one(
                 {},
                 {
                     "$set": {"admin": role_name}
                 }
             )
 
-    def get_admin_role(self, server):
-        server_settings = self.get_server(server.id)
-        setting = server_settings.find_one({})
-        if not setting or "admin" not in setting:
+    def get_admin_role(self, guild):
+        settings_collection = self.get_guild(guild.id)
+        guild_config = settings_collection.find_one({})
+        if not guild_config or "admin" not in guild_config:
             return None
-        return discord.utils.get(server.roles, name=setting["admin"])
-
-    def is_admin(self, user_roles, server_id):
-        server_settings = self.get_server(server_id)
-        setting = server_settings.find_one({})
-        if not setting or not setting["admin"]:
-            return False
-        return setting["admin"] in user_roles
+        return discord.utils.get(guild.roles, name=guild_config["admin"])
 
 
     # Player methods
@@ -75,11 +68,11 @@ class RankDB(MongoClient):
         members = self.get_members(guild.id)
         return members.find_one({"user_id": user.id})
 
-    def find_members(self, query, guild, limit=None):
+    def find_members(self, query, guild, limit=0):
         members = self.get_members(guild.id)
         return members.find(query, limit=limit)
 
-    def find_top_members_by(self, sort_key, guild, limit=None):
+    def find_top_members_by(self, sort_key, guild, limit=0):
         members = self.get_members(guild.id)
         return members.find({"accepted": {"$gt": 4}}, limit=limit, sort=[(sort_key, DESCENDING)])
 
@@ -148,20 +141,13 @@ class RankDB(MongoClient):
         matches = self.get_matches(guild.id)
         return matches.find_one({"game_id": game_id})
 
-    def find_matches(self, query, guild, limit=None):
+    def find_matches(self, query, guild, limit=0):
         matches = self.get_matches(guild.id)
         return matches.find(query, limit=limit, sort=[("timestamp", DESCENDING)])
 
-    def find_member_matches(self, member, guild, limit=None):
+    def find_member_matches(self, member, guild, limit=0):
         return self.find_matches(
             {"players.{}".format(member["user_id"]): {"$exists": True}}, guild, limit)
-
-    def find_player_pending(self, user_id, server_id):
-        player = self.find_member(user_id, server_id)
-        if not player:
-            return []
-        matches = [self.find_match(game_id, server_id) for game_id in player["pending"]]
-        return matches
 
     def reset_matches(self, server_id):
         matches = self.get_matches(server_id)

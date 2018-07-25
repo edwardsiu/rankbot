@@ -1,74 +1,72 @@
 import discord
 from discord.ext import commands
+from src import embed
 
 class Help():
     def __init__(self, bot):
         self.bot = bot
 
-    def _user_help(self, token):
-        emsg = discord.Embed(title="Command Help")
-        emsg.add_field(name="{}help".format(token), inline=False, value=(
-            "Show the command list. `{}help [command]` for detail\n\n".format(token)
+    def _user_help(self):
+        emsg = embed.info(title="Command Help")
+        emsg.add_field(name="help", inline=False, value=(
+            f"Show the command list. `{self.bot.command_prefix}help [command]` for detail"
         ))
-        emsg.add_field(name="{}info".format(token), inline=False, value=(
+        emsg.add_field(name="info", inline=False, value=(
             "Show an overview of the league"
         ))
-        emsg.add_field(name="{}register".format(token), inline=False, value=(
+        emsg.add_field(name="register", inline=False, value=(
             "Register to the server ranked league"
         ))
-        emsg.add_field(name="{}log".format(token), inline=False, value=(
+        emsg.add_field(name="log", inline=False, value=(
             "Log a match result into the ranked system"
         ))
-        emsg.add_field(name="{}confirm".format(token), inline=False, value=(
+        emsg.add_field(name="confirm", inline=False, value=(
             "Verify the most recent match result"
         ))
-        emsg.add_field(name="{}deny".format(token), inline=False, value=(
+        emsg.add_field(name="deny", inline=False, value=(
             "Dispute the most recent match result"
         ))
-        emsg.add_field(name="{}status".format(token), inline=False, value=(
+        emsg.add_field(name="status", inline=False, value=(
             "Check the details of the most recent match"
         ))
-        emsg.add_field(name="{}pending".format(token), inline=False, value=(
+        emsg.add_field(name="pending", inline=False, value=(
             "List your pending unconfirmed matches"
         ))
-        emsg.add_field(name="{}remind".format(token), inline=False, value=(
+        emsg.add_field(name="remind", inline=False, value=(
             "Remind players to confirm your pending matches"
         ))
-        emsg.add_field(name="{}top".format(token), inline=False, value=(
+        emsg.add_field(name="top", inline=False, value=(
             "List the top players in the league"
         ))
-        emsg.add_field(name="{}score".format(token), inline=False, value=(
-            "Show your ranked score card"
+        emsg.add_field(name="profile", inline=False, value=(
+            "Show your league profile card"
         ))
-        emsg.add_field(name="{}history".format(token), inline=False, value=(
+        emsg.add_field(name="history", inline=False, value=(
             "Show your recent match results"
         ))
-        emsg.add_field(name="{}use".format(token), inline=False, value=(
+        emsg.add_field(name="use", inline=False, value=(
             "Set your current deck"
         ))
-        emsg.add_field(name="{}decks".format(token), inline=False, value=(
+        emsg.add_field(name="decks", inline=False, value=(
             "Show all registered decks that are being tracked"
         ))
-        emsg.add_field(name="{}stats".format(token), inline=False, value=(
+        emsg.add_field(name="stat", inline=False, value=(
             "Show league statistics"
         ))
         return emsg
 
-    def _admin_help(self, token):
+    def _admin_help(self):
         emsg = discord.Embed(title="Admin Command Help")
-        emsg.add_field(name="{}admin".format(token), inline=False, value=(
+        emsg.add_field(name="admin", inline=False, value=(
             "Set the mentioned role as the league admin role"
         ))
-        emsg.add_field(name="{}reset".format(token), inline=False, value=(
-            "Reset all points and remove all matches"
-        ))
-        emsg.add_field(name="{}disputed".format(token), inline=False, value=(
+        emsg.add_field(name="disputed", inline=False, value=(
             "List all disputed matches"
         ))
-        emsg.add_field(name="{}accept".format(token), inline=False, value=(
+        emsg.add_field(name="accept", inline=False, value=(
             "Override a disputed match by confirming it"
         ))
-        emsg.add_field(name="{}reject".format(token), inline=False, value=(
+        emsg.add_field(name="reject", inline=False, value=(
             "Override a disputed match by deleting it"
         ))
         return emsg
@@ -83,10 +81,10 @@ class Help():
     async def help(self, ctx):
         user = ctx.message.author
         if ctx.invoked_subcommand is None:
-            emsg = self._user_help(ctx.prefix)
+            emsg = self._user_help()
             await self.bot.send_help(user, emsg)
             if self.bot.is_admin(ctx):
-                emsg = self._admin_help(ctx.prefix)
+                emsg = self._admin_help()
                 await self.bot.send_help(user, emsg)
 
     @help.command(name='log')

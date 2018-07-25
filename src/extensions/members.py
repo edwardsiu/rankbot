@@ -16,7 +16,7 @@ class Members():
     @commands.command()
     @commands.guild_only()
     async def register(self, ctx):
-        """Register the author to the league"""
+        """Register to this guild's EDH league."""
             
         user = ctx.message.author
         guild = ctx.message.guild
@@ -58,7 +58,7 @@ class Members():
             emsg.add_field(name="Last Played Deck", value=player["deck"])
 
 
-    def _get_score_card(self, user, guild):
+    def _get_profile_card(self, user, guild):
         player = self.bot.db.find_member(user, guild)
         if not player:
             return None
@@ -76,17 +76,24 @@ class Members():
 
     @commands.command()
     @commands.guild_only()
-    async def score(self, ctx):
+    async def profile(self, ctx):
+        """Display the profile of a registered player.
+        
+        Usage:
+          profile
+          profile @user1
+        """
+
         users = utils.get_target_users(ctx)
         for user in users:
-            score_card = self._get_score_card(user, ctx.message.guild)
-            if not score_card:
+            profile_card = self._get_profile_card(user, ctx.message.guild)
+            if not profile_card:
                 emsg = embed.error(
                     description = "**{}** is not a registered player".format(user.name)
                 )
                 await ctx.send(embed=emsg)
                 continue
-            await ctx.send(embed=score_card)
+            await ctx.send(embed=profile_card)
 
 
     @commands.command()

@@ -28,7 +28,7 @@ def get_limit(args):
     if arg.isdigit():
         return int(re.match(r"\d*", arg).group())
     elif arg.lower() == "all":
-        return None
+        return 0
     else:
         return DEFAULT_LIMIT
 
@@ -70,25 +70,3 @@ def sort_by_winrate(data):
 
 def sort_by_unique_players(data):
     return sorted(data, key=lambda deck: len(deck["players"]), reverse=True)
-
-def make_deck_table(data):
-    headings = ["Deck", "Games", "Wins", "Win %", "# Pilots", "Meta %"]
-    rows = []
-    total_entries = 0
-    for deck in data:
-        total_entries += deck["entries"]
-    for deck in data:
-        row = [
-            deck["deck_name"],
-            deck["entries"],
-            deck["wins"],
-            "{:.3f}%".format(100*deck["wins"]/deck["entries"]),
-            len(deck["players"]),
-            "{:.3f}%".format(100*deck["entries"]/total_entries)
-        ]
-        rows.append(row)
-    tables = []
-    table_height = 10
-    for i in range(0, len(data), table_height):
-        tables.append(table.make_table(headings, rows[i:i+table_height]))
-    return tables

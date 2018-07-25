@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+import logging
 import re
 
 from src import checks
@@ -22,12 +23,13 @@ class Stats():
         members_collection = self.bot.db.get_members(ctx.message.guild.id)
         nmembers = members_collection.count()
 
-        emsg = embed.info(title="{} League".format(ctx.message.guild.name)) \
+        emsg = embed.info(title=f"{ctx.message.guild.name} League") \
                     .add_field(name="Players", value=str(nmembers)) \
                     .add_field(name="Games Played", value=str(accepted)) \
                     .add_field(name="Unconfirmed Games", value=str(pending)) \
                     .add_field(name="Link", value=(
-            "https://discordapp.com/oauth2/authorize?client_id={}&scope=bot&permissions=0".format(self.bot.client_id))
+            f"https://discordapp.com/oauth2/authorize?" \
+            f"client_id={self.bot.client_id}&scope=bot&permissions=0")
         )
         await ctx.send(embed=emsg)
         
@@ -40,7 +42,7 @@ class Stats():
             players = self.bot.db.find_top_members_by("points", ctx.message.guild, limit=limit)
             emsg = embed.msg(
                 title = "Top Players by Points",
-                description = "\n".join(["{}. **{}** with {} points".format(ix + 1, player['name'], player['points'])
+                description = "\n".join([f"{ix+1}. **{player['name']}** with {player['points']} points"
                                       for ix, player in enumerate(players)])
             )
             await ctx.send(embed=emsg)
@@ -51,7 +53,7 @@ class Stats():
         players = self.bot.db.find_top_members_by("wins", ctx.message.guild, limit=limit)
         emsg = embed.msg(
             title = "Top Players by Total Wins",
-            description = "\n".join(["{}. **{}** with {} wins".format(ix + 1, player['name'], player['wins'])
+            description = "\n".join([f"{ix+1}. **{player['name']}** with {player['wins']} wins"
                                       for ix, player in enumerate(players)])
         )
         await ctx.send(embed=emsg)
@@ -63,7 +65,7 @@ class Stats():
         players = self.bot.db.find_top_members_by("accepted", ctx.message.guild, limit=limit)
         emsg = embed.msg(
             title = "Top Players by Games Played",
-            description = "\n".join(["{}. **{}** with {} games".format(ix + 1, player['name'], player['accepted'])
+            description = "\n".join([f"{ix+1}. **{player['name']}** with {player['accepted']} games"
                                       for ix, player in enumerate(players)])
         )
         await ctx.send(embed=emsg)
@@ -74,7 +76,7 @@ class Stats():
         players = self.bot.db.find_top_members_by("points", ctx.message.guild, limit=limit)
         emsg = embed.msg(
             title = "Top Players by Points",
-            description = "\n".join(["{}. **{}** with {} points".format(ix + 1, player['name'], player['points'])
+            description = "\n".join([f"{ix+1}. **{player['name']}** with {player['points']} points"
                                       for ix, player in enumerate(players)])
         )
         await ctx.send(embed=emsg)
@@ -82,44 +84,44 @@ class Stats():
 
     @commands.group()
     @commands.guild_only()
-    async def stats(self, ctx):
+    async def stat(self, ctx):
         if ctx.invoked_subcommand is None:
             emsg = embed.error(
-                description = "Not enough args. Enter `{}help stats` for more info."
+                description = f"Not enough args. Enter `{ctx.prefix}help stat` for more info."
             )
             await ctx.send(embed=emsg)
             return
 
-    def _make_deck_table(self, table_title, data):
-        columns = ["Deck", "Games", "Wins", "Win %", "# Pilots", "Meta %"]
+    def _make_tables(self, title, data, syntax=None):
+        columns = ["Deck", "Meta %", "Wins", "Win %", "Pilots"]
         rows = []
-        total_entries = 0
+        total_entries = sum([deck["entries"] for deck in data])
         for deck in data:
-            total_entries += deck["entries"]
-        for deck in data:
+            meta_percent = 100*deck["entries"]/total_entries
+            win_percent =100*deck["wins"]/deck["entries"]
             row = [
                 deck["deck_name"],
-                deck["entries"],
-                deck["wins"],
-                "{:.3f}%".format(100*deck["wins"]/deck["entries"]),
-                len(deck["players"]),
-                "{:.3f}%".format(100*deck["entries"]/total_entries)
+                f"{meta_percent:.3f}% ({deck['entries']})",
+                str(deck["wins"]),
+                f"{win_percent:.3f}%",
+                str(len(deck["players"]))
             ]
             rows.append(row)
-        tables = []
-        table_height = 10
-        for i in range(0, len(data), table_height):
-            tables.append(table.make_table(table_title, headings, rows[i:i+table_height]))
-        return tables
+        rows_per_table = 10
+        _tables = [
+            str(
+                table.Table(title, columns, rows[i:i+rows_per_table], syntax=syntax)
+            ) for i in range(0, len(data), rows_per_table)
+        ]
+        return _tables
 
-    async def _display_deck_table(self, ctx, table_title, deck_data):
-        text_tables = self._make_deck_table(table_title, deck_data)
-        for text_table in text_tables:
-            await self.bot.send_message(ctx.message.channel, utils.code_block(text_table))
+    async def _send_tables(self, ctx, _tables):
+        for _table in _tables:
+            await ctx.send(_table)
 
 
-    @stats.group()
-    async def decks(self, ctx):
+    @stat.command()
+    async def decks(self, ctx, *args):
         """Display statistics about tracked decks.
         Statistics shown are:
             1. Games played
@@ -134,39 +136,32 @@ class Stats():
 
         if self.bot.deck_data["unsynced"]:
             matches = self.bot.db.find_matches(
-                {"timestamp": {"$gt": self.deck_tracking_start_date}}, ctx.message.server.id)
+                {"timestamp": {"$gt": self.deck_tracking_start_date}}, ctx.message.guild)
             if matches:
                 self.bot.deck_data["data"] = utils.process_match_stats(matches)
             self.bot.deck_data["unsynced"] = False
 
         if not self.bot.deck_data["data"]:
-            emsg = discord.Embed()
-            emsg.description = "No matches found."
-            await self.bot.send_error(ctx.message.channel, emsg)
+            emsg = embed.error(description="No matches found")
+            await ctx.send(embed=emsg)
             return
 
-        if ctx.invoked_subcommand is None:
+        if not args:
             sorted_data = utils.sort_by_entries(self.bot.deck_data["data"])
-            await self._display_deck_table(ctx, "Deck Stats (Sorted by Meta Share)", sorted_data)
-            return
-
-
-    @decks.command(name='wins')
-    async def _stats_decks_wins(self, ctx):
-        sorted_data = utils.sort_by_wins(self.bot.deck_data["data"])
-        await self._display_deck_table(ctx, "Deck Stats (Sorted by Total Wins)", sorted_data)
-
-
-    @decks.command(name='winrate')
-    async def _stats_decks_winrate(self, ctx):
-        sorted_data = utils.sort_by_winrate(self.bot.deck_data["data"])
-        await self._display_deck_table(ctx, "Deck Stats (Sorted by Win %)", sorted_data)
-
-
-    @decks.command(name='popularity')
-    async def _stats_decks_popularity(self, ctx):
-        sorted_data = utils.sort_by_unique_players(self.bot.deck_data["data"])
-        await self._display_deck_table(ctx, "Deck Stats (Sorted by Popularity)", sorted_data)
+            _tables = self._make_tables("Deck Stats [Meta % ▼]", sorted_data, "ini")
+        elif args[0].lower() == "wins":
+            sorted_data = utils.sort_by_wins(self.bot.deck_data["data"])
+            _tables = self._make_tables("Deck Stats [Wins ▼]", sorted_data, "ini")
+        elif args[0].lower() == "winrate":
+            sorted_data = utils.sort_by_winrate(self.bot.deck_data["data"])
+            _tables = self._make_tables("Deck Stats [Win % ▼]", sorted_data, "ini")
+        elif args[0].lower() == "popularity":
+            sorted_data = utils.sort_by_unique_players(self.bot.deck_data["data"])
+            _tables = self._make_tables("Deck Stats [Popularity ▼]", sorted_data, "ini")
+        else:
+            sorted_data = utils.sort_by_entries(self.bot.deck_data["data"])
+            _tables = self._make_tables("Deck Stats [Meta % ▼]", sorted_data, "ini")
+        await self._send_tables(ctx, _tables)
 
 
 def setup(bot):
