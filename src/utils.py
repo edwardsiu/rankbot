@@ -39,22 +39,22 @@ def code_block(string):
 def process_match_stats(matches):
     decks = {}
     for match in matches:
-        for player in match["decks"]:
-            deck_name = match["decks"][player]
+        for member_id in match["decks"]:
+            deck_name = match["decks"][member_id]
             if deck_name in decks:
                 decks[deck_name]["entries"] += 1
-                decks[deck_name]["players"].add(player)
+                decks[deck_name]["players"].add(member_id)
             else:
                 decks[deck_name] = {
                     "deck_name": deck_name,
                     "entries": 1,
-                    "players": {player},
+                    "players": {member_id},
                     "wins": 0
                 }
                 if not deck_name:
                     decks[deck_name]["deck_name"] = "Unknown"
-        winning_player = match["winner"]
-        winning_deck = match["decks"][winning_player]
+        winner_id = match["winner"]
+        winning_deck = match["decks"][str(winner_id)]
         decks[winning_deck]["wins"] += 1
     list_decks = [decks[i] for i in decks]
     return list_decks

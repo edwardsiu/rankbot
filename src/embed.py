@@ -1,5 +1,5 @@
 import discord
-from src.colors import C_OK, C_INFO, C_ERR
+from src.colors import C_OK, C_INFO, C_SUCCESS, C_ERR
 
 def info(**kwargs):
     emsg = discord.Embed(color=C_INFO, **kwargs)
@@ -7,6 +7,10 @@ def info(**kwargs):
 
 def msg(**kwargs):
     emsg = discord.Embed(color=C_OK, **kwargs)
+    return emsg
+
+def success(**kwargs):
+    emsg = discord.Embed(color=C_SUCCESS, **kwargs)
     return emsg
 
 def error(**kwargs):

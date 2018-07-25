@@ -2,6 +2,7 @@ from datetime import datetime
 import discord
 from discord.ext import commands
 import hashids
+from src import checks
 from src.colors import *
 from src.emojis import confirm_emoji, unconfirm_emoji, trophy_emoji
 from src import status_codes as stc
@@ -9,11 +10,11 @@ from src import status_codes as stc
 class Matches():
     def __init__(self, bot):
         self.bot = bot
+        self.hasher = hashids.Hashids(salt="cEDH league")
 
 
     def _create_pending_game(self, msg, winner, players):
-        hasher = hashids.Hashids(salt="cEDH league")
-        game_id = self.bot.db.get_game_id(hasher, msg.id, msg.server.id)
+        game_id = self.bot.db.get_game_id(self.hasher, msg.id, msg.server.id)
         # create a pending game record in the database for players
         self.bot.db.add_match(game_id, winner, players, msg.server.id)
         return game_id
@@ -224,23 +225,20 @@ class Matches():
 
 
     @commands.command()
+    @commands.guild_only()
+    @commands.check(checks.is_admin)
     async def accept(self, ctx):
-        if not self.bot.is_in_server(ctx):
-            return
-        if not self.bot.is_admin(ctx):
-            return
-
         match = self._get_match_to_override(ctx)
         if not match:
             return
         for player_id in match["players"]:
-            self.bot.db.remove_pending_match(player_id, match["game_id"], ctx.message.server.id)
-        self.bot.db.confirm_all_players(match["players"], match["game_id"], ctx.message.server.id)
+            self.bot.db.remove_pending_match(match["game_id"], int(player_id), ctx.message.guild)
+        self.bot.db.confirm_all_players(match["game_id"], match["players"], ctx.message.guild)
         delta = self.bot.db.check_match_status(
-            match["game_id"], ctx.message.server.id)
+            match["game_id"], ctx.message.guild)
         if not delta:
             return
-        await self._show_delta(match["game_id"], delta, ctx.message.channel)
+        await self._show_delta(match["game_id"], delta, ctx)
         
 
     @commands.command()
