@@ -1,51 +1,35 @@
 from datetime import datetime
 import discord
 from discord.ext import commands
-import hashids
 from src import checks
-from src.colors import *
+from src import embed
 from src.emojis import confirm_emoji, unconfirm_emoji, trophy_emoji
 from src import status_codes as stc
 
 class Matches():
     def __init__(self, bot):
         self.bot = bot
-        self.hasher = hashids.Hashids(salt="cEDH league")
-
-
-    def _create_pending_game(self, msg, winner, players):
-        game_id = self.bot.db.get_game_id(self.hasher, msg.id, msg.server.id)
-        # create a pending game record in the database for players
-        self.bot.db.add_match(game_id, winner, players, msg.server.id)
-        return game_id
 
 
     async def _are_players_registered(self, ctx, players):
         for user in players:
-            if not self.bot.db.find_member(user.id, ctx.message.server.id):
-                emsg = discord.Embed()
-                emsg.description = "**{}** is not a registered player".format(user.name)
-                await self.bot.send_error(ctx.message.channel, emsg)
+            if not self.bot.db.find_member(user.id, ctx.message.guild):
+                await ctx.send(embed=embed.error(description=f"**{user.name}** is not a registered player."))
                 return False
         return True
 
 
     async def _has_enough_players(self, ctx, players):
         if len(players) != 4:
-            emsg = discord.Embed()
-            emsg.description = "There must be exactly 3 other players to log a result."
-            await self.bot.send_error(ctx.message.channel, emsg)
+            await ctx.send(embed=embed.error(description="There must be exactly 3 other players to log a result."))
             return False
         return True
 
 
     @commands.command()
+    @commands.guild_only()
+    @commands.check(checks.is_registered)
     async def log(self, ctx):
-        if not self.bot.is_in_server(ctx):
-            return
-        if not await self.bot.is_registered(ctx):
-            return
-
         winner = ctx.message.author
         losers = ctx.message.mentions
         players = [winner] + losers
@@ -55,13 +39,13 @@ class Matches():
         if not self._has_enough_players(ctx, players):
             return
 
-        game_id = self._create_pending_game(ctx.message, winner, players)
-        emsg = discord.Embed()
-        emsg.title = "Game id: {}".format(game_id)
-        emsg.description = ("Match has been logged and awaiting confirmation from "
-            + "{}\n".format(" ".join([u.mention for u in players]))
-            + "Please `{0}confirm` or `{0}deny` this record.".format(ctx.prefix))
-        await self.bot.send_embed(ctx.message.channel, emsg)
+        game_id = self.bot.db.add_match(ctx, winner, players)
+        player_mentions = " ".join([player.mention for player in players])
+        emsg = embed.msg(
+            title=f'Game id: {game_id}',
+            description=f"Match has been logged and awaiting confirmation from {player_mentions}"
+        ).set_footer(text=f"Actions: `{ctx.prefix}confirm` | `{ctx.prefix}deny`")
+        await ctx.send(embed=emsg)
 
 
     async def _has_pending(self, ctx, player):

@@ -2,7 +2,7 @@ from datetime import datetime
 import operator
 import discord
 from discord.ext import commands
-from src.checks import is_registered
+from src import checks
 from src import embed
 from src import table
 from src import utils
@@ -98,7 +98,7 @@ class Members():
 
     @commands.command()
     @commands.guild_only()
-    @commands.check(is_registered)
+    @commands.check(checks.is_registered)
     async def pending(self, ctx):
         user = ctx.message.author
         guild = ctx.message.guild

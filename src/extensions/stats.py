@@ -17,16 +17,14 @@ class Stats():
     @commands.group()
     @commands.guild_only()
     async def info(self, ctx):
-        matches_collection = self.bot.db.get_matches(ctx.message.guild.id)
-        pending = matches_collection.count({"status": stc.PENDING})
-        accepted = matches_collection.count({"status": stc.ACCEPTED})
-        members_collection = self.bot.db.get_members(ctx.message.guild.id)
-        nmembers = members_collection.count()
+        num_pending = self.bot.db.count_matches({"status": stc.PENDING}, ctx.message.guild)
+        num_accepted = self.bot.db.count_matches({"status": stc.ACCEPTED}, ctx.message.guild)
+        num_members = self.bot.db.members(ctx.message.guild).count()
 
         emsg = embed.info(title=f"{ctx.message.guild.name} League") \
-                    .add_field(name="Players", value=str(nmembers)) \
-                    .add_field(name="Games Played", value=str(accepted)) \
-                    .add_field(name="Unconfirmed Games", value=str(pending)) \
+                    .add_field(name="Players", value=str(num_members)) \
+                    .add_field(name="Games Played", value=str(num_accepted)) \
+                    .add_field(name="Unconfirmed Games", value=str(num_pending)) \
                     .add_field(name="Link", value=(
             f"https://discordapp.com/oauth2/authorize?" \
             f"client_id={self.bot.client_id}&scope=bot&permissions=0")

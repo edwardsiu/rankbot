@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+import hashids
 from src import database
 from src import embed
 from src import help_formatter
@@ -9,6 +10,7 @@ class RankBot(commands.Bot):
         self.db = database.RankDB(config["mongodb_host"], config["mongodb_port"])
         self.client_id = config["client_id"]
         self.deck_data = {"data": None, "unsynced": True}
+        self.hasher = hashids.Hashids(salt="cEDH league")
 
     async def on_guild_join(self, guild):
         emsg = embed.msg(description=(

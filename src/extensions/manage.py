@@ -1,29 +1,20 @@
 import discord
 from discord.ext import commands
+from src import checks
+from src import embed
 
 class Manage():
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
-    async def admin(self, ctx):
-        if not self.bot.is_in_server(ctx):
-            return
-        if not self.bot.is_admin(ctx):
-            return
-
-        emsg = discord.Embed()
-        if not ctx.message.role_mentions:
-            emsg.description = "Please mention a role to set as league admin role"
-            await self.bot.send_error(ctx.message.channel, emsg)
-            return
-        role = ctx.message.role_mentions[0]
-        self.bot.db.set_admin_role(role.name, ctx.message.server.id)
-        emsg.description = "{} are now the league admins".format(role.mention)
-        await self.bot.send_embed(ctx.message.channel, emsg)
+    @commands.command(name='set-admin')
+    @commands.guild_only()
+    @commands.check(checks.is_admin)
+    async def _set_admin(self, ctx, *, role: discord.Role):
+        self.bot.db.set_admin_role(role.name, ctx.message.guild)
+        await ctx.send(embed=embed.success(description=f"**SUCCESS** - {role.mention} set to league admin"))
 
     
-    @commands.command()
     async def reset(self, ctx):
         if not self.bot.is_in_server(ctx):
             return

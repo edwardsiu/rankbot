@@ -70,3 +70,26 @@ def sort_by_winrate(data):
 
 def sort_by_unique_players(data):
     return sorted(data, key=lambda deck: len(deck["players"]), reverse=True)
+
+def recurse_color_combinations(color, prefix, out):
+    if len(color) > 0:
+        recurse_color_combinations(color[1:], prefix+color[0], out)
+        recurse_color_combinations(color[1:], prefix, out)
+        out.append(prefix+color[0])
+    return out
+
+def get_all_color_combinations():
+    combinations = recurse_color_combinations("wubrg", "", [])
+    return sorted(combinations, key=lambda i: len(i))
+
+def sort_color_str(color_str):
+    return "".join(sorted(color_str.lower()))
+
+def transform_deck_name(deck_name):
+    """Convert a deck name to a canonical form. The canonical form contains only
+    lower-cased letters and is sorted in alphabetical order. This allows,
+    for example, Chain Veil Teferi and Teferi Chain Veil to match to the same deck."""
+
+    sorted_name = "".join(sorted(deck_name.lower()))
+    letters_only = re.search(r"([a-z]*)$", sorted_name).group()
+    return letters_only

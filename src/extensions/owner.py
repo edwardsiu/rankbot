@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-import hashids
 import json
 import random
 from src import embed
@@ -19,9 +18,9 @@ class OwnerCog():
         try:
             self.bot.load_extension(f'src.extensions.{cog}')
         except Exception as e:
-            await ctx.send(embed=embed.error(description=f'**`ERROR:`** {type(e).__name__} - {e}'))
+            await ctx.send(embed=embed.error(description=f'**ERROR** - {type(e).__name__} - {e}'))
         else:
-            await ctx.send(embed=embed.success(description='**`SUCCESS`**'))
+            await ctx.send(embed=embed.success(description='**SUCCESS**'))
 
     @commands.command(name='unload', hidden=True)
     @commands.is_owner()
@@ -32,9 +31,9 @@ class OwnerCog():
         try:
             self.bot.unload_extension(f'src.extensions.{cog}')
         except Exception as e:
-            await ctx.send(embed=embed.error(description=f'**`ERROR:`** {type(e).__name__} - {e}'))
+            await ctx.send(embed=embed.error(description=f'**ERROR** - {type(e).__name__} - {e}'))
         else:
-            await ctx.send(embed=embed.success(description='**`SUCCESS`**'))
+            await ctx.send(embed=embed.success(description='**SUCCESS**'))
 
     @commands.command(name='reload', hidden=True)
     @commands.is_owner()
@@ -46,9 +45,9 @@ class OwnerCog():
             self.bot.unload_extension(f'src.extensions.{cog}')
             self.bot.load_extension(f'src.extensions.{cog}')
         except Exception as e:
-            await ctx.send(embed=embed.error(description=f'**`ERROR:`** {type(e).__name__} - {e}'))
+            await ctx.send(embed=embed.error(description=f'**ERROR** - {type(e).__name__} - {e}'))
         else:
-            await ctx.send(embed=embed.success(description='**`SUCCESS`**'))
+            await ctx.send(embed=embed.success(description='**SUCCESS**'))
 
     @commands.group(name='add', hidden=True)
     @commands.is_owner()
@@ -56,7 +55,7 @@ class OwnerCog():
         """Add a user, match, or deck to the bot."""
 
         if ctx.invoked_subcommand is None:
-            await ctx.send(embed=embed.error(description=f'**`ERROR:`** Specify a component to add'))
+            await ctx.send(embed=embed.error(description=f'**ERROR** - Specify a component to add'))
             return
 
     @add_component.command(name='user', hidden=True)
@@ -66,11 +65,11 @@ class OwnerCog():
         guild = ctx.message.guild
         if self.bot.db.add_member(user, guild):
             emsg = embed.msg(
-                description = "Registered **{}** to the {} league".format(user.name, guild.name)
+                description = f"Registered **{user.name}** to the {guild.name} league"
             )
         else:
             emsg = embed.error(
-                description = "**{}** is already registered".format(user.name)
+                description = f"**{user.name}** is already registered"
             )
         await ctx.send(embed=emsg)
 
@@ -90,20 +89,41 @@ class OwnerCog():
         """Add a match to the database. Winner is the first player mentioned."""
 
         guild = ctx.message.guild
-        players = ctx.message.mentions
-        if len(players) != 4:
-            await ctx.send(embed=embed.error(description=f'**`ERROR:`** Not enough players mentioned'))
+        users = ctx.message.mentions
+        if len(users) != 4:
+            await ctx.send(embed=embed.error(description=f'**ERROR** - Not enough players mentioned'))
             return
-        winner = players[random.randint(0,3)]
-        hasher = hashids.Hashids(salt="cEDH league")
-        game_id = self.bot.db.get_game_id(hasher, ctx.message.id, guild)
-        self.bot.db.add_match(game_id, winner, players, guild)
-        for player in players:
+        winner = users[random.randint(0,3)]
+        
+        game_id = self.bot.db.add_match(ctx, winner, users)
+        for user in users:
             rand_deck = self._get_random_deck()
-            self.bot.db.confirm_player(rand_deck, game_id, player, guild)
+            self.bot.db.confirm_match_for_user(game_id, user.id, rand_deck, guild)
         delta = self.bot.db.check_match_status(game_id, guild)
         if delta:
-            await ctx.send(embed=embed.success(description=f'**`SUCCESS:`** Added {game_id}'))
+            await ctx.send(embed=embed.success(description=f'**SUCCESS** - Added {game_id}'))
+
+    def _load_decks(self):
+        with open("config/decks.json", "r") as infile:
+            decks = json.load(infile)
+        decks_added = 0
+        for category in decks:
+            for deck in category["decks"]:
+                decks_added += self.bot.db.add_deck(
+                    category["colors"], 
+                    category["color_name"],
+                    deck["name"],
+                    deck["nicknames"]
+                )
+        return decks_added
+
+
+    @commands.command(name="reload-decks")
+    @commands.is_owner()
+    async def reload_decks(self, ctx):
+        decks_added = self._load_decks()
+        await ctx.send(embed=embed.success(
+            description=f"**SUCCESS** - Decks reloaded. {decks_added} new decks imported."))
         
 
 
