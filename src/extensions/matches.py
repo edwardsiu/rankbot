@@ -14,14 +14,14 @@ class Matches():
     async def _are_players_registered(self, ctx, players):
         for user in players:
             if not self.bot.db.find_member(user.id, ctx.message.guild):
-                await ctx.send(embed=embed.error(description=f"**{user.name}** is not a registered player."))
+                await ctx.send(embed=embed.error(description=f"**{user.name}** is not a registered player"))
                 return False
         return True
 
 
     async def _has_enough_players(self, ctx, players):
         if len(players) != 4:
-            await ctx.send(embed=embed.error(description="There must be exactly 3 other players to log a result."))
+            await ctx.send(embed=embed.error(description="There must be exactly 3 other players to log a result"))
             return False
         return True
 
@@ -48,43 +48,33 @@ class Matches():
         await ctx.send(embed=emsg)
 
 
-    async def _has_pending(self, ctx, player):
-        if not player["pending"]:
-            emsg = discord.Embed()
-            emsg.description = "You have no pending games to confirm"
-            await self.bot.send_error(ctx.message.channel, emsg)
+    async def _has_confirmed_deck(self, msg, author):
+        await msg.add_reaction(msg, "👍")
+        await msg.add_reaction(msg, "👎")
+        def check(reaction, user):
+            return user == author and str(reaction.emoji) in ["👍", "👎"]
+        
+        reaction, user = await self.bot.wait_for('reaction_add', timeout=60.0, check=check)
+        if not reaction:
             return False
-        return True
+        await msg.delete()
+        return reaction.emoji == "👍"
 
 
-    def _get_pending_game_id(self, ctx, player):
-        game_id = player["pending"][-1] if not ctx.args else ctx.args[0]
-        return game_id
-
-
-    async def _has_confirmed_deck(self, msg, ctx):
-        await self.bot.add_reaction(msg, "👍")
-        await self.bot.add_reaction(msg, "👎")
-        resp = await self.bot.wait_for_reaction(["👍", "👎"], user=ctx.message.author, timeout=60.0, message=msg)
-        if not resp:
-            return False
-        await self.bot.delete_message(msg)
-        return resp.reaction.emoji == "👍"
-
-
-    async def _confirm_deck(self, game_id, player, ctx):
-        emsg = discord.Embed()
-        emsg.title = "Game id: {}".format(game_id)
-        if "deck" not in player or not player["deck"]:
-            emsg.description = ("No deck specified for **{}**. ".format(ctx.message.author.name)
-                + "Set your deck with the `{}use` command, ".format(ctx.prefix)
-                + "then type `{}confirm` again.".format(ctx.prefix))
-            await self.bot.send_error(ctx.message.channel, emsg)
+    async def _confirm_deck(self, ctx, player, game_id):
+        if not player["deck"]:
+            emsg = embed.error(
+                description=(f"No deck specified for **{ctx.message.author.name}**\n" \
+                             f"Set your deck with `{ctx.prefix}use`, then type `{ctx.prefix}confirm` again")
+            )
+            await ctx.send(embed=emsg)
             return False
         else:
-            emsg.description = ("{} Was **{}** the deck you piloted?\n".format(ctx.message.author.mention, player["deck"]))
-            bot_msg = await self.bot.send_embed(ctx.message.channel, emsg)
-            if self._has_confirmed_deck(bot_msg, ctx):
+            emsg = embed.msg(
+                description=f"{ctx.message.author.mention} Was **{player['deck']}** the deck you piloted?"
+            )
+            bot_msg = await ctx.send(embed=emsg)
+            if self._has_confirmed_deck(bot_msg, ctx.message.author):
                 return True
             else:
                 emsg = discord.Embed()
@@ -93,58 +83,51 @@ class Matches():
                 await self.bot.send_embed(ctx.message.channel, emsg)
                 return False
 
+    async def _show_delta(self, ctx, game_id, delta):
+        emsg = embed.msg(title=f"Game id: {game_id}") \
+                    .add_field(name="Status", value="`ACCEPTED`") \
+                    .add_field(name="Point Changes", value=(
+                        "\n".join([f"`{i['player']}: {i['change']:+}`" for i in delta])
+                    ))
+        # next time the stat-deck command is called, it will refetch the data
+        self.bot.deck_data["unsynced"] = True
+        await ctx.send(embed=emsg)
 
-    async def _get_player_confirmation(self, game_id, player, ctx):
-        if not await self._confirm_deck(game_id, player, ctx):
+
+    async def _get_player_confirmation(self, ctx, player, game_id):
+        if not await self._confirm_deck(ctx, player, game_id):
             return
-        emsg = discord.Embed()
-        self.bot.db.confirm_player(player["deck"], ctx.message.author.id, game_id, ctx.message.server.id)
-        emsg.description = "Received confirmation from **{}**".format(ctx.message.author.name)
-        await self.bot.send_embed(ctx.message.channel, emsg)
-        delta = self.bot.db.check_match_status(game_id, ctx.message.server.id)
-        if not delta:
-            return
-        await self._show_delta(game_id, delta, ctx.message.channel)
+        self.bot.db.confirm_match_for_user(game_id, ctx.message.author.id, player["deck"], ctx.message.guild)
+        await ctx.send(embed=embed.success(description=f"Recieved confirmation from **{ctx.message.author.name}**"))
+        delta = self.bot.db.check_match_status(game_id, ctx.message.guild)
+        if delta is not None:
+            await self._show_delta(ctx, game_id, delta)
 
 
     @commands.command()
-    async def confirm(self, ctx):
-        if not self.bot.is_in_server(ctx):
-            return
-        if not await self.bot.is_registered(ctx):
-            return
-
+    @commands.guild_only()
+    @commands.check(checks.is_registered)
+    async def confirm(self, ctx, *, game_id: str=""):
         user = ctx.message.author
-        player = self.bot.db.find_member(user.id, ctx.message.server.id)
-        if not self._has_pending(ctx, player):
+        player = self.bot.db.find_member(user.id, ctx.message.guild)
+        if not len(player["pending"]):
+            await ctx.send(embed=embed.msg(description="No pending matches to confirm"))
+            return
+        if not game_id:
+            game_id = player["pending"][-1]
+
+        pending_match = self.bot.db.find_match(game_id, ctx.message.guild)
+        if not pending_match:
+            await ctx.send(embed=embed.error(description=f"`{game_id}` does not exist"))
+            return
+        if str(user.id) not in pending_match["players"]:
+            await ctx.send(embed=embed.error(description="Only participants can confirm a match"))
             return
 
-        game_id = self._get_pending_game_id(ctx, player)
-        pending_game = self.bot.db.find_match(game_id, ctx.message.server.id)
-
-        emsg = discord.Embed()
-        if not pending_game:
-            emsg.description = "Match `{}` not found".format(game_id)
-            await self.bot.send_error(ctx.message.channel, emsg)
-            return
-        if user.id not in pending_game["players"]:
-            emsg.description = "Only participants can confirm a match"
-            await self.bot.send_error(ctx.message.channel, emsg)
-            return
-        if pending_game["players"][user.id] == stc.UNCONFIRMED:
-            await self._get_player_confirmation(game_id, player, ctx)
+        if pending_match["players"][str(user.id)] == stc.UNCONFIRMED:
+            await self._get_player_confirmation(ctx, player, game_id)
         else:
-            emsg.description = "You have already confirmed this match"
-            await self.bot.send_error(ctx.message.channel, emsg)
-
-
-    async def _show_delta(self, game_id, delta, channel):
-        emsg = discord.Embed(title="Game id: {}".format(game_id))
-        emsg.description = ("Match has been accepted.\n"
-            +  ", ".join(["`{0}: {1:+}`".format(i["player"], i["change"]) for i in delta]))
-        # next time the stat-deck command is called, it will refetch the data
-        self.bot.deck_data["unsynced"] = True
-        await self.bot.send_embed(channel, emsg)
+            await ctx.send(embed=embed.error(description="You have already confirmed this match"))
 
 
     @commands.command()

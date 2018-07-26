@@ -10,9 +10,10 @@ for shard in ["390254034289819669"]:
     for member in members:
         db.members.update_one({"user_id": member["user_id"]},
             {
-                #"$set": {
-                #    "user_id": int(member["user_id"])
-                #},
+                "$set": {
+                    "user_id": int(member["user_id"]),
+                    "deck": ""
+                },
                 "$rename": {
                     "user": "name"
                 }
