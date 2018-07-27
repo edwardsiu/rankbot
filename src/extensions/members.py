@@ -33,15 +33,14 @@ class Members():
 
     def _get_favorite_deck(self, player, guild):
         player_id = player["user_id"]
-        matches = self.bot.db.find_member_matches(player, guild, limit=self.favorite_deck_window)
+        matches = self.bot.db.find_user_matches(player_id, guild, limit=self.favorite_deck_window)
         decks = {}
         for match in matches:
-            if "decks" in match:
-                deck_name = match["decks"][str(player_id)]
-                if deck_name and deck_name in decks:
-                    decks[deck_name] += 1
-                else:
-                    decks[deck_name] = 1
+            deck_name = match["decks"][str(player_id)]
+            if deck_name and deck_name in decks:
+                decks[deck_name] += 1
+            else:
+                decks[deck_name] = 1
         if decks:
             return max(decks.items(), key=operator.itemgetter(1))[0]
         return None
@@ -59,7 +58,7 @@ class Members():
 
 
     def _get_profile_card(self, user, guild):
-        player = self.bot.db.find_member(user, guild)
+        player = self.bot.db.find_member(user.id, guild)
         if not player:
             return None
         win_percent = 100*player["wins"]/player["accepted"] if player["accepted"] else 0.0
@@ -102,7 +101,7 @@ class Members():
     async def pending(self, ctx):
         user = ctx.message.author
         guild = ctx.message.guild
-        player = self.bot.db.find_member(user, guild)
+        player = self.bot.db.find_member(user.id, guild)
         if not player["pending"]:
             emsg = embed.msg(description="You have no pending, unconfirmed matches.")
             await ctx.send(embed=emsg)
@@ -110,17 +109,17 @@ class Members():
         emsg = embed.msg(
             title = "Pending Matches",
             description = ", ".join(player["pending"])
-        ).set_footer(text="Actions: {0}status [game id] | " \
-                     "{0}confirm [game id] | " \
-                     "{0}deny [game id]".format(ctx.prefix)
+        ).add_field(
+            name="Actions", 
+            value=f"`{ctx.prefix}status [game id]`\n`{ctx.prefix}confirm [game id]`\n`{ctx.prefix}deny [game id]`"
         )
         await ctx.send(embed=emsg)
 
 
-    def _make_match_table(self, user, matches):
+    def _make_match_tables(self, user, matches):
+        title = "{}'s Match History".format(user.name)
         columns = ["Date (UTC)", "Game Id", "Deck", "Result"]
         rows = []
-        title = "{}'s Match History".format(user.name)
         for match in matches:
             date = datetime.fromtimestamp(match["timestamp"]).strftime("%Y-%m-%d")
             if "decks" in match and match["decks"][str(user.id)]:
@@ -130,21 +129,27 @@ class Members():
             result = "WIN" if match["winner"] == str(user.id) else "LOSE"
             row = [date, match["game_id"], deck_name, result]
             rows.append(row)
-        return table.Table(title, columns, rows)
+        _tables = []
+        table_height = 10
+        for i in range(0, len(rows), table_height):
+            _tables.append(table.Table(title, columns, rows[i:i+table_height]))
+        return _tables
 
     @commands.command()
     @commands.guild_only()
-    async def history(self, ctx):
+    async def history(self, ctx, *args):
+        limit = utils.get_limit(args)
+
         users = utils.get_target_users(ctx)
         for user in users:
-            player = self.bot.db.find_member(user, ctx.message.guild)
-            if not player:
+            if not self.bot.db.find_member(user.id, ctx.message.guild):
                 continue
-            matches = self.bot.db.find_member_matches(player, ctx.message.guild, limit=5)
+            matches = self.bot.db.find_user_matches(user.id, ctx.message.guild, limit=limit)
             if not matches:
                 continue
-            match_table = self._make_match_table(user, matches)
-            await ctx.send(str(match_table))
+            _tables = self._make_match_tables(user, matches)
+            for _table in _tables:
+                await ctx.send(str(_table))
     
 
 

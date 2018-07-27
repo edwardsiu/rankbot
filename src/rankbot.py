@@ -18,3 +18,4 @@ class RankBot(commands.Bot):
             + "admin using `set_admin [role name]`"
         ))
         await guild.owner.send(embed=emsg)
+        self.db.setup_indices(guild)

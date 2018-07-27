@@ -18,8 +18,8 @@ with open("config/bot.yml", "r") as f:
 
 bot = rankbot.RankBot(command_prefix=config["command_prefix"])
 bot.setup_config(config)
-#extensions = get_extensions()
-extensions = ["owner", "members", "stats", "decks"]
+extensions = get_extensions()
+#extensions = ["owner", "members", "stats", "decks"]
 for ext in extensions:
     try:
         bot.load_extension("src.extensions.{}".format(ext))

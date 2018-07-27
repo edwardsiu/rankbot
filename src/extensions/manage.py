@@ -10,7 +10,7 @@ class Manage():
     @commands.command(name='set-admin')
     @commands.guild_only()
     @commands.check(checks.is_admin)
-    async def _set_admin(self, ctx, *, role: discord.Role):
+    async def set_admin(self, ctx, *, role: discord.Role):
         self.bot.db.set_admin_role(role.name, ctx.message.guild)
         await ctx.send(embed=embed.success(description=f"**SUCCESS** - {role.mention} set to league admin"))
 

@@ -20,17 +20,12 @@ def get_avatar(user):
 
 def get_limit(args):
     """Returns the number of elements to fetch from the database.
-    Limit is based on the first arg of the command context."""
+    Searches through all the args for an integer"""
 
-    if not len(args):
-        return DEFAULT_LIMIT
-    arg = args[0]
-    if arg.isdigit():
-        return int(re.match(r"\d*", arg).group())
-    elif arg.lower() == "all":
-        return 0
-    else:
-        return DEFAULT_LIMIT
+    for arg in args:
+        if arg.isdigit():
+            return int(re.match(r"\d*", arg).group())
+    return DEFAULT_LIMIT
 
 def code_block(string):
     return "```" + string + "```"

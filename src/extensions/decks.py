@@ -13,20 +13,25 @@ class Decks():
     @commands.command(aliases=["set-deck"])
     @commands.guild_only()
     @commands.check(checks.is_registered)
-    async def use(self, ctx, *tokens):
+    async def use(self, ctx, *, deck_name: str=""):
         """Set the user's last played deck to the given deck name.
         Rogue is a placeholder deck name for an unregistered deck.
         Unrecognized deck names default to Rogue."""
 
         user = ctx.message.author
-        deck_name = " ".join(tokens)
+        action_description = f"`{ctx.prefix}decks`\n`{ctx.prefix}decks [color set]`"
+        if not deck_name:
+            emsg = embed.error(description="No deck specified.") \
+                        .add_field(name="Actions", value=action_description)
+            await ctx.send(embed=emsg)
+            return
         if deck_name.lower() == "rogue":
             official_name = "Rogue"
         else:
             deck = self.bot.db.find_deck(deck_name)
             if not deck:
                 emsg = embed.error(description=f"{deck_name} is not a recognized deck.") \
-                            .set_footer(text=f"Search decks: `{ctx.prefix}decks` | `{ctx.prefix}decks [color set]`")
+                            .add_field(name="Actions", value=action_description)
                 await ctx.send(embed=emsg)
                 return
             else:
@@ -35,7 +40,7 @@ class Decks():
         await ctx.send(embed=embed.msg(description=f"Deck set to {official_name} for **{user.name}**"))
 
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def decks(self, ctx, *, color: str=""):
         """Show a list of all registered decks by color combination. If a color combination
         is specified, filter the results by that color combination."""

@@ -14,14 +14,14 @@ D_C = "╬"
 CONT = "↳ "
 
 class Table(object):
-    def __init__(self, title, columns=None, rows=None, max_width=64, padding=1, syntax=None):
+    def __init__(self, title="", columns=None, rows=None, max_width=64, padding=1, syntax=""):
         self.title = title
         self.columns = columns
         self.rows = rows
         self.column_widths = []
         self.max_width = max_width - 1 # subtract table edge
         self.padding = padding # 1 char for a space and 1 char for a table edge
-        self.syntax = syntax if syntax else ""
+        self.syntax = syntax
 
     def __str__(self):
         self._compute_column_widths()

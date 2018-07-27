@@ -41,12 +41,17 @@ class RankDB(MongoClient):
         guild_config = self.config().roles.find_one({"guild": guild.id})
         if not guild_config:
             return None
-        return discord.utils.get(guild.roles, name=guild_config["admin"])
+        return discord.utils.find(lambda r: r.name == guild_config["admin"], guild.roles)
+
+    def setup_indices(self, guild):
+        self.members(guild).create_index("user_id")
+        self.matches(guild).create_index("game_id")
+        self.matches(guild).create_index("status")
 
 
     # Member methods
     def add_member(self, user, guild):
-        if not self.find_member(user, guild):
+        if not self.find_member(user.id, guild):
             document = {
                 "name": user.name,  # string
                 "user_id": user.id, # int (was string)

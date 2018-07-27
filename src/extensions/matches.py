@@ -1,10 +1,12 @@
+import asyncio
 from datetime import datetime
 import discord
 from discord.ext import commands
 from src import checks
 from src import embed
-from src.emojis import confirm_emoji, unconfirm_emoji, trophy_emoji
+from src import emojis
 from src import status_codes as stc
+from src import table
 
 class Matches():
     def __init__(self, bot):
@@ -34,9 +36,9 @@ class Matches():
         losers = ctx.message.mentions
         players = [winner] + losers
 
-        if not self._are_players_registered(ctx, players):
+        if not await self._are_players_registered(ctx, players):
             return
-        if not self._has_enough_players(ctx, players):
+        if not await self._has_enough_players(ctx, players):
             return
 
         game_id = self.bot.db.add_match(ctx, winner, players)
@@ -44,21 +46,22 @@ class Matches():
         emsg = embed.msg(
             title=f'Game id: {game_id}',
             description=f"Match has been logged and awaiting confirmation from {player_mentions}"
-        ).set_footer(text=f"Actions: `{ctx.prefix}confirm` | `{ctx.prefix}deny`")
+        ).add_field(name="Actions", value=f"`{ctx.prefix}confirm` | `{ctx.prefix}deny`")
         await ctx.send(embed=emsg)
 
 
-    async def _has_confirmed_deck(self, msg, author):
-        await msg.add_reaction(msg, "👍")
-        await msg.add_reaction(msg, "👎")
+    async def _has_confirmed_deck(self, bot_msg, ctx):
+        await bot_msg.add_reaction(emojis.thumbs_up)
+        await bot_msg.add_reaction(emojis.thumbs_down)
         def check(reaction, user):
-            return user == author and str(reaction.emoji) in ["👍", "👎"]
-        
-        reaction, user = await self.bot.wait_for('reaction_add', timeout=60.0, check=check)
-        if not reaction:
+            return user == ctx.message.author and str(reaction.emoji) in (emojis.thumbs_up, emojis.thumbs_down)
+        try:
+            reaction, user = await self.bot.wait_for('reaction_add', timeout=60.0, check=check)
+        except asyncio.TimeoutError:
+            await bot_msg.delete()
             return False
-        await msg.delete()
-        return reaction.emoji == "👍"
+        else:
+            return reaction.emoji == emojis.thumbs_up
 
 
     async def _confirm_deck(self, ctx, player, game_id):
@@ -69,19 +72,19 @@ class Matches():
             )
             await ctx.send(embed=emsg)
             return False
-        else:
-            emsg = embed.msg(
-                description=f"{ctx.message.author.mention} Was **{player['deck']}** the deck you piloted?"
-            )
-            bot_msg = await ctx.send(embed=emsg)
-            if self._has_confirmed_deck(bot_msg, ctx.message.author):
-                return True
-            else:
-                emsg = discord.Embed()
-                emsg.description = ("Set your deck with the `{}use` command, ".format(ctx.prefix)
-                    + "then type `{}confirm` again.".format(ctx.prefix))
-                await self.bot.send_embed(ctx.message.channel, emsg)
-                return False
+
+        emsg = embed.msg(
+            description=f"{ctx.message.author.mention} Was **{player['deck']}** the deck you piloted?"
+        )
+        bot_msg = await ctx.send(embed=emsg)
+        
+        if await self._has_confirmed_deck(bot_msg, ctx):
+            return True
+
+        await ctx.send(embed=embed.error(
+            description=f"Set your deck with the `{ctx.prefix}use` command, then type `{ctx.prefix}confirm` again")
+        )
+        return False
 
     async def _show_delta(self, ctx, game_id, delta):
         emsg = embed.msg(title=f"Game id: {game_id}") \
@@ -100,7 +103,7 @@ class Matches():
         self.bot.db.confirm_match_for_user(game_id, ctx.message.author.id, player["deck"], ctx.message.guild)
         await ctx.send(embed=embed.success(description=f"Recieved confirmation from **{ctx.message.author.name}**"))
         delta = self.bot.db.check_match_status(game_id, ctx.message.guild)
-        if delta is not None:
+        if delta:
             await self._show_delta(ctx, game_id, delta)
 
 
@@ -110,8 +113,8 @@ class Matches():
     async def confirm(self, ctx, *, game_id: str=""):
         user = ctx.message.author
         player = self.bot.db.find_member(user.id, ctx.message.guild)
-        if not len(player["pending"]):
-            await ctx.send(embed=embed.msg(description="No pending matches to confirm"))
+        if not player["pending"]:
+            await ctx.send(embed=embed.info(description="No pending matches to confirm"))
             return
         if not game_id:
             game_id = player["pending"][-1]
@@ -131,180 +134,168 @@ class Matches():
 
 
     @commands.command()
-    async def deny(self, ctx):
-        if not self.bot.is_in_server(ctx):
-            return
-        if not await self.bot.is_registered(ctx):
-            return
-        
+    @commands.guild_only()
+    @commands.check(checks.is_registered)
+    async def deny(self, ctx, *, game_id: str=""):
         user = ctx.message.author
-        player = self.bot.db.find_member(user.id, ctx.message.server.id)
-        if not self._has_pending(ctx, player):
+        player = self.bot.db.find_member(user.id, ctx.message.guild)
+        if not player["pending"]:
+            await ctx.send(embed=embed.info(description="No pending matches to deny"))
+            return
+        if not game_id:
+            game_id = player["pending"][-1]
+
+        pending_match = self.bot.db.find_match(game_id, ctx.message.guild)
+        if not pending_match:
+            await ctx.send(embed=embed.error(description=f"`{game_id}` does not exist"))
+            return
+        if str(user.id) not in pending_match["players"]:
+            await ctx.send(embed=embed.error(description="Only participants can deny a match"))
             return
 
-        game_id = self._get_pending_game_id(ctx, player)
-        pending_game = self.bot.db.find_match(game_id, ctx.message.server.id)
-
-        emsg = discord.Embed()
-        if not pending_game:
-            emsg.description = "Match `{}` not found".format(game_id)
-            await self.bot.send_error(ctx.message.channel, emsg)
-            return
-        if user.id not in pending_game["players"]:
-            emsg.description = "Only participants can deny a match"
-            await self.bot.send_error(ctx.message.channel, emsg)
-            return
-        if pending_game["status"] == stc.ACCEPTED:
-            emsg.description = "Cannot deny an accepted match"
-            await self.bot.send_error(ctx.message.channel, emsg)
-            return
-        if pending_game["status"] == stc.PENDING:
-            self.bot.db.set_match_status(stc.DISPUTED, game_id, ctx.message.server.id)
-            if pending_game["players"][user.id] == stc.CONFIRMED:
-                self.bot.db.unconfirm_player(user.id, game_id, ctx.message.server.id)
-
-        admin_role = self.bot.db.get_admin_role(ctx.message.server)
-        mention = "" if not admin_role else admin_role.mention
-        emsg.description = "{} Match `{}` has been marked as **disputed**".format(
-            mention, game_id)
-        await self.bot.send_error(ctx.message.channel, emsg)
-
-    
-    async def _get_match_to_override(self, ctx):
-        emsg = discord.Embed()
-        if not ctx.args:
-            emsg.description = "Please include a game id to override. " \
-                               "See `{}help {} for more info.".format(
-                                   ctx.prefix, ctx.command)
-            await self.bot.send_error(ctx.message.channel, emsg)
-            return None
-        game_id = ctx.args[0]
-        match = self.bot.db.find_match(game_id, ctx.message.server.id)
-        if not match:
-            emsg.description = "Failed to find match with game id `{}`".format(game_id)
-            await self.bot.send_error(ctx.message.channel, emsg)
-            return None
-        if match["status"] == stc.ACCEPTED:
-            emsg.description = "Cannot override an accepted match"
-            await self.bot.send_error(ctx.message.channel, emsg)
-            return None
-        return match
+        if pending_match["status"] == stc.ACCEPTED:
+            await ctx.send(embed=embed.error(description="Accepted matches cannot be denied"))
+        elif pending_match["status"] == stc.DISPUTED:
+            await ctx.send(embed=embed.info(description="This match has already been marked for review"))
+        else:
+            self.bot.db.set_match_status(stc.DISPUTED, game_id, ctx.message.guild)
+            if pending_match["players"][str(user.id)] == stc.CONFIRMED:
+                self.bot.db.unconfirm_match_for_user(game_id, user.id, ctx.message.guild)
+            admin_role = self.bot.db.get_admin_role(ctx.message.guild)
+            mention = "" if not admin_role else admin_role.mention
+            await ctx.send(embed=embed.msg(
+                description=f"{mention} Match `{game_id}` has been marked as **disputed**")
+            )
 
 
     @commands.command()
     @commands.guild_only()
     @commands.check(checks.is_admin)
-    async def accept(self, ctx):
-        match = self._get_match_to_override(ctx)
+    async def accept(self, ctx, *, game_id: str=""):
+        if not game_id:
+            await ctx.send(embed=embed.error(description="No game id specified"))
+            return
+        match = self.bot.db.find_match(game_id, ctx.message.guild)
         if not match:
+            await ctx.send(embed=embed.error(description=f"`{game_id}` does not exist"))
             return
-        for player_id in match["players"]:
-            self.bot.db.remove_pending_match(match["game_id"], int(player_id), ctx.message.guild)
-        self.bot.db.confirm_all_players(match["game_id"], match["players"], ctx.message.guild)
-        delta = self.bot.db.check_match_status(
-            match["game_id"], ctx.message.guild)
-        if not delta:
+        if match["status"] == stc.ACCEPTED:
             return
-        await self._show_delta(match["game_id"], delta, ctx)
+
+        self.bot.db.confirm_match_for_users(game_id, match["players"].keys(), ctx.message.guild)
+        delta = self.bot.db.check_match_status(game_id, ctx.message.guild)
+        if delta:
+            await self._show_delta(ctx, game_id, delta)
         
 
     @commands.command()
-    async def reject(self, ctx):
-        if not self.bot.is_in_server(ctx):
+    @commands.guild_only()
+    @commands.check(checks.is_admin)
+    async def reject(self, ctx, *, game_id: str=""):
+        if not game_id:
+            await ctx.send(embed=embed.error(description="No game id specified"))
             return
-        if not self.bot.is_admin(ctx):
+        match = self.bot.db.find_match(game_id, ctx.message.guild)
+        if not match:
+            await ctx.send(embed=embed.error(description=f"`{game_id}` does not exist"))
+            return
+        if match["status"] == stc.ACCEPTED:
+            await ctx.send(embed=embed.error(description="Cannot override an accepted match"))
             return
 
-        match = self._get_match_to_override(ctx)
-        if not match:
-            return
-        for player_id in match["players"]:
-            self.bot.db.remove_pending_match(player_id, match["game_id"], ctx.message.server.id)
-        self.bot.db.delete_match(match["game_id"], ctx.message.server.id)
-        emsg = discord.Embed()
-        emsg.description = "Match `{}` has been removed".format(match["game_id"])
-        await self.bot.send_embed(ctx.message.channel, emsg)
+        self.bot.db.delete_match(game_id, ctx.message.guild)
+        await ctx.send(embed=embed.msg(description=f"`{game_id}` has been removed"))
+
+    def _make_game_table(self, players, match):
+        columns = ["Player", "Deck", "Status"]
+        rows = []
+        for player in players:
+            user_id = str(player["user_id"])
+            if match["decks"][user_id]:
+                deck_name = match["decks"][user_id]
+            else:
+                deck_name = "???"
+            status = " ☑" if match["players"][user_id] == stc.CONFIRMED else " ☐"
+            rows.append([player["name"], deck_name, status])
+        _table = table.Table(columns=columns, rows=rows, max_width=45)
+        return str(_table)
 
 
     @commands.command()
     @commands.guild_only()
-    async def status(self, ctx, *, game_id: str):
-        emsg = discord.Embed()
-        #if not ctx.args:
-        #    emsg.description = "Please include a game id"
-        #    await self.bot.send_error(ctx.message.channel, emsg)
-        #    return
-        #game_id = ctx.args[0]
-        match = self.bot.db.find_match(game_id, ctx.message.guild.id)
-        if not match:
-            emsg.description = "Match `{}` not found".format(game_id)
-            emsg.color = C_ERR
-            #await self.bot.send_error(ctx.message.channel, emsg)
-            await ctx.send(embed=emsg)
+    async def game(self, ctx, *, game_id: str=""):
+        if not game_id:
+            await ctx.send(embed=embed.error(description="No game id specified"))
             return
-        winner = self.bot.db.find_member(match["winner"], ctx.message.guild.id)
-        players = [self.bot.db.find_member(pid, ctx.message.guild.id) for pid in match["players"]]
-        emsg.title = "Game id: {}".format(game_id)
+        match = self.bot.db.find_match(game_id, ctx.message.guild)
+        if not match:
+            await ctx.send(embed=embed.error(description=f"`{game_id}` does not exist"))
+            return
+        winner = self.bot.db.find_member(match["winner"], ctx.message.guild)
+        user_ids = [int(user_id) for user_id in match["players"]]
+        players = self.bot.db.find_members({"user_id": {"$in": user_ids}}, ctx.message.guild)
         date = datetime.fromtimestamp(match["timestamp"])
-        emoji_type = {stc.CONFIRMED: confirm_emoji, stc.UNCONFIRMED: unconfirm_emoji}
-        player_strings = []
-        for player in players:
-            if "decks" in match and match["decks"][player["user_id"]]:
-                deck_name = match["decks"][player["user_id"]]
-            else:
-                deck_name = "???"
-            status_msg = u"{} {}: {}".format(emoji_type[match["players"][player["user_id"]]], 
-                player["user"], deck_name)
-            if player["user_id"] == winner["user_id"]:
-                status_msg += u" " + trophy_emoji
-            player_strings.append(status_msg)
-        emsg.add_field(name="Date", inline=True, value=date.strftime("%Y-%m-%d"))
-        emsg.add_field(name="Status", inline=True, value=match["status"])
-        emsg.add_field(name="Players", inline=True, value=("\n".join(player_strings)))
-        #await self.bot.send_embed(ctx.message.channel, emsg)
-        emsg.color = C_OK
+        if match["status"] == stc.ACCEPTED:
+            status_symbol = emojis.accepted
+        elif match["status"] == stc.PENDING:
+            status_symbol = emojis.pending
+        else:
+            status_symbol = emojis.disputed
+        emsg = embed.msg(title=f"Game id: {game_id}") \
+                    .add_field(name="Date", value=date.strftime("%Y-%m-%d")) \
+                    .add_field(name="Winner", value=winner["name"]) \
+                    .add_field(name="Status", value=status_symbol)
+        
+        emsg.description = self._make_game_table(players, match)
         await ctx.send(embed=emsg)
+
+    async def _find_user(self, user_id):
+        return await self.bot.get_user_info(int(user_id))
 
 
     @commands.command()
+    @commands.guild_only()
+    @commands.check(checks.is_registered)
     async def remind(self, ctx):
-        if not self.bot.is_in_server(ctx):
+        member = self.bot.db.find_member(ctx.message.author.id, ctx.message.guild)
+        if not member["pending"]:
+            await ctx.send(embed=embed.msg(description="You have no pending matches"))
             return
-        if not await self.bot.is_registered(ctx):
-            return
-
-        user = ctx.message.author
-        pending_matches = self.bot.db.find_player_pending(user.id, ctx.message.server.id)
+        pending_matches = self.bot.db.find_matches({"game_id": {"$in": member["pending"]}}, ctx.message.guild)
         for match in pending_matches:
             emsg = discord.Embed()
-            unconfirmed = [discord.utils.get(ctx.message.server.members, id=user_id).mention
-                for user_id in match["players"] if match["players"][user_id] != stc.CONFIRMED
+            unconfirmed = [
+                await self.bot.get_user_info(int(user_id)) for user_id in match["players"] 
+                if match["players"][user_id] == stc.UNCONFIRMED
             ]
-            emsg.title = "Game id: {}".format(match["game_id"])
-            emsg.description = "{}\nPlease confirm this match by saying: `{}confirm {}`".format(
-                " ".join(unconfirmed), ctx.prefix, match["game_id"])
-            await self.bot.send_embed(ctx.message.channel, emsg)
+            mentions = " ".join([user.mention for user in unconfirmed])
+            emsg = embed.msg(
+                title=f"Game id: {match['game_id']}",
+                description=(f"{mentions}\n" \
+                             f"Please confirm this match by saying: `{ctx.prefix}confirm {match['game_id']}`")
+            )
+            await ctx.send(embed=emsg)
+
+    def _get_game_ids_list(self, matches):
+        if not matches.count():
+            return "N/A"
+        return "\n".join([f"`{match['game_id']}`" for match in matches])
 
     
     @commands.command()
-    async def disputed(self, ctx):
-        if not self.bot.is_in_server(ctx):
-            return
-        if not self.bot.is_admin(ctx):
-            return
-
-        disputed_matches = self.bot.db.find_matches({"status": stc.DISPUTED}, ctx.message.server.id)
-        emsg = discord.Embed()
-        if not disputed_matches.count():
-            emsg.description = "No disputed matches found"
-            await self.bot.send_embed(ctx.message.channel, emsg)
-            return
-        emsg.title = "Disputed Matches"
-        emsg.description = ("\n".join([match["game_id"] for match in disputed_matches])
-            + "\nUse `{0}accept [game id]` or `{0}reject [game id]` to resolve a dispute.".format(
-                ctx.prefix
-            ))
-        await self.bot.send_embed(ctx.message.channel, emsg)
+    @commands.guild_only()
+    @commands.check(checks.is_admin)
+    async def matches(self, ctx):
+        disputed_matches = self.bot.db.find_matches({"status": stc.DISPUTED}, ctx.message.guild)
+        pending_matches = self.bot.db.find_matches({"status": stc.PENDING}, ctx.message.guild)
+        disputed = self._get_game_ids_list(disputed_matches)
+        pending = self._get_game_ids_list(pending_matches)
+        emsg = embed.info(title="Pending and Disputed Matches") \
+                    .add_field(name="Disputed", value=disputed) \
+                    .add_field(name="Pending", value=pending) \
+                    .add_field(name="Actions", 
+                        value=f"`{ctx.prefix}game [game id]`\n`{ctx.prefix}accept [game id]`\n`{ctx.prefix}reject [game id]`")
+        await ctx.send(embed=emsg)
 
 
 def setup(bot):

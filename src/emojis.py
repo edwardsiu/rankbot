@@ -1,6 +1,9 @@
-confirm_emoji = u'\U00002705'
-unconfirm_emoji = u'\U0000274C'
-trophy_emoji = u'\U0001F3C6'
-info_emoji = u'\U00002139'
-return_emoji = u'\U000021A9'
-thumbs_up_emoji = u'\U0001F44D'
+accepted = "✅"
+pending = "⏳"
+disputed = "❌"
+trophy = "🏆"
+first_place = "🥇"
+second_place = "🥈"
+third_place = "🥉"
+thumbs_up = "👍"
+thumbs_down = "👎"
