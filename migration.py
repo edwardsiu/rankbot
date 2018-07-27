@@ -18,6 +18,7 @@ for shard in ["390254034289819669"]:
                 "user": "name"
             }
         })
+    db.members.create_index("user_id")
     matches = db.matches.find()
     for match in matches:
         if "decks" in match:
@@ -37,3 +38,6 @@ for shard in ["390254034289819669"]:
                     }
                 }
             })
+    db.matches.create_index("game_id")
+    db.matches.create_index("status")
+    
