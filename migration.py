@@ -9,12 +9,31 @@ for shard in ["390254034289819669"]:
     members = db.members.find()
     for member in members:
         db.members.update_one({"user_id": member["user_id"]},
+        {
+            "$set": {
+                "user_id": int(member["user_id"]),
+                "deck": ""
+            },
+            "$rename": {
+                "user": "name"
+            }
+        })
+    matches = db.matches.find()
+    for match in matches:
+        if "decks" in match:
+            db.matches.update_one({"game_id": match["game_id"]},
             {
                 "$set": {
-                    "user_id": int(member["user_id"]),
-                    "deck": ""
-                },
-                "$rename": {
-                    "user": "name"
+                    "winner": int(match["winner"])
+                }
+            })
+        else:
+            db.matches.update_one({"game_id": match["game_id"]},
+            {
+                "$set": {
+                    "winner": int(match["winner"]),
+                    "decks": {
+                        user_id: "" for user_id in match["players"]
+                    }
                 }
             })
