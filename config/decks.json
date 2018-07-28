@@ -344,6 +344,19 @@
         ]
     },
     {
+        "color_name": "Sultai",
+        "colors": "UBG",
+        "decks": [
+            {
+                "name": "Tasigur Control",
+                "nicknames": [
+                    "tasigur control",
+                    "tasigur"
+                ]
+            }
+        ]
+    },
+    {
         "color_name": "Sans Blue",
         "colors": "WBRG",
         "decks": [
