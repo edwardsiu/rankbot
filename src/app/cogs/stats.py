@@ -14,6 +14,15 @@ class Stats():
     @commands.group()
     @commands.guild_only()
     async def info(self, ctx):
+        """Show summary info of the league.
+
+        Usage:
+          info
+
+        Description:
+          Displays the number of registered players, the number of games recorded,
+          and the number of pending games."""
+
         num_pending = self.bot.db.count_matches({"status": stc.PENDING}, ctx.message.guild)
         num_accepted = self.bot.db.count_matches({"status": stc.ACCEPTED}, ctx.message.guild)
         num_members = self.bot.db.members(ctx.message.guild).count()
@@ -21,17 +30,19 @@ class Stats():
         emsg = embed.info(title=f"{ctx.message.guild.name} League") \
                     .add_field(name="Players", value=str(num_members)) \
                     .add_field(name="Games Played", value=str(num_accepted)) \
-                    .add_field(name="Unconfirmed Games", value=str(num_pending)) \
-                    .add_field(name="Link", value=(
-            f"https://discordapp.com/oauth2/authorize?" \
-            f"client_id={self.bot.client_id}&scope=bot&permissions=0")
-        )
+                    .add_field(name="Unconfirmed Games", value=str(num_pending))
+            #        .add_field(name="Link", value=(
+            #f"https://discordapp.com/oauth2/authorize?" \
+            #f"client_id={self.bot.client_id}&scope=bot&permissions=0")
+        #)
         await ctx.send(embed=emsg)
         
 
     @commands.group()
     @commands.guild_only()
     async def top(self, ctx):
+        """Display the league leaderboard."""
+
         if ctx.invoked_subcommand is None:
             limit = utils.DEFAULT_LIMIT
             players = self.bot.db.find_top_members_by("points", ctx.message.guild, limit=limit)
@@ -44,6 +55,16 @@ class Stats():
 
     @top.command(name='wins')
     async def _top_wins(self, ctx, *args):
+        """Display the league leaderboard by wins.
+
+        Usage:
+          top wins
+          top wins [n players]
+        
+        Description:
+          Display the top 10 players in the league by wins. If a number is specified, display
+          that many players instead."""
+
         limit = utils.get_limit(args)
         players = self.bot.db.find_top_members_by("wins", ctx.message.guild, limit=limit)
         emsg = embed.msg(
@@ -56,6 +77,16 @@ class Stats():
 
     @top.command(name='games')
     async def _top_games(self, ctx, *args):
+        """Display the league leaderboard by games.
+
+        Usage:
+          top games
+          top games [n players]
+        
+        Description:
+          Display the top 10 players in the league by games. If a number is specified, display
+          that many players instead."""
+
         limit = utils.get_limit(args)
         players = self.bot.db.find_top_members_by("accepted", ctx.message.guild, limit=limit)
         emsg = embed.msg(
@@ -67,6 +98,16 @@ class Stats():
 
     @top.command(name='points')
     async def _top_points(self, ctx, *args):
+        """Display the league leaderboard by points.
+
+        Usage:
+          top points
+          top points [n players]
+        
+        Description:
+          Display the top 10 players in the league by score. If a number is specified, display
+          that many players instead."""
+
         limit = utils.get_limit(args)
         players = self.bot.db.find_top_members_by("points", ctx.message.guild, limit=limit)
         emsg = embed.msg(
@@ -92,6 +133,9 @@ class Stats():
         rows = []
         total_entries = sum([deck["entries"] for deck in data])
         for deck in data:
+            # skip any untracked decks. this occurs if a game was overriden by an admin
+            if deck["deck_name"] == "Unknown":
+                continue
             meta_percent = 100*deck["entries"]/total_entries
             win_percent =100*deck["wins"]/deck["entries"]
             row = [
@@ -118,16 +162,23 @@ class Stats():
     @stat.command()
     async def decks(self, ctx, *args):
         """Display statistics about tracked decks.
-        Statistics shown are:
-            1. Games played
-            2. Total Wins
-            3. Win %
-            4. Popularity (number of unique players)
-            5. Pod % (Games played/total matches)
-        Default (no args): show all decks sorted by games played
-        wins: show all decks sorted by total wins
-        winrate: show all decks sorted by winrate
-        players: show all decks sorted by popularity (unique players)"""
+
+        Usage:
+          stat decks
+          stat decks wins
+          stat decks winrate
+          stat decks popularity
+
+        Description:
+          Displays the records of all decks tracked by the league.
+          Data displayed is:
+          1. Meta share (% of pods that contain this deck)
+          2. Games played (Same as meta share, just the raw value)
+          3. Total wins
+          4. Win %
+          5. Popularity (Number of unique pilots)
+          
+          The default sort is by meta share. If another key is specified, sort by that instead."""
 
         if self.bot.deck_data["unsynced"]:
             matches = self.bot.db.find_matches(

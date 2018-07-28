@@ -118,7 +118,7 @@ class OwnerCog():
         return decks_added
 
 
-    @commands.command(name="reload-decks")
+    @commands.command(name="reload-decks", hidden=True)
     @commands.is_owner()
     async def reload_decks(self, ctx):
         decks_added = self._load_decks()

@@ -77,6 +77,9 @@ class Members():
         Usage:
           profile
           profile @user1
+
+        Description:
+          Shows the match record, favorite deck, and current deck.
         """
 
         users = utils.get_target_users(ctx)
@@ -95,6 +98,14 @@ class Members():
     @commands.guild_only()
     @commands.check(checks.is_registered)
     async def pending(self, ctx):
+        """Display a list of pending matches.
+        
+        Usage:
+          pending
+          
+        Description:
+          Show a list of pending matches."""
+
         user = ctx.message.author
         guild = ctx.message.guild
         player = self.bot.db.find_member(user.id, guild)
@@ -122,7 +133,7 @@ class Members():
                 deck_name = match["decks"][str(user.id)]
             else:
                 deck_name = "Unknown"
-            result = "WIN" if match["winner"] == str(user.id) else "LOSE"
+            result = "WIN" if match["winner"] == user.id else "LOSE"
             row = [date, match["game_id"], deck_name, result]
             rows.append(row)
         _tables = []
@@ -134,6 +145,16 @@ class Members():
     @commands.command()
     @commands.guild_only()
     async def history(self, ctx, *args):
+        """Show the most recent matches.
+
+        Usage:
+          history
+          history [n matches]
+
+        Description:
+          Show the caller's last 10 matches. If a number is specified, show 
+          that many matches instead."""
+          
         limit = utils.get_limit(args)
 
         users = utils.get_target_users(ctx)

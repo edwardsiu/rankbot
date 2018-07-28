@@ -11,9 +11,15 @@ class Decks():
     @commands.guild_only()
     @commands.check(checks.is_registered)
     async def use(self, ctx, *, deck_name: str=""):
-        """Set the user's last played deck to the given deck name.
-        Rogue is a placeholder deck name for an unregistered deck.
-        Unrecognized deck names default to Rogue."""
+        """Set the user's current deck.
+
+        Usage:
+          use [deck name]
+
+        Description:
+          Deck must be a registered deck. A list of all registered decks 
+          can be viewed with the `decks` command. If the desired deck is 
+          not being tracked, Rogue can be used as a placeholder deck."""
 
         user = ctx.message.author
         action_description = f"`{ctx.prefix}decks`\n`{ctx.prefix}decks [color set]`"
@@ -39,8 +45,17 @@ class Decks():
 
     @commands.command()
     async def decks(self, ctx, *, color: str=""):
-        """Show a list of all registered decks by color combination. If a color combination
-        is specified, filter the results by that color combination."""
+        """Show all registered decks.
+        
+        Usage:
+          decks
+          decks [color combo]
+          decks wub
+
+        Description:
+          Show all registered decks, categorized by color combination.
+          If a color combination is specified in wubrg format,
+          filter the results by that color combination."""
 
         if not color:
             emsg = embed.msg(title="Registered Decks")
