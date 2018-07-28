@@ -7,19 +7,16 @@ class Decks():
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=["set-deck"])
+    @commands.command(
+        aliases=["set-deck"],
+        brief="Set your current deck",
+        usage="`{0}use [deck name]`"
+    )
     @commands.guild_only()
     @commands.check(checks.is_registered)
     async def use(self, ctx, *, deck_name: str=""):
-        """Set the user's current deck.
-
-        Usage:
-          use [deck name]
-
-        Description:
-          Deck must be a registered deck. A list of all registered decks 
-          can be viewed with the `decks` command. If the desired deck is 
-          not being tracked, Rogue can be used as a placeholder deck."""
+        """Set your current deck to the specified deck. 
+        The deck must be a registered deck. A list of all registered decks can be viewed with the `decks` command. If the desired deck is not being tracked, Rogue can be used as a placeholder."""
 
         user = ctx.message.author
         action_description = f"`{ctx.prefix}decks`\n`{ctx.prefix}decks [color set]`"
@@ -43,19 +40,14 @@ class Decks():
         await ctx.send(embed=embed.msg(description=f"Deck set to {official_name} for **{user.name}**"))
 
 
-    @commands.command()
+    @commands.command(
+        brief="Show all registered decks",
+        usage=("`{0}decks`\n" \
+               "`{0}decks [color combination]`"
+        )
+    )
     async def decks(self, ctx, *, color: str=""):
-        """Show all registered decks.
-        
-        Usage:
-          decks
-          decks [color combo]
-          decks wub
-
-        Description:
-          Show all registered decks, categorized by color combination.
-          If a color combination is specified in wubrg format,
-          filter the results by that color combination."""
+        """Show all registered decks, categorized by color combination. If a color combination is specified in WUBRG format, filter the results by that color combination. For example, to show only Esper decks, use WUB as the color combination (order does not matter)."""
 
         if not color:
             emsg = embed.msg(title="Registered Decks")

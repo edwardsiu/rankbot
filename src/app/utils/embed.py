@@ -16,3 +16,10 @@ def success(**kwargs):
 def error(**kwargs):
     emsg = discord.Embed(color=C_ERR, **kwargs)
     return emsg
+
+def match_delta(game_id, delta):
+    emsg = msg(title=f"Game id: {game_id}")
+    emsg.add_field(name="Status", value="`ACCEPTED`")
+    emsg.add_field(name="Point Changes", value=(
+        "\n".join([f"`{i['player']}: {i['change']:+}`" for i in delta])))
+    return emsg

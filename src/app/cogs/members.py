@@ -9,10 +9,13 @@ class Members():
         self.favorite_deck_window = 10
 
 
-    @commands.command()
+    @commands.command(
+        brief="Register to this guild's EDH league",
+        usage="`{0}register`"
+    )
     @commands.guild_only()
     async def register(self, ctx):
-        """Register to this guild's EDH league."""
+        """Register to this guild's EDH league to participate in match tracking."""
             
         user = ctx.message.author
         guild = ctx.message.guild
@@ -69,18 +72,14 @@ class Members():
         return emsg
 
 
-    @commands.command()
+    @commands.command(
+        brief="Display your league profile",
+        usage=("`{0}profile`\n" \
+               "`{0}profile @user1`")
+    )
     @commands.guild_only()
     async def profile(self, ctx):
-        """Display the profile of a registered player.
-        
-        Usage:
-          profile
-          profile @user1
-
-        Description:
-          Shows the match record, favorite deck, and current deck.
-        """
+        """Display the profile of the mentioned player if they are registered. If no player is mentioned, show your own profile."""
 
         users = utils.get_target_users(ctx)
         for user in users:
@@ -94,17 +93,14 @@ class Members():
             await ctx.send(embed=profile_card)
 
 
-    @commands.command()
+    @commands.command(
+        brief="List all pending matches",
+        usage="`{0}pending`"
+    )
     @commands.guild_only()
     @commands.check(checks.is_registered)
     async def pending(self, ctx):
-        """Display a list of pending matches.
-        
-        Usage:
-          pending
-          
-        Description:
-          Show a list of pending matches."""
+        """Display a list of all your pending matches. Use the `remind` command instead to alert players to confirm your pending matches."""
 
         user = ctx.message.author
         guild = ctx.message.guild
@@ -142,19 +138,16 @@ class Members():
             _tables.append(table.Table(title, columns, rows[i:i+table_height]))
         return _tables
 
-    @commands.command()
+    @commands.command(
+        brief="Show your recent matches",
+        usage=("`{0}recent`\n" \
+               "`{0}recent [n matches]`"
+        )
+    )
     @commands.guild_only()
-    async def history(self, ctx, *args):
-        """Show the most recent matches.
+    async def recent(self, ctx, *args):
+        """Show your last 10 matches. If a number is specified, show that many matches instead."""
 
-        Usage:
-          history
-          history [n matches]
-
-        Description:
-          Show the caller's last 10 matches. If a number is specified, show 
-          that many matches instead."""
-          
         limit = utils.get_limit(args)
 
         users = utils.get_target_users(ctx)

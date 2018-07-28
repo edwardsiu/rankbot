@@ -7,8 +7,7 @@ from discord.ext import commands
 from app import rankbot
 
 def get_cogs():
-    #return [f.split(".")[0] for f in os.listdir("app/cogs") if not f[0] == "_"]
-    return ["decks", "manage", "matches", "members", "owner", "stats"]
+    return [f.split(".")[0] for f in os.listdir("app/cogs") if not f[0] == "_"]
 
 logging_fmt = '%(asctime)-15s - %(levelname)s - %(message)s'
 handler = logging.handlers.RotatingFileHandler(filename="bot.log", maxBytes=100000, backupCount=1)

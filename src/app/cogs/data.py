@@ -6,22 +6,18 @@ import re
 from app.constants import status_codes as stc
 from app.utils import checks, embed, table, utils
 
-class Stats():
+class Data():
     def __init__(self, bot):
         self.bot = bot
         self.deck_tracking_start_date = 1529132400
 
-    @commands.group()
+    @commands.group(
+        brief="Show summary info for the leage",
+        usage="`{0}info`"
+    )
     @commands.guild_only()
     async def info(self, ctx):
-        """Show summary info of the league.
-
-        Usage:
-          info
-
-        Description:
-          Displays the number of registered players, the number of games recorded,
-          and the number of pending games."""
+        """Show summary info of the league. Displays the number of registered players, the number of games recorded, and the number of pending games."""
 
         num_pending = self.bot.db.count_matches({"status": stc.PENDING}, ctx.message.guild)
         num_accepted = self.bot.db.count_matches({"status": stc.ACCEPTED}, ctx.message.guild)
@@ -38,10 +34,15 @@ class Stats():
         await ctx.send(embed=emsg)
         
 
-    @commands.group()
+    @commands.group(
+        brief="Show the leaderboard",
+        usage=("`{0}top`\n" \
+               "`{0}top [wins|games|score]`"
+        )
+    )
     @commands.guild_only()
     async def top(self, ctx):
-        """Display the league leaderboard."""
+        """Display the league leaderboard. Specify a key to sort by total wins, games, or points."""
 
         if ctx.invoked_subcommand is None:
             limit = utils.DEFAULT_LIMIT
@@ -53,17 +54,15 @@ class Stats():
             )
             await ctx.send(embed=emsg)
 
-    @top.command(name='wins')
+    @top.command(
+        name='wins',
+        brief="Show the leaderboard for total wins",
+        usage=("`{0}top wins`\n" \
+               "`{0}top wins [n players]`"
+        )
+    )
     async def _top_wins(self, ctx, *args):
-        """Display the league leaderboard by wins.
-
-        Usage:
-          top wins
-          top wins [n players]
-        
-        Description:
-          Display the top 10 players in the league by wins. If a number is specified, display
-          that many players instead."""
+        """Display the top 10 players in the league by wins. If a number is specified, display that many players instead."""
 
         limit = utils.get_limit(args)
         players = self.bot.db.find_top_members_by("wins", ctx.message.guild, limit=limit)
@@ -75,17 +74,15 @@ class Stats():
         await ctx.send(embed=emsg)
 
 
-    @top.command(name='games')
+    @top.command(
+        name='games',
+        brief="Show the leaderboard for total games played",
+        usage=("`{0}top games`\n" \
+               "`{0}top games [n players]`"
+        )
+    )
     async def _top_games(self, ctx, *args):
-        """Display the league leaderboard by games.
-
-        Usage:
-          top games
-          top games [n players]
-        
-        Description:
-          Display the top 10 players in the league by games. If a number is specified, display
-          that many players instead."""
+        """Display the top 10 players in the league by games played. If a number is specified, display that many players instead."""
 
         limit = utils.get_limit(args)
         players = self.bot.db.find_top_members_by("accepted", ctx.message.guild, limit=limit)
@@ -96,17 +93,15 @@ class Stats():
         )
         await ctx.send(embed=emsg)
 
-    @top.command(name='points')
-    async def _top_points(self, ctx, *args):
-        """Display the league leaderboard by points.
-
-        Usage:
-          top points
-          top points [n players]
-        
-        Description:
-          Display the top 10 players in the league by score. If a number is specified, display
-          that many players instead."""
+    @top.command(
+        name='score',
+        brief="Show the leaderboard for highest score",
+        usage=("`{0}top score`\n" \
+               "`{0}top score [n players]`"
+        )
+    )
+    async def _top_score(self, ctx, *args):
+        """Display the top 10 players in the league by points. If a number is specified, display that many players instead."""
 
         limit = utils.get_limit(args)
         players = self.bot.db.find_top_members_by("points", ctx.message.guild, limit=limit)
@@ -116,17 +111,6 @@ class Stats():
                                       for ix, player in enumerate(players)])
         )
         await ctx.send(embed=emsg)
-
-
-    @commands.group()
-    @commands.guild_only()
-    async def stat(self, ctx):
-        if ctx.invoked_subcommand is None:
-            emsg = embed.error(
-                description = f"Not enough args. Enter `{ctx.prefix}help stat` for more info."
-            )
-            await ctx.send(embed=emsg)
-            return
 
     def _make_tables(self, title, data, syntax=None):
         columns = ["Deck", "Meta %", "Wins", "Win %", "Pilots"]
@@ -140,9 +124,9 @@ class Stats():
             win_percent =100*deck["wins"]/deck["entries"]
             row = [
                 deck["deck_name"],
-                f"{meta_percent:.3f}% ({deck['entries']})",
+                f"{meta_percent:.3g}% ({deck['entries']})",
                 str(deck["wins"]),
-                f"{win_percent:.3f}%",
+                f"{win_percent:.3g}%",
                 str(len(deck["players"]))
             ]
             rows.append(row)
@@ -150,65 +134,57 @@ class Stats():
         _tables = [
             str(
                 table.Table(title, columns, rows[i:i+rows_per_table], syntax=syntax)
-            ) for i in range(0, len(data), rows_per_table)
+            ) for i in range(0, len(rows), rows_per_table)
         ]
         return _tables
 
-    async def _send_tables(self, ctx, _tables):
+
+    @commands.command(
+        brief="Display records of tracked decks",
+        usage=("`{0}deckstats`\n" \
+               "`{0}deckstats [wins|winrate|popularity]`"
+        )
+    )
+    @commands.guild_only()
+    async def deckstats(self, ctx, *, sort_key: str=""):
+        """Displays the records of all decks tracked by the league. Data displayed includes meta share, games played, total wins, win %, and popularity. 
+        
+        Games played is the number of times a deck has been logged. 
+        The meta share is the percentage of time a deck is logged and is proportional to games played.
+        Total wins and win % should be self-explanatory. 
+        Popularity is represented by the number of unique pilots that have logged matches with the deck.
+
+        By default, this command sorts the results by meta share. Include one of the other keys to sort by those columns instead."""
+
+        matches = self.bot.db.find_matches(
+            {
+                "timestamp": {"$gt": self.deck_tracking_start_date}, 
+                "status": stc.ACCEPTED
+            }, ctx.message.guild)
+        if not matches:
+            emsg = embed.error(description="No matches found")
+            await ctx.send(embed=emsg)
+            return
+        data = utils.process_match_stats(matches)
+
+        if not sort_key:
+            sorted_data = utils.sort_by_entries(data)
+            _tables = self._make_tables("Deck Stats [Meta % ▼]", sorted_data, "ini")
+        elif sort_key.lower() == "wins":
+            sorted_data = utils.sort_by_wins(data)
+            _tables = self._make_tables("Deck Stats [Wins ▼]", sorted_data, "ini")
+        elif sort_key.lower() == "winrate":
+            sorted_data = utils.sort_by_winrate(data)
+            _tables = self._make_tables("Deck Stats [Win % ▼]", sorted_data, "ini")
+        elif sort_key.lower() == "popularity":
+            sorted_data = utils.sort_by_unique_players(data)
+            _tables = self._make_tables("Deck Stats [Popularity ▼]", sorted_data, "ini")
+        else:
+            sorted_data = utils.sort_by_entries(data)
+            _tables = self._make_tables("Deck Stats [Meta % ▼]", sorted_data, "ini")
         for _table in _tables:
             await ctx.send(_table)
 
 
-    @stat.command()
-    async def decks(self, ctx, *args):
-        """Display statistics about tracked decks.
-
-        Usage:
-          stat decks
-          stat decks wins
-          stat decks winrate
-          stat decks popularity
-
-        Description:
-          Displays the records of all decks tracked by the league.
-          Data displayed is:
-          1. Meta share (% of pods that contain this deck)
-          2. Games played (Same as meta share, just the raw value)
-          3. Total wins
-          4. Win %
-          5. Popularity (Number of unique pilots)
-          
-          The default sort is by meta share. If another key is specified, sort by that instead."""
-
-        if self.bot.deck_data["unsynced"]:
-            matches = self.bot.db.find_matches(
-                {"timestamp": {"$gt": self.deck_tracking_start_date}}, ctx.message.guild)
-            if matches:
-                self.bot.deck_data["data"] = utils.process_match_stats(matches)
-            self.bot.deck_data["unsynced"] = False
-
-        if not self.bot.deck_data["data"]:
-            emsg = embed.error(description="No matches found")
-            await ctx.send(embed=emsg)
-            return
-
-        if not args:
-            sorted_data = utils.sort_by_entries(self.bot.deck_data["data"])
-            _tables = self._make_tables("Deck Stats [Meta % ▼]", sorted_data, "ini")
-        elif args[0].lower() == "wins":
-            sorted_data = utils.sort_by_wins(self.bot.deck_data["data"])
-            _tables = self._make_tables("Deck Stats [Wins ▼]", sorted_data, "ini")
-        elif args[0].lower() == "winrate":
-            sorted_data = utils.sort_by_winrate(self.bot.deck_data["data"])
-            _tables = self._make_tables("Deck Stats [Win % ▼]", sorted_data, "ini")
-        elif args[0].lower() == "popularity":
-            sorted_data = utils.sort_by_unique_players(self.bot.deck_data["data"])
-            _tables = self._make_tables("Deck Stats [Popularity ▼]", sorted_data, "ini")
-        else:
-            sorted_data = utils.sort_by_entries(self.bot.deck_data["data"])
-            _tables = self._make_tables("Deck Stats [Meta % ▼]", sorted_data, "ini")
-        await self._send_tables(ctx, _tables)
-
-
 def setup(bot):
-    bot.add_cog(Stats(bot))
+    bot.add_cog(Data(bot))

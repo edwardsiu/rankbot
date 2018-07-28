@@ -9,10 +9,14 @@ class OwnerCog():
         self.bot = bot
     
     # Hidden means it won't show up on the default help.
-    @commands.command(name='load', hidden=True)
+    @commands.command(
+        name='load', hidden=True,
+        brief="Load a command module",
+        usage="`{0}load [cog name]`"
+    )
     @commands.is_owner()
     async def cog_load(self, ctx, *, cog: str):
-        """Command which Loads a Module."""
+        """Loads a command cog."""
 
         try:
             self.bot.load_extension(f'app.cogs.{cog}')
@@ -21,11 +25,14 @@ class OwnerCog():
         else:
             await ctx.send(embed=embed.success(description='**SUCCESS**'))
 
-    @commands.command(name='unload', hidden=True)
+    @commands.command(
+        name='unload', hidden=True,
+        brief="Unload a command module",
+        usage="`{0}unload [cog name]`"
+    )
     @commands.is_owner()
     async def cog_unload(self, ctx, *, cog: str):
-        """Command which Unloads a Module.
-        Remember to use dot path. e.g: cogs.owner"""
+        """Unloads a command cog."""
 
         try:
             self.bot.unload_extension(f'app.cogs.{cog}')
@@ -34,11 +41,14 @@ class OwnerCog():
         else:
             await ctx.send(embed=embed.success(description='**SUCCESS**'))
 
-    @commands.command(name='reload', hidden=True)
+    @commands.command(
+        name='reload', hidden=True,
+        brief="Reload a command module",
+        usage="`{0}reload [cog name]`"
+    )
     @commands.is_owner()
     async def cog_reload(self, ctx, *, cog: str):
-        """Command which Reloads a Module.
-        Remember to use dot path. e.g: cogs.owner"""
+        """Reloads a command cog."""
 
         try:
             self.bot.unload_extension(f'app.cogs.{cog}')
@@ -48,16 +58,27 @@ class OwnerCog():
         else:
             await ctx.send(embed=embed.success(description='**SUCCESS**'))
 
-    @commands.group(name='add', hidden=True)
+    @commands.group(
+        name='add', hidden=True,
+        brief="Add a component to the bot",
+        usage=("`{0}add user`\n" \
+               "`{0}add match`\n" \
+               "`{0}add deck`\n"
+        )
+    )
     @commands.is_owner()
     async def add_component(self, ctx):
-        """Add a user, match, or deck to the bot."""
+        """Add a user, match, or deck to the league."""
 
         if ctx.invoked_subcommand is None:
             await ctx.send(embed=embed.error(description=f'**ERROR** - Specify a component to add'))
             return
 
-    @add_component.command(name='user', hidden=True)
+    @add_component.command(
+        name='user', hidden=True,
+        brief="Register a user to the league",
+        usage="`{0}add user @user`"
+    )
     async def _add_user(self, ctx, *, user: discord.User):
         """Add a user to the database."""
 
@@ -81,11 +102,15 @@ class OwnerCog():
         return decks
 
     def _get_random_deck(self, deck_names):
-        return decks_names[random.randint(0, len(deck_names)-1)]
+        return deck_names[random.randint(0, len(deck_names)-1)]
 
-    @add_component.command(name='match', hidden=True)
+    @add_component.command(
+        name='match', hidden=True,
+        brief="Add a match to the database",
+        usage="`{0}add match @user1 @user2 @user3 @user4`"
+    )
     async def _add_match(self, ctx):
-        """Add a match to the database. Winner is the first player mentioned."""
+        """Add a match to the database. Decks for each player are chosen at random. The winner is chosen at random. For testing purposes only."""
 
         guild = ctx.message.guild
         users = ctx.message.mentions
@@ -118,9 +143,15 @@ class OwnerCog():
         return decks_added
 
 
-    @commands.command(name="reload-decks", hidden=True)
+    @commands.command(
+        name="rescan", hidden=True,
+        brief="Rescan the decks.json file",
+        usage="`{0}rescan`"
+    )
     @commands.is_owner()
-    async def reload_decks(self, ctx):
+    async def _rescan_decks(self, ctx):
+        """Scans the decks.json file in config/ and imports the decks into the database."""
+
         decks_added = self._load_decks()
         if not decks_added:
             await ctx.send(embed=embed.info(

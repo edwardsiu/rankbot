@@ -25,20 +25,15 @@ class Matches():
         return True
 
 
-    @commands.command()
+    @commands.command(
+        brief="Add a match to the tracking system",
+        usage="`{0}log @user1 @user2 @user3`"
+    )
     @commands.guild_only()
     @commands.check(checks.is_registered)
     async def log(self, ctx):
-        """Add a match to the tracking system.
-
-        Usage:
-          log @user1 @user2 @user3
-
-        Description:
-          A match must have exactly 4 players. To log a match, the winner should
-          invoke this command and mention the 3 players that lost. The match will
-          be entered into the tracking system in PENDING state. Only after all
-          players have `confirmed` the result will the match be accepted."""
+        """Add a match to the tracking system. 
+        A match must have exactly 4 players. To log a match, the winner should invoke this command and mention the 3 players that lost. The match will be entered into the tracking system in PENDING state. Only after all players have confirmed the result will the match be accepted."""
 
         winner = ctx.message.author
         losers = ctx.message.mentions
@@ -94,44 +89,27 @@ class Matches():
         )
         return False
 
-    async def _show_delta(self, ctx, game_id, delta):
-        emsg = embed.msg(title=f"Game id: {game_id}") \
-                    .add_field(name="Status", value="`ACCEPTED`") \
-                    .add_field(name="Point Changes", value=(
-                        "\n".join([f"`{i['player']}: {i['change']:+}`" for i in delta])
-                    ))
-        # next time the stat-deck command is called, it will refetch the data
-        self.bot.deck_data["unsynced"] = True
-        await ctx.send(embed=emsg)
-
 
     async def _get_player_confirmation(self, ctx, player, game_id):
         if not await self._confirm_deck(ctx, player, game_id):
-            return
+            return None
         self.bot.db.confirm_match_for_user(game_id, ctx.message.author.id, player["deck"], ctx.message.guild)
         await ctx.send(embed=embed.success(description=f"Recieved confirmation from **{ctx.message.author.name}**"))
-        delta = self.bot.db.check_match_status(game_id, ctx.message.guild)
-        if delta:
-            await self._show_delta(ctx, game_id, delta)
+        return self.bot.db.check_match_status(game_id, ctx.message.guild)
 
 
-    @commands.command()
+    @commands.command(
+        brief="Validate a match result",
+        usage=("`{0}confirm`\n" \
+               "`{0}confirm [game id]`"
+        )
+    )
     @commands.guild_only()
     @commands.check(checks.is_registered)
     async def confirm(self, ctx, *, game_id: str=""):
-        """Verify that the match result is correct.
-
-        Usage:
-          confirm
-          confirm [game id]
-
-        Description:
-          All players, including the winner, must confirm a match. By default, this command
-          will confirm the most recent pending match by the caller. If a game_id is specified,
-          then the specified match will be confirmed instead. 
-
-          Confirmation is a 2-step process to verify the caller's deck choice and then that the
-          match result is correct."""
+        """Validate a match result. All players, including the winner, must confirm a match. 
+        By default, this command will confirm the most recent pending match by the caller. If a game_id is specified, then the specified match will be confirmed instead. 
+        Confirmation is a two-step process to verify the caller's deck choice and then to verify that the match result is correct."""
 
         user = ctx.message.author
         player = self.bot.db.find_member(user.id, ctx.message.guild)
@@ -150,23 +128,21 @@ class Matches():
             return
 
         if pending_match["players"][str(user.id)] == stc.UNCONFIRMED:
-            await self._get_player_confirmation(ctx, player, game_id)
+            delta = await self._get_player_confirmation(ctx, player, game_id)
+            if delta:
+                await ctx.send(embed=embed.match_delta(game_id, delta))
         else:
             await ctx.send(embed=embed.error(description="You have already confirmed this match"))
 
 
-    @commands.command()
+    @commands.command(
+        brief="Dispute a match result",
+        usage="`{0}deny [game id]`"
+    )
     @commands.guild_only()
     @commands.check(checks.is_registered)
     async def deny(self, ctx, *, game_id: str=""):
-        """Notify league admins that the match result is incorrect.
-
-        Usage:
-          deny
-          deny [game id]
-
-        Description:
-          League admins may resolve the match by either accepting or removing it."""
+        """Dispute a match result. This will notify league admins that the match result requires attention. League admins may resolve the match by either accepting or removing it. If you created the match and there is an error (ie. mentioned the wrong players), then the `remove` command is more appropriate to undo the logged match and log the correct result."""
 
         user = ctx.message.author
         player = self.bot.db.find_member(user.id, ctx.message.guild)
@@ -174,7 +150,8 @@ class Matches():
             await ctx.send(embed=embed.info(description="No pending matches to deny"))
             return
         if not game_id:
-            game_id = player["pending"][-1]
+            await ctx.send(embed=embed.error(description="You must specify a game id to dispute it"))
+            return
 
         pending_match = self.bot.db.find_match(game_id, ctx.message.guild)
         if not pending_match:
@@ -199,66 +176,6 @@ class Matches():
             )
 
 
-    @commands.command()
-    @commands.guild_only()
-    @commands.check(checks.is_admin)
-    async def accept(self, ctx, *, game_id: str=""):
-        """Force a match into accepted state.
-
-        Usage:
-          accept [game id]
-
-        Description:
-          This should only be used if a match is known to be valid but one or more of the
-          participants is unwilling or unavailable to confirm.
-          This command can only be used by an admin."""
-
-        if not game_id:
-            await ctx.send(embed=embed.error(description="No game id specified"))
-            return
-        match = self.bot.db.find_match(game_id, ctx.message.guild)
-        if not match:
-            await ctx.send(embed=embed.error(description=f"`{game_id}` does not exist"))
-            return
-        if match["status"] == stc.ACCEPTED:
-            return
-
-        self.bot.db.confirm_match_for_users(game_id, match["players"].keys(), ctx.message.guild)
-        delta = self.bot.db.check_match_status(game_id, ctx.message.guild)
-        if delta:
-            await self._show_delta(ctx, game_id, delta)
-        
-
-    @commands.command()
-    @commands.guild_only()
-    @commands.check(checks.is_registered)
-    async def reject(self, ctx, *, game_id: str=""):
-        """Remove a match from the tracking system.
-
-        Usage:
-          reject [game id]
-
-        Description:
-          This should only be used if a match is known to be invalid. Only pending matches can
-          be rejected. This command can only be used by an admin or the player who logged the match."""
-
-        if not game_id:
-            await ctx.send(embed=embed.error(description="No game id specified"))
-            return
-        match = self.bot.db.find_match(game_id, ctx.message.guild)
-        if not match:
-            await ctx.send(embed=embed.error(description=f"`{game_id}` does not exist"))
-            return
-        if match["status"] == stc.ACCEPTED:
-            await ctx.send(embed=embed.error(description="Cannot override an accepted match"))
-            return
-        if not (match["winner"] == ctx.message.author.id or checks.is_admin(ctx)):
-            await ctx.send(embed=embed.error(description="Only a league admin or the match winner can remove a match"))
-            return
-
-        self.bot.db.delete_match(game_id, ctx.message.guild)
-        await ctx.send(embed=embed.msg(description=f"`{game_id}` has been removed"))
-
     def _make_game_table(self, players, match):
         columns = ["Player", "Deck", "Status"]
         rows = []
@@ -274,21 +191,13 @@ class Matches():
         return str(_table)
 
 
-    @commands.command()
+    @commands.command(
+        brief="Get details of a game",
+        usage="`{0}game [game id]`"
+    )
     @commands.guild_only()
     async def game(self, ctx, *, game_id: str=""):
-        """Get the details of a game.
-
-        Usage:
-          game [game id]
-
-        Description:
-          Displays the following information:
-            Date
-            Players
-            What decks they played
-            Winner
-            Accept status of the match"""
+        """Get the details of a game. Details include the date it was logged, who the players were, what decks were played, who won the match, and the confirmation status of the match."""
 
         if not game_id:
             await ctx.send(embed=embed.error(description="No game id specified"))
@@ -308,7 +217,7 @@ class Matches():
         else:
             status_symbol = emojis.disputed
         emsg = embed.msg(title=f"Game id: {game_id}") \
-                    .add_field(name="Date", value=date.strftime("%Y-%m-%d")) \
+                    .add_field(name="Date (UTC)", value=date.strftime("%Y-%m-%d")) \
                     .add_field(name="Winner", value=winner["name"]) \
                     .add_field(name="Status", value=status_symbol)
         
@@ -319,18 +228,15 @@ class Matches():
         return await self.bot.get_user_info(int(user_id))
 
 
-    @commands.command()
+    @commands.command(
+        brief="Alert players to confirm pending matches",
+        usage="`{0}remind`"
+    )
     @commands.guild_only()
     @commands.check(checks.is_registered)
     async def remind(self, ctx):
         """Send an alert to each player to confirm your pending matches.
-        
-        Usage:
-          remind
-          
-        Description:
-          Pulls the caller's list of pending matches. Mentions all players in each match
-          that has not confirmed the result."""
+        This will pull your list of pending matches and mention all players in each match that has not yet confirmed the result."""
 
         member = self.bot.db.find_member(ctx.message.author.id, ctx.message.guild)
         if not member["pending"]:
@@ -356,18 +262,14 @@ class Matches():
         return "\n".join([f"`{match['game_id']}`" for match in matches])
 
     
-    @commands.command()
+    @commands.command(
+        brief="List all pending and disputed matches",
+        usage="`{0}matches`"
+    )
     @commands.guild_only()
-    @commands.check(checks.is_admin)
     async def matches(self, ctx):
-        """See a list of all disputed and pending matches.
-
-        Usage:
-          matches
-
-        Description:
-          Shows a list of all disputed and pending matches.
-          Primarily for league admins to find any matches that require resolution."""
+        """Shows a list of all disputed and pending matches.
+        Primarily for league admins to find any matches that require resolution."""
 
         disputed_matches = self.bot.db.find_matches({"status": stc.DISPUTED}, ctx.message.guild)
         pending_matches = self.bot.db.find_matches({"status": stc.PENDING}, ctx.message.guild)
@@ -377,7 +279,7 @@ class Matches():
                     .add_field(name="Disputed", value=disputed) \
                     .add_field(name="Pending", value=pending) \
                     .add_field(name="Actions", 
-                        value=f"`{ctx.prefix}game [game id]`\n`{ctx.prefix}accept [game id]`\n`{ctx.prefix}reject [game id]`")
+                        value=f"`{ctx.prefix}game [game id]`\n`{ctx.prefix}accept [game id]`\n`{ctx.prefix}remove [game id]`")
         await ctx.send(embed=emsg)
 
 
