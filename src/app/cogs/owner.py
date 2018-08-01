@@ -140,7 +140,11 @@ class OwnerCog():
         else:
             return r.json()
 
-    def _fetch_names_tappedout(self, slug):
+    def _fetch_names_tappedout(self, link):
+        result = re.search(r'(?<=mtg-decks/).*?(?=/)', link)
+        if not result:
+            return []
+        slug = result.group()
         r = requests.get(f"http://tappedout.net/mtg-decks/{slug}/?fmt=markdown")
         commander_names = []
         try:
@@ -176,12 +180,16 @@ class OwnerCog():
             return
 
         deck_name = args[0]
-        tappedout_slug = args[1]
+        deck_link = args[1]
         if self.bot.db.find_deck(deck_name):
             await ctx.send(embed=embed.error(description=f'**ERROR** - {deck_name} already exists'))
             return
-            
-        names = self._fetch_names_tappedout(tappedout_slug)
+
+        if 'tappedout' in deck_link:
+            names = self._fetch_names_tappedout(deck_link)
+        else:
+            await ctx.send(embed=embed.error(description=f'**ERROR** - This deck hosting site is not supported'))
+            return
         if not names:
             await ctx.send(embed=embed.error(description=f'**ERROR** - Failed to fetch commanders from Tappedout slug'))
             return
