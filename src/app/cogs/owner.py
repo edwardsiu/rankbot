@@ -2,7 +2,10 @@ import discord
 from discord.ext import commands
 import json
 import random
-from app.utils import embed
+import re
+import requests
+from app.utils import embed, utils
+from app.constants import color_names
 
 class OwnerCog():
     def __init__(self, bot):
@@ -127,6 +130,75 @@ class OwnerCog():
         delta = self.bot.db.check_match_status(game_id, guild)
         if delta:
             await ctx.send(embed=embed.success(description=f'**SUCCESS** - Added {game_id}'))
+
+    def _fetch_scryfall(self, name):
+        try:
+            params = {"fuzzy": name}
+            r = requests.get("https://api.scryfall.com/cards/named", params=params)
+        except:
+            return None
+        else:
+            return r.json()
+
+    def _fetch_names_tappedout(self, slug):
+        r = requests.get(f"http://tappedout.net/mtg-decks/{slug}/?fmt=markdown")
+        commander_names = []
+        try:
+            match = re.findall(r'### Commander.*((\n[*] 1.*)+)', r.text)[0][0]
+            _commanders = match.strip().split('\n')
+            for _commander in _commanders:
+                name = re.search(r'\[.*?\]', _commander).group()[1:-1]
+                commander_names.append(name)
+        except Exception as e:
+            print(e)
+            return []
+        return commander_names
+
+    def _get_color_identity(self, commanders):
+        colors = []
+        for commander in commanders:
+            if commander:
+                colors += commander["color_identity"]
+        return utils.sort_color_str("".join(colors))
+
+
+    @add_component.command(
+        name='deck', hidden=True,
+        brief="Add a deck to the database",
+        usage="`{0}add deck [deck name] [tappedout slug]`"
+    )
+    async def _add_deck(self, ctx, *args):
+        if len(args) < 2:
+            await ctx.send(embed=embed.error(description=f'**ERROR** - Not enough args'))
+            return
+        if len(args) > 2:
+            await ctx.send(embed=embed.error(description=f'**ERROR** - Too many args. Make sure to enclose deck names in quotes.'))
+            return
+
+        deck_name = args[0]
+        tappedout_slug = args[1]
+        if self.bot.db.find_deck(deck_name):
+            await ctx.send(embed=embed.error(description=f'**ERROR** - {deck_name} already exists'))
+            return
+            
+        names = self._fetch_names_tappedout(tappedout_slug)
+        if not names:
+            await ctx.send(embed=embed.error(description=f'**ERROR** - Failed to fetch commanders from Tappedout slug'))
+            return
+        commanders = [self._fetch_scryfall(name) for name in names]
+        if not commanders:
+            await ctx.send(embed=embed.error(description=f'**ERROR** - Failed to fetch commanders from Scryfall'))
+            return
+        color_identity = self._get_color_identity(commanders)
+        color_name = color_names.NAMES[color_identity]
+        self.bot.db.add_deck(
+            color_identity,
+            color_name,
+            deck_name,
+            [deck_name.lower()]
+        )
+        await ctx.send(embed=embed.success(description=f'**SUCCESS** - Imported {deck_name} to deck database'))
+        
 
     def _load_decks(self):
         with open("../config/decks.json", "r") as infile:
