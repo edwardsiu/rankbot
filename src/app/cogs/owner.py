@@ -158,7 +158,7 @@ class OwnerCog():
                 description=f"Nothing new to import"))
         else:
             await ctx.send(embed=embed.success(
-                description=f"**SUCCESS** - {decks_added} new decks imported"))
+                description=f"**SUCCESS** - {decks_added} new deck(s) imported"))
         
 
 
