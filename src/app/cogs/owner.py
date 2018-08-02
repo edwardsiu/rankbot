@@ -4,7 +4,8 @@ import json
 import random
 from app.constants import color_names
 from app import exceptions as err
-from app.utils import deckhost, embed
+from app.utils import embed
+from app.utils.deckhosts import deck_utils
 
 class OwnerCog():
     def __init__(self, bot):
@@ -152,7 +153,7 @@ class OwnerCog():
             return
 
         try:
-            deck = deckhost.parse_deck(deck_link)
+            deck = deck_utils.extract(deck_link)
         except err.DeckNotFoundError:
             await ctx.send(embed=embed.error(description=f'**ERROR** - Failed to fetch decklist from link'))
             return

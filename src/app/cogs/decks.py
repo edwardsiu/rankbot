@@ -2,7 +2,8 @@ from discord.ext import commands
 import json
 import re
 from app import exceptions as err
-from app.utils import checks, deckhost, embed, utils
+from app.utils import checks, embed, utils
+from app.utils.deckhosts import deck_utils
 
 class Decks():
     def __init__(self, bot):
@@ -74,6 +75,24 @@ class Decks():
                 )
                 await ctx.send(embed=emsg)
 
+    async def _get_deck(self, ctx, link):
+        """Helper method for deck fetching."""
+
+        if not link:
+            await ctx.send(embed=embed.error(description="Please include a link to the decklist to preview."))
+            return None
+
+        try:
+            deck = deck_utils.extract(link)
+        except err.DeckNotFoundError:
+            await ctx.send(embed=embed.error(description="Failed to fetch decklist from the given link."))
+            return None
+        except err.CardNotFoundError:
+            await ctx.send(embed=embed.error(description="Failed to fetch commander from Scryfall."))
+            return None
+        return deck
+        
+
     @commands.command(
         brief="Display a decklist preview",
         usage="`{0}preview [link to decklist]`"
@@ -81,17 +100,8 @@ class Decks():
     async def preview(self, ctx, *, link: str=""):
         """Show a preview of a decklist. Supported deck hosts are tappedout.net and deckstats.net."""
 
-        if not link:
-            await ctx.send(embed=embed.error(description="Please include a link to the decklist to preview."))
-            return
-
-        try:
-            deck = deckhost.parse_deck(link)
-        except err.DeckNotFoundError:
-            await ctx.send(embed=embed.error(description="Failed to fetch decklist from the given link."))
-            return
-        except err.CardNotFoundError:
-            await ctx.send(embed=embed.error(description="Failed to fetch commander from Scryfall."))
+        deck = await self._get_deck(ctx, link)
+        if not deck:
             return
         commanders = " & ".join([commander['name'] for commander in deck['commanders']])
         emsg = embed.info(title=commanders) \
