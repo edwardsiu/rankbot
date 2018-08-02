@@ -2,8 +2,9 @@ import discord
 from discord.ext import commands
 import json
 import random
-from app.utils import deckhost, embed
 from app.constants import color_names
+from app import exceptions as err
+from app.utils import deckhost, embed
 
 class OwnerCog():
     def __init__(self, bot):
@@ -150,22 +151,17 @@ class OwnerCog():
             await ctx.send(embed=embed.error(description=f'**ERROR** - {deck_name} already exists'))
             return
 
-        if 'tappedout' in deck_link:
-            names = self._fetch_names_tappedout(deck_link)
-        else:
-            await ctx.send(embed=embed.error(description=f'**ERROR** - This deck hosting site is not supported'))
+        try:
+            deck = deckhost.parse_deck(deck_link)
+        except err.DeckNotFoundError:
+            await ctx.send(embed=embed.error(description=f'**ERROR** - Failed to fetch decklist from link'))
             return
-        if not names:
-            await ctx.send(embed=embed.error(description=f'**ERROR** - Failed to fetch commanders from Tappedout slug'))
-            return
-        commanders = [self._fetch_scryfall(name) for name in names]
-        if not commanders:
+        except err.CardNotFoundError:
             await ctx.send(embed=embed.error(description=f'**ERROR** - Failed to fetch commanders from Scryfall'))
             return
-        color_identity = self._get_color_identity(commanders)
-        color_name = color_names.NAMES[color_identity]
+        color_name = color_names.NAMES[deck["color_identity"]]
         self.bot.db.add_deck(
-            color_identity,
+            deck["color_identity"],
             color_name,
             deck_name,
             [deck_name.lower()]
