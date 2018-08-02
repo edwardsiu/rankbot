@@ -1,7 +1,8 @@
 from discord.ext import commands
 import json
 import re
-from app.utils import checks, embed, utils
+from app import exceptions as err
+from app.utils import checks, deckhost, embed, utils
 
 class Decks():
     def __init__(self, bot):
@@ -73,6 +74,34 @@ class Decks():
                 )
                 await ctx.send(embed=emsg)
 
+    @commands.command(
+        brief="Display a decklist preview",
+        usage="`{0}preview [link to decklist]`"
+    )
+    async def preview(self, ctx, *, link: str=""):
+        """Show a preview of a decklist. Supported deck hosts are tappedout.net and deckstats.net."""
+
+        if not link:
+            await ctx.send(embed=embed.error(description="Please include a link to the decklist to preview."))
+            return
+
+        try:
+            deck = deckhost.parse_deck(link)
+        except err.DeckNotFoundError:
+            await ctx.send(embed=embed.error(description="Failed to fetch decklist from the given link."))
+            return
+        except err.CardNotFoundError:
+            await ctx.send(embed=embed.error(description="Failed to fetch commander from Scryfall."))
+            return
+        commanders = " & ".join([commander['name'] for commander in deck['commanders']])
+        emsg = embed.info(title=commanders) \
+                    .set_thumbnail(url=deck['commanders'][0]['image_uris']['art_crop'])
+        for category in deck['decklist']:
+            category_name = category['category']
+            count = sum([card['count'] for card in category['cards']])
+            cards = [f"{card['count']} {card['name']}" for card in category['cards']]
+            emsg.add_field(name=f"{category_name} ({count})", value="\n".join(cards))
+        await ctx.send(embed=emsg)
 
 
 def setup(bot):

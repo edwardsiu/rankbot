@@ -23,39 +23,48 @@ def _get_card_name_deckstats(line):
     name = re.search(r"\D+", line).group()
     return name
 
+def _sort_categories(decklist):
+    return sorted(decklist, key=lambda o: len(o['cards']))
+
 def _parse_tappedout_decklist(dlist):
     lines = dlist.split('\n')
-    decklist = {}
-    current_key = ""
+    decklist = []
+    idx = -1
     for line in lines:
         if not line.strip():
             continue
         if re.match(r'### ', line):
-            current_key = re.search(r"[a-zA-Z]+", line).group()
-            decklist[current_key] = []
+            category = re.search(r"[a-zA-Z]+", line).group()
+            decklist.append({"category": category, "cards": []})
+            idx += 1
         elif re.match(r'[*]', line):
             match = re.search(r'\d+', line)
             if not match:
                 continue
             count = match.group()
             name = _get_card_name_tappedout(line)
-            decklist[current_key].append(f'{count} {name}')
-            
-    return decklist
+            decklist[idx]['cards'].append({"name": name, "count": int(count)})
+    return _sort_categories(decklist)
 
 def _parse_deckstats_decklist(dlist):
     lines = dlist.split('\n')
-    decklist = {}
-    current_key = ""
+    decklist = []
+    idx = -1
     for line in lines:
         if not line.strip():
             continue
         if re.match(r'\D', line):
-            current_key = line.strip()
-            decklist[current_key] = []
+            category = line.strip()
+            decklist.append({"category": category, "cards": []})
+            idx += 1
         else:
-            decklist[current_key].append(line)
-    return decklist
+            match = re.search(r'\d+', line)
+            if not match:
+                continue
+            count = match.group()
+            name = _get_card_name_deckstats(line)
+            decklist[idx]['cards'].append({"name": name, "count": int(count)})
+    return _sort_categories(decklist)
 
 def _search_tappedout(link):
     _slug_match = re.search(r'(?<=mtg-decks/).*?(?=/)', link)
