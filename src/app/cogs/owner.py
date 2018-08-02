@@ -2,9 +2,7 @@ import discord
 from discord.ext import commands
 import json
 import random
-import re
-import requests
-from app.utils import embed, utils
+from app.utils import deckhost, embed
 from app.constants import color_names
 
 class OwnerCog():
@@ -131,39 +129,6 @@ class OwnerCog():
         if delta:
             await ctx.send(embed=embed.success(description=f'**SUCCESS** - Added {game_id}'))
 
-    def _fetch_scryfall(self, name):
-        try:
-            params = {"fuzzy": name}
-            r = requests.get("https://api.scryfall.com/cards/named", params=params)
-        except:
-            return None
-        else:
-            return r.json()
-
-    def _fetch_names_tappedout(self, link):
-        result = re.search(r'(?<=mtg-decks/).*?(?=/)', link)
-        if not result:
-            return []
-        slug = result.group()
-        r = requests.get(f"http://tappedout.net/mtg-decks/{slug}/?fmt=markdown")
-        commander_names = []
-        try:
-            match = re.findall(r'### Commander.*((\n[*] 1.*)+)', r.text)[0][0]
-            _commanders = match.strip().split('\n')
-            for _commander in _commanders:
-                name = re.search(r'\[.*?\]', _commander).group()[1:-1]
-                commander_names.append(name)
-        except Exception as e:
-            print(e)
-            return []
-        return commander_names
-
-    def _get_color_identity(self, commanders):
-        colors = []
-        for commander in commanders:
-            if commander:
-                colors += commander["color_identity"]
-        return utils.sort_color_str("".join(colors))
 
 
     @add_component.command(
