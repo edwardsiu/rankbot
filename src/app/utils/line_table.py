@@ -23,7 +23,7 @@ class LineTable():
         return column_widths
 
     def _truncate_cell(self, cell, width):
-        return f"{cell[:width-3]..."
+        return f"{cell[:width-3]}..."
 
     def generate(self):
         column_widths = self._calculate_widths()
