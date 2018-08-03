@@ -268,7 +268,7 @@ class RankDB(MongoClient):
             }
         )
 
-    def add_deck(self, color, color_name, deck_name, aliases, description=""):
+    def add_deck(self, color, color_name, deck_name, aliases, commanders, description=""):
         decks = self.decks()
         document = {
             "name": deck_name,
@@ -276,7 +276,8 @@ class RankDB(MongoClient):
             "color_name": color_name,
             "description": description,
             "aliases": aliases,
-            "canonical_aliases": [utils.transform_deck_name(alias) for alias in aliases]
+            "canonical_aliases": [utils.transform_deck_name(alias) for alias in aliases],
+            "commanders": commanders
         }
         if not decks.find_one({"name": deck_name}):
             decks.insert_one(document)

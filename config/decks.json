@@ -5,6 +5,7 @@
         "decks": [
             {
                 "name": "Baral Control",
+                "commanders": ["Baral, Chief of Compliance"],
                 "aliases": [
                     "Baral",
                     "Baral Control"
@@ -12,6 +13,7 @@
             },
             {
                 "name": "JVP Storm",
+                "commanders": ["Jace, Vryn's Prodigy"],
                 "aliases": [
                     "JVP",
                     "JVP High Tide",
@@ -20,6 +22,7 @@
             },
             {
                 "name": "Chain Veil Teferi",
+                "commanders": ["Teferi, Temporal Archmage"],
                 "aliases": [
                     "CVT",
                     "Teferi",
@@ -28,6 +31,7 @@
             },
             {
                 "name": "Azami",
+                "commanders": ["Azami, Lady of Scrolls"],
                 "aliases": [
                     "Azami"
                 ]
@@ -40,14 +44,17 @@
         "decks": [
             {
                 "name": "Sidisi ANF",
+                "commanders": ["Sidisi, Undead Vizier"],
                 "aliases": [
                     "Sidisi ANF",
                     "B Sidisi",
-                    "Bidisi"
+                    "Bidisi",
+                    "SUV"
                 ]
             },
             {
                 "name": "Sidisi Razaketh",
+                "commanders": ["Sidisi, Undead Vizier"],
                 "aliases": [
                     "Sidisi Razaketh",
                     "Buried Alive Sidisi"
@@ -61,12 +68,14 @@
         "decks": [
             {
                 "name": "Godo",
+                "commanders": ["Godo, Bandit Warlord"],
                 "aliases": [
                     "Godo"
                 ]
             },
             {
                 "name": "Neheb Redstuff",
+                "commanders": ["Neheb, the Eternal"],
                 "aliases": [
                     "Neheb Redstuff"
                 ]
@@ -79,6 +88,7 @@
         "decks": [
             {
                 "name": "Selvala Brostorm",
+                "commanders": ["Selvala, Heart of the Wilds"],
                 "aliases": [
                     "Selvala",
                     "Selvala Brostorm",
@@ -87,6 +97,7 @@
             },
             {
                 "name": "Yisan",
+                "commanders": ["Yisan, the Wanderer Bard"],
                 "aliases": [
                     "Yisan"
                 ]
@@ -99,6 +110,7 @@
         "decks": [
             {
                 "name": "GAAIV Control",
+                "commanders": ["Grand Arbiter Augustin IV"],
                 "aliases": [
                     "GAAIV",
                     "Grand Arbiter",
@@ -113,6 +125,7 @@
         "decks": [
             {
                 "name": "Circu Scepter",
+                "commanders": ["Circu, Dimir Lobotomist"],
                 "aliases": [
                     "Circu Scepter",
                     "Circu"
@@ -120,6 +133,7 @@
             },
             {
                 "name": "Dralnu Storm",
+                "commanders": ["Dralnu, Lich Lord"],
                 "aliases": [
                     "Dralnu Storm",
                     "Dralnu"
@@ -127,6 +141,7 @@
             },
             {
                 "name": "Oona Scepter",
+                "commanders": ["Oona, Queen of the Fae"],
                 "aliases": [
                     "Oona Scepter",
                     "Oona"
@@ -140,6 +155,7 @@
         "decks": [
             {
                 "name": "Captain Sisay",
+                "commanders": ["Captain Sisay"],
                 "aliases": [
                     "Sisay",
                     "Captain Sisay",
@@ -148,6 +164,7 @@
             },
             {
                 "name": "Gaddok Teeg Midrange",
+                "commanders": ["Gaddok Teeg"],
                 "aliases": [
                     "Gaddok Teeg Midrange",
                     "Gaddok Teeg"
@@ -161,12 +178,14 @@
         "decks": [
             {
                 "name": "Jhoira",
+                "commanders": ["Jhoira, Weatherlight Captain"],
                 "aliases": [
                     "Jhoira"
                 ]
             },
             {
                 "name": "Keranos Control",
+                "commanders": ["Keranos, God of Storms"],
                 "aliases": [
                     "Keranos",
                     "Keranos Control",
@@ -181,6 +200,7 @@
         "decks": [
             {
                 "name": "Edric Flying Men",
+                "commanders": ["Edric, Spymaster of Trest"],
                 "aliases": [
                     "Edric",
                     "Edric Flying Men",
@@ -189,6 +209,7 @@
             },
             {
                 "name": "Momir Hackball",
+                "commanders": ["Momir Vig, Simic Visionary"],
                 "aliases": [
                     "Momir",
                     "Hackball",
@@ -197,6 +218,7 @@
             },
             {
                 "name": "Rashmi Control",
+                "commanders": ["Rashmi, Eternities Crafter"],
                 "aliases": [
                     "Rashmi",
                     "Rashmi Control"
@@ -204,6 +226,7 @@
             },
             {
                 "name": "Tatyova Stax",
+                "commanders": ["Tatyova, Benthic Druid"],
                 "aliases": [
                     "Tatyova",
                     "Tatyova Stax"
@@ -217,6 +240,7 @@
         "decks": [
             {
                 "name": "Doomsday Grenzo",
+                "commanders": ["Grenzo, Dungeon Warden"],
                 "aliases": [
                     "Grenzo",
                     "Doomsday Grenzo",
@@ -231,12 +255,14 @@
         "decks": [
             {
                 "name": "Gitrog",
+                "commanders": ["The Gitrog Monster"],
                 "aliases": [
                     "Gitrog"
                 ]
             },
             {
                 "name": "Varolz Hulk",
+                "commanders": ["Varolz, the Scar-Striped"],
                 "aliases": [
                     "Varolz",
                     "Varolz Hulk"
@@ -250,6 +276,7 @@
         "decks": [
             {
                 "name": "Ruric Thar",
+                "commanders": ["Ruric Thar, the Unbowed"],
                 "aliases": [
                     "Ruric Thar",
                     "Ruric"
@@ -263,6 +290,7 @@
         "decks": [
             {
                 "name": "Doomsday Zur",
+                "commanders": ["Zur the Enchanter"],
                 "aliases": [
                     "DD Zur",
                     "Doomsday Zur"
@@ -270,6 +298,7 @@
             },
             {
                 "name": "Shimmer Zur",
+                "commanders": ["Zur the Enchanter"],
                 "aliases": [
                     "Shimmer Zur",
                     "Zur Storm"
@@ -277,6 +306,7 @@
             },
             {
                 "name": "Consultation Zur",
+                "commanders": ["Zur the Enchanter"],
                 "aliases": [
                     "Consultation Zur",
                     "Zur Consult"
@@ -284,6 +314,7 @@
             },
             {
                 "name": "Zur Control",
+                "commanders": ["Zur the Enchanter"],
                 "aliases": [
                     "Zur Control"
                 ]
@@ -296,12 +327,14 @@
         "decks": [
             {
                 "name": "Kess Storm",
+                "commanders": ["Kess, Dissident Mage"],
                 "aliases": [
                     "Kess Storm"
                 ]
             },
             {
                 "name": "Consultation Kess",
+                "commanders": ["Kess, Dissident Mage"],
                 "aliases": [
                     "Consultation Kess",
                     "Kess Consult"
@@ -309,12 +342,14 @@
             },
             {
                 "name": "Kess Twin",
+                "commanders": ["Kess, Dissident Mage"],
                 "aliases": [
                     "Kess Twin"
                 ]
             },
             {
                 "name": "Jeleva Storm",
+                "commanders": ["Jeleva, Nephalia's Scourge"],
                 "aliases": [
                     "Jeleva Storm"
                 ]
@@ -327,6 +362,7 @@
         "decks": [
             {
                 "name": "Derevi Stax",
+                "commanders": ["Derevi, Empyrial Tactician"],
                 "aliases": [
                     "Derevi",
                     "Derevi Stax"
@@ -340,12 +376,14 @@
         "decks": [
             {
                 "name": "Kaalia",
+                "commanders": ["Kaalia of the Vast"],
                 "aliases": [
                     "Kaalia"
                 ]
             },
             {
                 "name": "Marchesa Stax",
+                "commanders": ["Queen Marchesa"],
                 "aliases": [
                     "Marduchesa",
                     "Marchesa Stax"
@@ -359,6 +397,7 @@
         "decks": [
             {
                 "name": "Tasigur Control",
+                "commanders": ["Tasigur, the Golden Fang"],
                 "aliases": [
                     "Tasigur Control",
                     "Tasigur"
@@ -372,6 +411,7 @@
         "decks": [
             {
                 "name": "Anafenza Kats",
+                "commanders": ["Anafenza, the Foremost"],
                 "aliases": [
                     "Anafenza",
                     "Anafenza Kats"
@@ -379,6 +419,7 @@
             },
             {
                 "name": "Ghavecraft",
+                "commanders": ["Ghave, Guru of Spores"],
                 "aliases": [
                     "Ghave",
                     "Ghavecraft"
@@ -392,6 +433,10 @@
         "decks": [
             {
                 "name": "Tymna Tana Blood Pod",
+                "commanders": [
+                    "Tymna the Weaver",
+                    "Tana, the Bloodsower"
+                ],
                 "aliases": [
                     "Blood Pod",
                     "Tymna Tana Blood Pod"
@@ -399,6 +444,10 @@
             },
             {
                 "name": "Tymna Tana Hulk",
+                "commanders": [
+                    "Tymna the Weaver",
+                    "Tana, the Bloodsower"
+                ],
                 "aliases": [
                     "TnT Hulk",
                     "Tymna Tana Hulk"
@@ -412,6 +461,10 @@
         "decks": [
             {
                 "name": "Thrasios Tymna MAN",
+                "commanders": [
+                    "Thrasios, Triton Hero", 
+                    "Tymna the Weaver"
+                ],
                 "aliases": [
                     "Thrasios Tymna MAN",
                     "Thras Tymna MAN",
@@ -420,12 +473,20 @@
             },
             {
                 "name": "Razakats",
+                "commanders": [
+                    "Thrasios, Triton Hero",
+                    "Tymna the Weaver"
+                ],
                 "aliases": [
                     "Razakats"
                 ]
             },
             {
                 "name": "Razahulk",
+                "commanders": [
+                    "Thrasios, Triton Hero",
+                    "Tymna the Weaver"
+                ],
                 "aliases": [
                     "Razahulk",
                     "Flashakats"
@@ -433,18 +494,30 @@
             },
             {
                 "name": "Breakfast Hulk",
+                "commanders": [
+                    "Thrasios, Triton Hero",
+                    "Tymna the Weaver"
+                ],
                 "aliases": [
                     "Breakfast Hulk"
                 ]
             },
             {
                 "name": "Hulkweaver",
+                "commanders": [
+                    "Thrasios, Triton Hero",
+                    "Tymna the Weaver"
+                ],
                 "aliases": [
                     "Hulkweaver"
                 ]
             },
             {
                 "name": "4c Varolz",
+                "commanders": [
+                    "Thrasios, Triton Hero",
+                    "Tymna the Weaver"
+                ],
                 "aliases": [
                     "4c Varolz",
                     "4CV",
@@ -454,6 +527,10 @@
             },
             {
                 "name": "Thrasios Tymna Scepter Storm",
+                "commanders": [
+                    "Thrasios, Triton Hero",
+                    "Tymna the Weaver"
+                ],
                 "aliases": [
                     "Thrasios Tymna Scepter Storm",
                     "Paradox Scepter Thrasios",
@@ -462,6 +539,10 @@
             },
             {
                 "name": "Doomtide Thrasios",
+                "commanders": [
+                    "Thrasios, Triton Hero",
+                    "Tymna the Weaver"
+                ],
                 "aliases": [
                     "Doomtide Thrasios",
                     "PTSD"
@@ -475,12 +556,20 @@
         "decks": [
             {
                 "name": "Tymna Kraum MAN",
+                "commanders": [
+                    "Tymna the Weaver",
+                    "Kraum, Ludevic's Opus"
+                ],
                 "aliases": [
                     "Tymna Kraum MAN"
                 ]
             },
             {
                 "name": "Tymna Kraum Bearweaver",
+                "commanders": [
+                    "Tymna the Weaver",
+                    "Kraum, Ludevic's Opus"
+                ],
                 "aliases": [
                     "Tymna Kraum Bearweaver",
                     "Bearweaver"
@@ -494,6 +583,10 @@
         "decks": [
             {
                 "name": "Thrasios Vial Scepter Storm",
+                "commanders": [
+                    "Thrasios, Triton Hero",
+                    "Vial Smasher the Fierce"
+                ],
                 "aliases": [
                     "Thrasios Vial Scepter Storm",
                     "Thras Vial Scepter",
@@ -502,12 +595,19 @@
             },
             {
                 "name": "Yidris Storm",
+                "commanders": [
+                    "Yidris, Maelstrom Wielder"
+                ],
                 "aliases": [
                     "Yidris Storm"
                 ]
             },
             {
                 "name": "Lightning Druid",
+                "commanders": [
+                    "Thrasios, Triton Hero",
+                    "Vial Smasher the Fierce"
+                ],
                 "aliases": [
                     "Lightning Druid"
                 ]
@@ -520,6 +620,7 @@
         "decks": [
             {
                 "name": "Food Chain Tazri",
+                "commanders": ["General Tazri"],
                 "aliases": [
                     "FCT",
                     "Food Chain Tazri"
@@ -527,12 +628,14 @@
             },
             {
                 "name": "Tazri Hulk",
+                "commanders": ["General Tazri"],
                 "aliases": [
                     "Tazri Hulk"
                 ]
             },
             {
                 "name": "Najeela Tempo",
+                "commanders": ["Najeela, the Blade-Blossom"],
                 "aliases": [
                     "Najeela",
                     "Najeela Tempo"
@@ -540,6 +643,7 @@
             },
             {
                 "name": "Scion Reanimator",
+                "commanders": ["Scion of the Ur-Dragon"],
                 "aliases": [
                     "Scion Reanimator"
                 ]

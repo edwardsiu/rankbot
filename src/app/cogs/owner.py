@@ -148,10 +148,6 @@ class OwnerCog():
 
         deck_name = args[0]
         deck_link = args[1]
-        if self.bot.db.find_deck(deck_name):
-            await ctx.send(embed=embed.error(description=f'**ERROR** - {deck_name} already exists'))
-            return
-
         try:
             deck = deck_utils.extract(deck_link)
         except err.DeckNotFoundError:
@@ -165,7 +161,8 @@ class OwnerCog():
             deck["color_identity"],
             color_name,
             deck_name,
-            [deck_name]
+            [deck_name],
+            [cmdr['name'] for cmdr in deck["commanders"]]
         )
         await ctx.send(embed=embed.success(description=f'**SUCCESS** - Imported {deck_name} to deck database'))
         
@@ -180,7 +177,8 @@ class OwnerCog():
                     category["colors"], 
                     category["color_name"],
                     deck["name"],
-                    deck["aliases"]
+                    deck["aliases"],
+                    deck["commanders"]
                 )
         return decks_added
 
