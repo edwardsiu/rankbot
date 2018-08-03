@@ -22,6 +22,9 @@ class LineTable():
                 pass
         return column_widths
 
+    def _truncate_cell(self, cell, width):
+        return f"{cell[:width-3]..."
+
     def generate(self):
         column_widths = self._calculate_widths()
         str_rows = []
@@ -30,7 +33,7 @@ class LineTable():
             # truncate any cells that are too long
             for i in range(columns):
                 if len(row[i]) > column_widths[i]:
-                    row[i] = row[i][:column_widths[i]]
+                    row[i] = self._truncate_cell(row[i], column_widths[i])
             str_rows.append(" ".join([f"{row[i]}".ljust(column_widths[i]) for i in range(columns)]))
         rows_per_table = int(2000/(self.width+columns))
         _tables = []
