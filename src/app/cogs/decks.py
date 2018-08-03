@@ -2,7 +2,7 @@ from discord.ext import commands
 import json
 import re
 from app import exceptions as err
-from app.utils import checks, embed, utils
+from app.utils import checks, embed, scryfall, utils
 from app.utils.deckhosts import deck_utils
 
 class Decks():
@@ -113,6 +113,30 @@ class Decks():
             emsg.add_field(name=f"{category_name} ({count})", value="\n".join(cards))
         await ctx.send(embed=emsg)
 
+
+    @commands.command(
+        brief="Display info about a deck",
+        usage="`{0}deck [deck name]`"
+    )
+    async def deck(self, ctx, *, deck_name: str=""):
+        """Displays detail info about a registered deck."""
+
+        if not deck_name:
+            await ctx.send(embed=embed.error(description="No deck name specified"))
+            return
+        deck = self.bot.db.find_deck(deck_name)
+        if not deck:
+            await ctx.send(embed=embed.error(description=f"{deck_name} was not found"))
+            return
+
+        card = scryfall.search(deck['commanders'][0])
+        description = deck['description'] if deck['description'] else "N/A"
+        emsg = embed.info(title=deck['name'], description=description) \
+                    .add_field(name="Commanders", value=("\n".join(deck['commanders']))) \
+                    .add_field(name="Color Identity", value=deck['color'].upper()) \
+                    .add_field(name="Aliases", value=("\n".join(deck['aliases']))) \
+                    .set_thumbnail(url=card['image_uris']['art_crop'])
+        await ctx.send(embed=emsg)
 
 def setup(bot):
     bot.add_cog(Decks(bot))
