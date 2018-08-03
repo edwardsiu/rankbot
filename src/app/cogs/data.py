@@ -4,7 +4,7 @@ import logging
 import re
 
 from app.constants import status_codes as stc
-from app.utils import checks, embed, table, utils
+from app.utils import checks, embed, line_table, table, utils
 
 class Data():
     def __init__(self, bot):
@@ -32,6 +32,22 @@ class Data():
             #f"client_id={self.bot.client_id}&scope=bot&permissions=0")
         #)
         await ctx.send(embed=emsg)
+
+
+    def _make_leaderboard_table(self, players, key, title):
+        rows = []
+        for i, player in enumerate(players):
+            rows.append([f"{i+1}.", player['name'], str(player[key])])
+        _line_table = line_table.LineTable(rows)
+        _tables = _line_table.generate()
+        emsgs = []
+        for _table in _tables:
+            emsg = embed.msg(
+                title = title,
+                description = _table
+            )
+            emsgs.append(emsg)
+        return emsgs
         
 
     @commands.group(
@@ -47,12 +63,9 @@ class Data():
         if ctx.invoked_subcommand is None:
             limit = utils.DEFAULT_LIMIT
             players = self.bot.db.find_top_members_by("points", ctx.message.guild, limit=limit)
-            emsg = embed.msg(
-                title = "Top Players by Points",
-                description = "\n".join([f"{ix+1}. **{player['name']}** with {player['points']} points"
-                                      for ix, player in enumerate(players)])
-            )
-            await ctx.send(embed=emsg)
+            emsgs = self._make_leaderboard_table(players, 'points', 'Top Players by Points')
+            for emsg in emsgs:
+                await ctx.send(embed=emsg)
 
     @top.command(
         name='wins',
@@ -66,12 +79,9 @@ class Data():
 
         limit = utils.get_limit(args)
         players = self.bot.db.find_top_members_by("wins", ctx.message.guild, limit=limit)
-        emsg = embed.msg(
-            title = "Top Players by Total Wins",
-            description = "\n".join([f"{ix+1}. **{player['name']}** with {player['wins']} wins"
-                                      for ix, player in enumerate(players)])
-        )
-        await ctx.send(embed=emsg)
+        emsgs = self._make_leaderboard_table(players, 'wins', 'Top Players by Total Wins')
+        for emsg in emsgs:
+            await ctx.send(embed=emsg)
 
 
     @top.command(
@@ -86,12 +96,9 @@ class Data():
 
         limit = utils.get_limit(args)
         players = self.bot.db.find_top_members_by("accepted", ctx.message.guild, limit=limit)
-        emsg = embed.msg(
-            title = "Top Players by Games Played",
-            description = "\n".join([f"{ix+1}. **{player['name']}** with {player['accepted']} games"
-                                      for ix, player in enumerate(players)])
-        )
-        await ctx.send(embed=emsg)
+        emsgs = self._make_leaderboard_table(players, 'accepted', 'Top Players by Games Played')
+        for emsg in emsgs:
+            await ctx.send(embed=emsg)
 
     @top.command(
         name='score',
@@ -105,14 +112,11 @@ class Data():
 
         limit = utils.get_limit(args)
         players = self.bot.db.find_top_members_by("points", ctx.message.guild, limit=limit)
-        emsg = embed.msg(
-            title = "Top Players by Points",
-            description = "\n".join([f"{ix+1}. **{player['name']}** with {player['points']} points"
-                                      for ix, player in enumerate(players)])
-        )
-        await ctx.send(embed=emsg)
+        emsgs = self._make_leaderboard_table(players, 'points', 'Top Players by Points')
+        for emsg in emsgs:
+            await ctx.send(embed=emsg)
 
-    def _make_tables(self, title, data, syntax=None):
+    def _make_deck_tables(self, title, data, syntax=None):
         columns = ["Deck", "Meta %", "Wins", "Win %", "Pilots"]
         rows = []
         total_entries = sum([deck["entries"] for deck in data])
@@ -137,7 +141,7 @@ class Data():
             ) for i in range(0, len(rows), rows_per_table)
         ]
         return _tables
-
+        
 
     @commands.command(
         brief="Display records of tracked decks",
@@ -169,19 +173,19 @@ class Data():
 
         if not sort_key:
             sorted_data = utils.sort_by_entries(data)
-            _tables = self._make_tables("Deck Stats [Meta % ▼]", sorted_data, "ini")
+            _tables = self._make_deck_tables("Deck Stats [Meta % ▼]", sorted_data, "ini")
         elif sort_key.lower() == "wins":
             sorted_data = utils.sort_by_wins(data)
-            _tables = self._make_tables("Deck Stats [Wins ▼]", sorted_data, "ini")
+            _tables = self._make_deck_tables("Deck Stats [Wins ▼]", sorted_data, "ini")
         elif sort_key.lower() == "winrate":
             sorted_data = utils.sort_by_winrate(data)
-            _tables = self._make_tables("Deck Stats [Win % ▼]", sorted_data, "ini")
+            _tables = self._make_deck_tables("Deck Stats [Win % ▼]", sorted_data, "ini")
         elif sort_key.lower() == "popularity":
             sorted_data = utils.sort_by_unique_players(data)
-            _tables = self._make_tables("Deck Stats [Popularity ▼]", sorted_data, "ini")
+            _tables = self._make_deck_tables("Deck Stats [Popularity ▼]", sorted_data, "ini")
         else:
             sorted_data = utils.sort_by_entries(data)
-            _tables = self._make_tables("Deck Stats [Meta % ▼]", sorted_data, "ini")
+            _tables = self._make_deck_tables("Deck Stats [Meta % ▼]", sorted_data, "ini")
         for _table in _tables:
             await ctx.send(_table)
 

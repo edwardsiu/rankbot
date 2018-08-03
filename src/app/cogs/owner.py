@@ -165,7 +165,7 @@ class OwnerCog():
             deck["color_identity"],
             color_name,
             deck_name,
-            [deck_name.lower()]
+            [deck_name]
         )
         await ctx.send(embed=embed.success(description=f'**SUCCESS** - Imported {deck_name} to deck database'))
         
@@ -180,7 +180,7 @@ class OwnerCog():
                     category["colors"], 
                     category["color_name"],
                     deck["name"],
-                    deck["nicknames"]
+                    deck["aliases"]
                 )
         return decks_added
 

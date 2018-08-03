@@ -5,7 +5,44 @@ from pymongo import MongoClient, DESCENDING
 from app.constants import status_codes as stc
 from app.utils import utils
 
-"""PRECOND: All messages that are to be processed are received in a server rather than DM"""
+"""PRECOND: All messages that are to be processed are received in a server rather than DM
+
+Schema changes for matches:
+Current:
+{
+    game_id: str,
+    winner: int,
+    players: {
+        id_str: status_str
+    },
+    decks: {
+        id_str: deck_str
+    }
+}
+Candidate:
+{
+    game_id: str,
+    winner: int,
+    players: [
+        {
+            user_id: int,
+            name: str,
+            deck: str,
+            confirmed: bool
+        }
+    ]
+}
+Decks:
+{
+    name: str,
+    aliases: [str],
+    canonical_aliases: [str],
+    description: str,
+    color: str,
+    color_name: str,
+    image_url: str
+}
+"""
 
 class RankDB(MongoClient):
     def guild(self, guild):
@@ -260,3 +297,8 @@ class RankDB(MongoClient):
 
     def find_decks_by_color(self, color):
         return self.decks().find({"color": utils.sort_color_str(color)})
+
+    def get_deck_short_name(self, alias):
+        deck = self.find_deck(alias)
+        shortest_name = sorted(deck['aliases'], key=(lambda n: len(n)))[0]
+        return shortest_name
