@@ -2,7 +2,7 @@
 class LineTable():
     """This type of table has no headers and is meant to display 2 or 3 columns of data"""
 
-    def __init__(self, rows, width=30, number=False):
+    def __init__(self, rows, width=27, number=False):
         self.rows = rows
         self.width = width
 
