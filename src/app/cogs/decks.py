@@ -131,11 +131,11 @@ class Decks():
 
         card = scryfall.search(deck['commanders'][0])
         description = deck['description'] if deck['description'] else "N/A"
-        emsg = embed.info(title=deck['name']) \
+        emsg = embed.info(title=f"Deck: {deck['name']}") \
                     .add_field(name="Commanders", value=("\n".join(deck['commanders']))) \
                     .add_field(name="Color Identity", value=deck['color'].upper()) \
                     .add_field(name="Aliases", value=("\n".join(deck['aliases']))) \
-                    .add_field(name="Description", value=description) \
+                    .add_field(name="Description", inline=False, value=description) \
                     .set_thumbnail(url=card['image_uris']['small'])
         await ctx.send(embed=emsg)
 
