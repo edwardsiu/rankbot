@@ -10,6 +10,7 @@ class Data():
     def __init__(self, bot):
         self.bot = bot
         self.deck_tracking_start_date = 1529132400
+        self.min_entries = 5
 
     @commands.group(
         brief="Show summary info for the leage",
@@ -122,7 +123,7 @@ class Data():
         total_entries = sum([deck["entries"] for deck in data])
         for deck in data:
             # skip any untracked decks. this occurs if a game was overriden by an admin
-            if deck["deck_name"] == "Unknown":
+            if deck["deck_name"] == "Unknown" or deck["entries"] < self.min_entries:
                 continue
             meta_percent = 100*deck["entries"]/total_entries
             win_percent =100*deck["wins"]/deck["entries"]
@@ -151,7 +152,7 @@ class Data():
     )
     @commands.guild_only()
     async def deckstats(self, ctx, *, sort_key: str=""):
-        """Displays the records of all decks tracked by the league. Data displayed includes meta share, games played, total wins, win %, and popularity. 
+        """Displays the records of all decks tracked by the league. Data displayed includes meta share, games played, total wins, win %, and popularity. A deck is required to have at least 5 games recorded in order to show up in the stats.
         
         Games played is the number of times a deck has been logged. 
         The meta share is the percentage of time a deck is logged and is proportional to games played.
