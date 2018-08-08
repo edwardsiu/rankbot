@@ -128,16 +128,17 @@ class Decks():
         if not deck:
             await ctx.send(embed=embed.error(description=f"{deck_name} was not found"))
             return
-        data = utils.get_match_stats(ctx)
-        if deck['name'] in data:
-            total_entries = sum([deck["entries"] for deck in data])
-            meta_percent = 100*deck["entries"]/total_entries
-            win_percent =100*deck["wins"]/deck["entries"]
-            meta_field_value = "{meta_percent:.3g}%"
-            winrate_field_value = "{win_percent:.3g}%"
-        else:
-            meta_field_value = "N/A"
-            winrate_field_value = "N/A"
+        #total_matches = self.bot.db.count_matches({"timestamp": {"$gt":system.deck_tracking_start_date}}, ctx.message.guild)
+        #data = utils.get_match_stats(ctx)
+        #if deck['name'] in data:
+        #    total_entries = sum([deck["entries"] for deck in data])
+        #    meta_percent = 100*deck["entries"]/total_entries
+        #    win_percent =100*deck["wins"]/deck["entries"]
+        #    meta_field_value = "{meta_percent:.3g}%"
+        #    winrate_field_value = "{win_percent:.3g}%"
+        #else:
+        #    meta_field_value = "N/A"
+        #    winrate_field_value = "N/A"
         
 
         card = scryfall.search(deck['commanders'][0])
@@ -145,8 +146,6 @@ class Decks():
                     .add_field(name="Commanders", value=("\n".join(deck['commanders']))) \
                     .add_field(name="Aliases", value=("\n".join(deck['aliases']))) \
                     .add_field(name="Color Identity", value=deck['color'].upper()) \
-                    .add_field(name="Meta %", value=meta_field_value) \
-                    .add_field(name="Win %", value=winrate_field_value) \
                     .set_thumbnail(url=card['image_uris']['small'])
         
         await ctx.send(embed=emsg)

@@ -151,7 +151,7 @@ class Data():
     )
     @commands.guild_only()
     async def deckstats(self, ctx, *, sort_key: str=""):
-        """Displays the records of all decks tracked by the league. Data displayed includes meta share, games played, total wins, win %, and popularity. A deck is required to have at least 5 games recorded in order to show up in the stats.
+        """Displays the records of all decks tracked by the league. Data displayed includes meta share, games played, total wins, win %, and popularity. A deck is required to have at least 10 games recorded in order to show up in the stats.
         
         Games played is the number of times a deck has been logged. 
         The meta share is the percentage of time a deck is logged and is proportional to games played.
