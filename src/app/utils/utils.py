@@ -1,5 +1,8 @@
 import re
 
+from app.constants import status_codes as stc
+from app.constants import system
+
 DEFAULT_LIMIT = 10
 
 # message processing
@@ -27,6 +30,16 @@ def get_limit(args):
     return DEFAULT_LIMIT
 
 # deck data processing
+def get_match_stats(ctx):
+    matches = ctx.bot.db.find_matches(
+        {
+            "timestamp": {"$gt": system.deck_tracking_start_date}, 
+            "status": stc.ACCEPTED
+        }, ctx.message.guild)
+    if not matches:
+        return None
+    return process_match_stats(matches)
+
 def process_match_stats(matches):
     decks = {}
     for match in matches:

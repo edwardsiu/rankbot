@@ -4,13 +4,12 @@ import logging
 import re
 
 from app.constants import status_codes as stc
+from app.constants import system
 from app.utils import checks, embed, line_table, table, utils
 
 class Data():
     def __init__(self, bot):
         self.bot = bot
-        self.deck_tracking_start_date = 1529132400
-        self.min_entries = 5
 
     @commands.group(
         brief="Show summary info for the leage",
@@ -123,7 +122,7 @@ class Data():
         total_entries = sum([deck["entries"] for deck in data])
         for deck in data:
             # skip any untracked decks. this occurs if a game was overriden by an admin
-            if deck["deck_name"] == "Unknown" or deck["entries"] < self.min_entries:
+            if deck["deck_name"] == "Unknown" or deck["entries"] < system.min_matches:
                 continue
             meta_percent = 100*deck["entries"]/total_entries
             win_percent =100*deck["wins"]/deck["entries"]
@@ -161,16 +160,11 @@ class Data():
 
         By default, this command sorts the results by meta share. Include one of the other keys to sort by those columns instead."""
 
-        matches = self.bot.db.find_matches(
-            {
-                "timestamp": {"$gt": self.deck_tracking_start_date}, 
-                "status": stc.ACCEPTED
-            }, ctx.message.guild)
-        if not matches:
+        data = utils.get_match_stats(ctx)
+        if not data:
             emsg = embed.error(description="No matches found")
             await ctx.send(embed=emsg)
             return
-        data = utils.process_match_stats(matches)
 
         if not sort_key:
             sorted_data = utils.sort_by_entries(data)

@@ -3,6 +3,7 @@ import time
 import discord
 from pymongo import MongoClient, DESCENDING
 from app.constants import status_codes as stc
+from app.constants import system
 from app.utils import utils
 
 """PRECOND: All messages that are to be processed are received in a server rather than DM
@@ -112,7 +113,7 @@ class RankDB(MongoClient):
         return self.members(guild).find(query, limit=limit)
 
     def find_top_members_by(self, sort_key, guild, limit=0):
-        return self.members(guild).find({"accepted": {"$gt": 4}}, limit=limit, sort=[(sort_key, DESCENDING)])
+        return self.members(guild).find({"accepted": {"$gte": system.min_matches}}, limit=limit, sort=[(sort_key, DESCENDING)])
 
     def push_pending_match(self, game_id, user_ids, guild):
         self.members(guild).update_many(
