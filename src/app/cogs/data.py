@@ -38,6 +38,8 @@ class Data():
         rows = []
         for i, player in enumerate(players):
             rows.append([f"{i+1}.", player['name'], str(player[key])])
+        if not rows:
+            return [embed.info(description="No players found with enough matches")]
         _line_table = line_table.LineTable(rows)
         _tables = _line_table.generate()
         emsgs = []
@@ -122,7 +124,7 @@ class Data():
         total_entries = sum([deck["entries"] for deck in data])
         for deck in data:
             # skip any untracked decks. this occurs if a game was overriden by an admin
-            if deck["deck_name"] == "Unknown" or deck["entries"] < system.min_matches:
+            if deck["deck_name"] == "Unknown" or deck["entries"] < 1:
                 continue
             meta_percent = 100*deck["entries"]/total_entries
             win_percent =100*deck["wins"]/deck["entries"]
