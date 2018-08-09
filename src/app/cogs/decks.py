@@ -129,21 +129,23 @@ class Decks():
         if not deck:
             await ctx.send(embed=embed.error(description=f"{deck_name} was not found"))
             return
-        total_deck_matches = self.bot.db.count_matches(
+        matches = self.bot.db.find_matches(
             {"players.deck": deck['name']}, ctx.message.guild)
-        if total_deck_matches:
+        total_appearances = 0
+        for match in matches:
+            total_appearances += sum([1 if player["deck"] == deck["name"] else 0 for player in match["players"]])
+        if total_appearances:
             total_deck_wins = self.bot.db.count_matches(
                 {"winning_deck": deck['name']}, ctx.message.guild)
             total_matches = self.bot.db.count_matches(
                 {"timestamp": {"$gt":system.deck_tracking_start_date}}, ctx.message.guild)
-            meta_percent = 100*total_deck_matches/total_matches
-            win_percent = 100*total_deck_wins/total_deck_matches
+            meta_percent = 100*total_appearances/(total_matches*4)
+            win_percent = 100*total_deck_wins/total_appearances
             meta_field_value = f"{meta_percent:.3g}%"
             winrate_field_value = f"{win_percent:.3g}%"
         else:
             meta_field_value = "N/A"
             winrate_field_value = "N/A"
-        print(deck)
         
         card = scryfall.search(deck['commanders'][0])
         emsg = embed.info(title=f"Deck: {deck['name']}") \

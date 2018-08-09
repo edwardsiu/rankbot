@@ -45,6 +45,8 @@ def process_match_stats(matches):
     for match in matches:
         for player in match["players"]:
             deck_name = player["deck"]
+            if not deck_name:
+                deck_name = "Unknown"
             if deck_name in decks:
                 decks[deck_name]["entries"] += 1
                 decks[deck_name]["players"].add(player["user_id"])
@@ -55,8 +57,6 @@ def process_match_stats(matches):
                     "players": {player["user_id"]},
                     "wins": 0
                 }
-                if not deck_name:
-                    decks[deck_name]["deck_name"] = "Unknown"
         winner_id = match["winner"]
         winning_deck = match["winning_deck"]
         decks[winning_deck]["wins"] += 1

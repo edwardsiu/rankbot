@@ -121,7 +121,7 @@ class Data():
     def _make_deck_tables(self, title, data, syntax=None):
         columns = ["Deck", "Meta %", "Wins", "Win %", "Pilots"]
         rows = []
-        total_entries = sum([deck["entries"] for deck in data])
+        total_entries = sum([deck['entries'] for deck in data])
         for deck in data:
             # skip any untracked decks. this occurs if a game was overriden by an admin
             if deck["deck_name"] == "Unknown" or deck["entries"] < system.min_matches:
