@@ -155,6 +155,7 @@ class Members():
                 continue
             matches = self.bot.db.find_user_matches(user.id, ctx.message.guild, limit=limit)
             if not matches:
+                await ctx.send(embed=embed.info(description=f"No matches found for **{user.name}**"))
                 continue
             _tables = self._make_match_tables(user, matches)
             for _table in _tables:
