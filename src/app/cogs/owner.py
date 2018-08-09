@@ -136,9 +136,11 @@ class OwnerCog():
     @add_component.command(
         name='deck', hidden=True,
         brief="Add a deck to the database",
-        usage="`{0}add deck [deck name] [tappedout slug]`"
+        usage="`{0}add deck [deck name] [deck link]`"
     )
     async def _add_deck(self, ctx, *args):
+        """Import a deck to the database. Information about the deck is scraped from the deck list link."""
+
         if len(args) < 2:
             await ctx.send(embed=embed.error(description=f'**ERROR** - Not enough args'))
             return
@@ -165,6 +167,31 @@ class OwnerCog():
             [cmdr['name'] for cmdr in deck["commanders"]]
         )
         await ctx.send(embed=embed.success(description=f'**SUCCESS** - Imported {deck_name} to deck database'))
+
+
+    @add_component.command(
+        name='alias', hidden=True,
+        brief="Add 1 or more aliases to a deck",
+        usage="`{0}add alias [deck name] [alias 1] [alias 2] [alias 3]`"
+    )
+    async def _add_alias(self, ctx, *args):
+        """Add one or more aliases for a deck. Names that are a multiple words must be enclosed in quotes."""
+
+        if len(args) < 2:
+            await ctx.send(embed=embed.error(description='**ERROR** - Not enough args'))
+            return
+
+        deck_name = args[0]
+        aliases = args[1:]
+        deck = self.bot.db.find_deck(deck_name)
+        if not deck:
+            await ctx.send(embed=embed.error(description='**ERROR** - Deck not found'))
+            return
+        response = self.bot.db.add_deck_aliases(deck_name, aliases)
+        if not response:
+            await ctx.send(embed=embed.error(description='**ERROR** - No aliases added'))
+        else:
+            await ctx.send(embed=embed.success(description=f'**SUCCESS** - New aliases added for **{deck["name"]}**'))
         
 
     def _load_decks(self):

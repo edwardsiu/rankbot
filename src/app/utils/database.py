@@ -321,6 +321,20 @@ class RankDB(MongoClient):
     def find_decks(self, query):
         return self.decks().find(query)
 
+    def add_deck_aliases(self, alias, new_aliases):
+        canonical_name = utils.transform_deck_name(alias)
+        new_canonical_aliases = list({utils.transform_deck_name(name) for name in new_aliases})
+        return self.decks().update_one({"canonical_aliases": canonical_name}, {
+            "$addToSet": {
+                "aliases": {
+                    "$each": new_aliases
+                },
+                "canonical_aliases": {
+                    "$each": new_canonical_aliases
+                }
+            }
+        })
+
     def find_one_deck_by_color(self, color):
         return self.decks().find_one({"color": utils.sort_color_str(color)})
 
