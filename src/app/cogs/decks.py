@@ -143,12 +143,13 @@ class Decks():
         else:
             meta_field_value = "N/A"
             winrate_field_value = "N/A"
+        print(deck)
         
         card = scryfall.search(deck['commanders'][0])
         emsg = embed.info(title=f"Deck: {deck['name']}") \
                     .add_field(name="Commanders", value=("\n".join(deck['commanders']))) \
-                    .add_field(name="Aliases", value=("\n".join(deck['aliases']))) \
                     .add_field(name="Color Identity", value=deck['color'].upper()) \
+                    .add_field(name="Aliases", inline=False, value=("\n".join(deck['aliases']))) \
                     .add_field(name="Meta %", value=meta_field_value) \
                     .add_field(name="Win %", value=winrate_field_value) \
                     .set_thumbnail(url=card['image_uris']['small'])
