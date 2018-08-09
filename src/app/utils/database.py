@@ -158,7 +158,7 @@ class RankDB(MongoClient):
                     "deck": "",
                     "confirmed": False
                 } for user in users
-            ]
+            ],
             "timestamp": time.time()
         }
         self.matches(ctx.message.guild).insert_one(pending_record)

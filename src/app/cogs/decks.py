@@ -2,6 +2,7 @@ from discord.ext import commands
 import json
 import re
 from app import exceptions as err
+from app.constants import system
 from app.utils import checks, embed, scryfall, utils
 from app.utils.deckhosts import deck_utils
 
