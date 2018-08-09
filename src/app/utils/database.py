@@ -18,11 +18,15 @@ Current:
     },
     decks: {
         id_str: deck_str
-    }
+    },
+    status: str,
+    timestamp: int
 }
 Candidate:
 {
     game_id: str,
+    status: str,
+    timestamp: int,
     winner: int,
     players: [
         {
@@ -145,8 +149,14 @@ class RankDB(MongoClient):
             "game_id": game_id,
             "status": stc.PENDING,
             "winner": winner.id,
-            "players": {str(user.id): stc.UNCONFIRMED for user in users},
-            "decks": {str(user.id): "" for user in users},
+            "players": [
+                {
+                    "user_id": user.id,
+                    "name": user.name,
+                    "deck": "",
+                    "confirmed": False
+                } for user in users
+            ]
             "timestamp": time.time()
         }
         self.matches(ctx.message.guild).insert_one(pending_record)
@@ -167,7 +177,7 @@ class RankDB(MongoClient):
 
     def find_user_matches(self, user_id, guild, limit=0):
         return self.find_matches(
-            {f"players.{user_id}": {"$exists": True}}, guild, limit)
+            {"players.user_id": user_id}, guild, limit)
 
     def count_matches(self, query, guild):
         return self.matches(guild).count(query)
@@ -182,30 +192,32 @@ class RankDB(MongoClient):
 
     def confirm_match_for_user(self, game_id, user_id, deck_name, guild):
         self.matches(guild).update_one(
-            {"game_id": game_id},
+            {"game_id": game_id, "players.user_id": user_id},
             {
                 "$set": {
-                    f"players.{user_id}": stc.CONFIRMED,
-                    f"decks.{user_id}": deck_name
+                    "players.$.confirmed": True,
+                    "players.$.deck": deck_name
                 }
             }
         )
 
-    def confirm_match_for_users(self, game_id, user_ids, guild):
+    def confirm_match_for_users(self, game_id, guild):
         self.matches(guild).update_one(
-            {"game_id": game_id},
+            {"game_id": game_id, "players.confirmed": False},
             {
                 "$set": {
-                    f"players.{user_id}": stc.CONFIRMED for user_id in user_ids
+                    "players.$[].confirmed": True
                 }
             }
         )
 
     def unconfirm_match_for_user(self, game_id, user_id, guild):
         self.matches(guild).update_one(
-            {"game_id": game_id},
+            {"game_id": game_id, "players.user_id": user_id},
             {
-                "$set": {"players.{}".format(user_id): stc.UNCONFIRMED}
+                "$set": {
+                    "players.$.confirmed": False
+                }
             }
         )
 
@@ -226,8 +238,8 @@ class RankDB(MongoClient):
     def update_scores(self, match, guild):
         winner = self.find_member(match["winner"], guild)
         losers = [
-            self.find_member(user_id, guild)
-            for user_id in match["players"] if int(user_id) != match["winner"]]
+            self.find_member(player["user_id"], guild)
+            for player in match["players"] if player["user_id"] != match["winner"]]
         gains = 0
         delta = []
         for member in losers:
