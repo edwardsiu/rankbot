@@ -124,7 +124,7 @@ class Data():
         total_entries = sum([deck["entries"] for deck in data])
         for deck in data:
             # skip any untracked decks. this occurs if a game was overriden by an admin
-            if deck["deck_name"] == "Unknown" or deck["entries"] < 1:
+            if deck["deck_name"] == "Unknown" or deck["entries"] < system.min_matches:
                 continue
             meta_percent = 100*deck["entries"]/total_entries
             win_percent =100*deck["wins"]/deck["entries"]
@@ -183,6 +183,9 @@ class Data():
         else:
             sorted_data = utils.sort_by_entries(data)
             _tables = self._make_deck_tables("Deck Stats [Meta % ▼]", sorted_data, "ini")
+        if not _tables:
+            await ctx.send(embed=embed.info(description="No decks found with enough matches"))
+            return
         for _table in _tables:
             await ctx.send(_table)
 
