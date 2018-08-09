@@ -112,23 +112,24 @@ class Matches():
         Confirmation is a two-step process to verify the caller's deck choice and then to verify that the match result is correct."""
 
         user = ctx.message.author
-        player = self.bot.db.find_member(user.id, ctx.message.guild)
-        if not player["pending"]:
+        member = self.bot.db.find_member(user.id, ctx.message.guild)
+        if not member["pending"]:
             await ctx.send(embed=embed.info(description="No pending matches to confirm"))
             return
         if not game_id:
-            game_id = player["pending"][-1]
+            game_id = member["pending"][-1]
 
-        pending_match = self.bot.db.find_match(game_id, ctx.message.guild)
-        if not pending_match:
+        match = self.bot.db.find_match(game_id, ctx.message.guild)
+        if not match:
             await ctx.send(embed=embed.error(description=f"`{game_id}` does not exist"))
             return
-        if str(user.id) not in pending_match["players"]:
+        player = next((i for i in match["players"] if i["user_id"] == user.id), None)
+        if not player:
             await ctx.send(embed=embed.error(description="Only participants can confirm a match"))
             return
 
-        if pending_match["players"][str(user.id)] == stc.UNCONFIRMED:
-            delta = await self._get_player_confirmation(ctx, player, game_id)
+        if not player["confirmed"]:
+            delta = await self._get_player_confirmation(ctx, member, game_id)
             if delta:
                 await ctx.send(embed=embed.match_delta(game_id, delta))
         else:
@@ -145,30 +146,30 @@ class Matches():
         """Dispute a match result. This will notify league admins that the match result requires attention. League admins may resolve the match by either accepting or removing it. If you created the match and there is an error (ie. mentioned the wrong players), then the `remove` command is more appropriate to undo the logged match and log the correct result."""
 
         user = ctx.message.author
-        player = self.bot.db.find_member(user.id, ctx.message.guild)
-        if not player["pending"]:
+        member = self.bot.db.find_member(user.id, ctx.message.guild)
+        if not member["pending"]:
             await ctx.send(embed=embed.info(description="No pending matches to deny"))
             return
         if not game_id:
             await ctx.send(embed=embed.error(description="You must specify a game id to dispute it"))
             return
 
-        pending_match = self.bot.db.find_match(game_id, ctx.message.guild)
-        if not pending_match:
+        match = self.bot.db.find_match(game_id, ctx.message.guild)
+        if not match:
             await ctx.send(embed=embed.error(description=f"`{game_id}` does not exist"))
             return
-        if str(user.id) not in pending_match["players"]:
+        player = next((i for i in match["players"] if i["user_id"] == user.id), None)
+        if not player:
             await ctx.send(embed=embed.error(description="Only participants can deny a match"))
             return
 
-        if pending_match["status"] == stc.ACCEPTED:
+        if match["status"] == stc.ACCEPTED:
             await ctx.send(embed=embed.error(description="Accepted matches cannot be denied"))
-        elif pending_match["status"] == stc.DISPUTED:
+        elif match["status"] == stc.DISPUTED:
             await ctx.send(embed=embed.info(description="This match has already been marked for review"))
         else:
             self.bot.db.set_match_status(stc.DISPUTED, game_id, ctx.message.guild)
-            if pending_match["players"][str(user.id)] == stc.CONFIRMED:
-                self.bot.db.unconfirm_match_for_user(game_id, user.id, ctx.message.guild)
+            self.bot.db.unconfirm_match_for_user(game_id, user.id, ctx.message.guild)
             admin_role = self.bot.db.get_admin_role(ctx.message.guild)
             mention = "" if not admin_role else admin_role.mention
             await ctx.send(embed=embed.msg(
@@ -176,16 +177,13 @@ class Matches():
             )
 
 
-    def _make_game_table(self, players, match):
+    def _make_game_table(self, match):
         columns = ["Player", "Deck", "Status"]
         rows = []
-        for player in players:
+        for player in match["players"]:
             user_id = str(player["user_id"])
-            if match["decks"][user_id]:
-                deck_name = match["decks"][user_id]
-            else:
-                deck_name = "???"
-            status = " ☑" if match["players"][user_id] == stc.CONFIRMED else " ☐"
+            deck_name = player["deck"] if player["deck"] else "???"
+            status = " ☑" if player["confirmed"] else " ☐"
             rows.append([player["name"], deck_name, status])
         _table = table.Table(columns=columns, rows=rows, max_width=45)
         return str(_table)
@@ -206,9 +204,8 @@ class Matches():
         if not match:
             await ctx.send(embed=embed.error(description=f"`{game_id}` does not exist"))
             return
-        winner = self.bot.db.find_member(match["winner"], ctx.message.guild)
-        user_ids = [int(user_id) for user_id in match["players"]]
-        players = self.bot.db.find_members({"user_id": {"$in": user_ids}}, ctx.message.guild)
+
+        winner = next((i for i in match["players"] if i["user_id"] == match["winner"]), None)
         date = datetime.fromtimestamp(match["timestamp"])
         if match["status"] == stc.ACCEPTED:
             status_symbol = emojis.accepted
@@ -221,7 +218,7 @@ class Matches():
                     .add_field(name="Winner", value=winner["name"]) \
                     .add_field(name="Status", value=status_symbol)
         
-        emsg.description = self._make_game_table(players, match)
+        emsg.description = self._make_game_table(match)
         await ctx.send(embed=emsg)
 
     async def _find_user(self, user_id):
@@ -245,8 +242,8 @@ class Matches():
         pending_matches = self.bot.db.find_matches({"game_id": {"$in": member["pending"]}}, ctx.message.guild)
         for match in pending_matches:
             unconfirmed = [
-                await self.bot.get_user_info(int(user_id)) for user_id in match["players"] 
-                if match["players"][user_id] == stc.UNCONFIRMED
+                await self.bot.get_user_info(player["user_id"]) for player in match["players"] 
+                if not player["confirmed"]
             ]
             mentions = " ".join([user.mention for user in unconfirmed])
             emsg = embed.msg(

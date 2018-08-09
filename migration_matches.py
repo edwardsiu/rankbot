@@ -13,6 +13,7 @@ for shard in ["390254034289819669"]:
             "timestamp": match["timestamp"],
             "status": match["status"],
             "winner": match["winner"],
+            "winning_deck": match["decks"][str(match["winner"])],
             "players": [
                 {
                     "user_id": int(player_id),

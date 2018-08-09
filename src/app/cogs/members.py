@@ -35,7 +35,8 @@ class Members():
         matches = self.bot.db.find_user_matches(player_id, guild, limit=self.favorite_deck_window)
         decks = {}
         for match in matches:
-            deck_name = match["decks"][str(player_id)]
+            player = next((i for i in match["players"] if i["user_id"] == player_id), None)
+            deck_name = player["deck"]
             if deck_name and deck_name in decks:
                 decks[deck_name] += 1
             else:
@@ -125,10 +126,8 @@ class Members():
         rows = []
         for match in matches:
             date = datetime.fromtimestamp(match["timestamp"]).strftime("%Y-%m-%d")
-            if "decks" in match and match["decks"][str(user.id)]:
-                deck_name = match["decks"][str(user.id)]
-            else:
-                deck_name = "Unknown"
+            player = next((i for i in match["players"] if i["user_id"] == user.id), None)
+            deck_name = player["deck"] if player["deck"] else "Unknown"
             result = "WIN" if match["winner"] == user.id else "LOSE"
             row = [date, match["game_id"], deck_name, result]
             rows.append(row)

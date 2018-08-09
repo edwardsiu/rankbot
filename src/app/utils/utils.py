@@ -43,22 +43,22 @@ def get_match_stats(ctx):
 def process_match_stats(matches):
     decks = {}
     for match in matches:
-        for member_id in match["decks"]:
-            deck_name = match["decks"][member_id]
+        for player in match["players"]:
+            deck_name = player["deck"]
             if deck_name in decks:
                 decks[deck_name]["entries"] += 1
-                decks[deck_name]["players"].add(member_id)
+                decks[deck_name]["players"].add(player["user_id"])
             else:
                 decks[deck_name] = {
                     "deck_name": deck_name,
                     "entries": 1,
-                    "players": {member_id},
+                    "players": {player["user_id"]},
                     "wins": 0
                 }
                 if not deck_name:
                     decks[deck_name]["deck_name"] = "Unknown"
         winner_id = match["winner"]
-        winning_deck = match["decks"][str(winner_id)]
+        winning_deck = match["winning_deck"]
         decks[winning_deck]["wins"] += 1
     list_decks = [decks[i] for i in decks]
     return list_decks

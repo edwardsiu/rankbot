@@ -28,6 +28,7 @@ Candidate:
     status: str,
     timestamp: int,
     winner: int,
+    winning_deck: str,
     players: [
         {
             user_id: int,
@@ -149,6 +150,7 @@ class RankDB(MongoClient):
             "game_id": game_id,
             "status": stc.PENDING,
             "winner": winner.id,
+            "winning_deck": "",
             "players": [
                 {
                     "user_id": user.id,
@@ -191,15 +193,28 @@ class RankDB(MongoClient):
         )
 
     def confirm_match_for_user(self, game_id, user_id, deck_name, guild):
-        self.matches(guild).update_one(
-            {"game_id": game_id, "players.user_id": user_id},
-            {
-                "$set": {
-                    "players.$.confirmed": True,
-                    "players.$.deck": deck_name
+        match = self.find_match(game_id, guild)
+        if user_id == match["winner"]:
+            self.matches(guild).update_one(
+                {"game_id": game_id, "players.user_id": user_id},
+                {
+                    "$set": {
+                        "players.$.confirmed": True,
+                        "players.$.deck": deck_name,
+                        "winning_deck": deck_name
+                    }
                 }
-            }
-        )
+            )
+        else:
+            self.matches(guild).update_one(
+                {"game_id": game_id, "players.user_id": user_id},
+                {
+                    "$set": {
+                        "players.$.confirmed": True,
+                        "players.$.deck": deck_name
+                    }
+                }
+            )
 
     def confirm_match_for_users(self, game_id, guild):
         self.matches(guild).update_one(
