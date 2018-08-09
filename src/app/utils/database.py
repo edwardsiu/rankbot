@@ -8,45 +8,40 @@ from app.utils import utils
 
 """PRECOND: All messages that are to be processed are received in a server rather than DM
 
-Schema changes for matches:
-Current:
-{
-    game_id: str,
-    winner: int,
-    players: {
-        id_str: status_str
-    },
-    decks: {
-        id_str: deck_str
-    },
-    status: str,
-    timestamp: int
+Member: {
+    name: str,
+    user_id: int,
+    points: int,
+    pending: [str],
+    accepted: int,
+    wins: int,
+    losses: int,
+    deck: str
 }
-Candidate:
-{
+
+Match: {
     game_id: str,
-    status: str,
-    timestamp: int,
     winner: int,
     winning_deck: str,
+    status: str,
+    timestamp: float,
     players: [
-        {
-            user_id: int,
+        player: {
             name: str,
+            user_id: int,
             deck: str,
             confirmed: bool
         }
     ]
 }
-Decks:
-{
+
+Deck: {
     name: str,
     aliases: [str],
     canonical_aliases: [str],
     description: str,
     color: str,
-    color_name: str,
-    image_url: str
+    color_name: str
 }
 """
 
@@ -236,12 +231,17 @@ class RankDB(MongoClient):
             }
         )
 
+    def _find_unconfirmed_player(self, players):
+        """Returns the first player that hasn't confirmed a match. Returns None if no players found."""
+
+        return next((i for i in players if not i["confirmed"]), None)
+
     def check_match_status(self, game_id, guild):
         match = self.find_match(game_id, guild)
         players = match["players"]
         if match["status"] == stc.ACCEPTED:
             return False
-        if stc.UNCONFIRMED in players.values():
+        if self._find_unconfirmed_player(match["players"]):
             return False
         # all players have confirmed the result
         self.set_match_status(stc.ACCEPTED, game_id, guild)
