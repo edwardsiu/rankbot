@@ -142,7 +142,7 @@ class Data():
             await ctx.send(embed=emsg)
 
     def _make_deck_tables(self, title, data, syntax=None):
-        columns = ["Deck", "Meta %", "Wins", "Win %", "Pilots"]
+        columns = ["Deck", "Meta %", "Win %", "SD", "Pilots"]
         rows = []
         total_entries = sum([deck['entries'] for deck in data])
         for deck in data:
@@ -150,11 +150,13 @@ class Data():
             if deck["deck_name"] == "Unknown" or deck["entries"] < system.min_matches:
                 continue
             meta_percent = 100*deck["entries"]/total_entries
+            win_percent = 100*deck["winrate"]
+            stddev = 100*deck["stddev"]
             row = [
                 deck["deck_name"],
-                f"{meta_percent:.3g}% ({deck['entries']})",
-                str(deck["wins"]),
-                f"{deck['winrate']:.3g}±{deck['ci95']:.3g}%",
+                f"{meta_percent:.3g}%",
+                f"{win_percent:.3g}%",
+                f"{stddev:.3g}%",
                 str(len(deck["players"]))
             ]
             rows.append(row)
@@ -170,16 +172,16 @@ class Data():
     @commands.command(
         brief="Display records of tracked decks",
         usage=("`{0}deckstats`\n" \
-               "`{0}deckstats [wins|winrate|popularity]`"
+               "`{0}deckstats [winrate|popularity]`"
         )
     )
     @commands.guild_only()
     async def deckstats(self, ctx, *, sort_key: str=""):
-        """Displays the records of all decks tracked by the league. Data displayed includes meta share, games played, total wins, win %, and popularity. A deck is required to have at least 10 games recorded in order to show up in the stats.
+        """Displays the records of all decks tracked by the league. Data displayed includes meta share, win %, and popularity. A deck is required to have at least 10 games recorded in order to show up in the stats.
         
         Games played is the number of times a deck has been logged. 
         The meta share is the percentage of time a deck is logged and is proportional to games played.
-        Total wins and win % should be self-explanatory. 
+        Win % should be self-explanatory. 
         Popularity is represented by the number of unique pilots that have logged matches with the deck.
 
         By default, this command sorts the results by meta share. Include one of the other keys to sort by those columns instead."""
@@ -193,9 +195,6 @@ class Data():
         if not sort_key:
             sorted_data = utils.sort_by_entries(data)
             _tables = self._make_deck_tables("Deck Stats [Meta % ▼]", sorted_data, "ini")
-        elif sort_key.lower() == "wins":
-            sorted_data = utils.sort_by_wins(data)
-            _tables = self._make_deck_tables("Deck Stats [Wins ▼]", sorted_data, "ini")
         elif sort_key.lower() == "winrate":
             sorted_data = utils.sort_by_winrate(data)
             _tables = self._make_deck_tables("Deck Stats [Win % ▼]", sorted_data, "ini")

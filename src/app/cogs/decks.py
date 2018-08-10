@@ -140,13 +140,15 @@ class Decks():
             meta_percent = total_appearances/(total_matches*4)
             win_percent = total_deck_wins/total_appearances
             variance = win_percent*(1-win_percent)
-            ci_95 = 1.96*sqrt(variance/total_appearances)
+            stddev = sqrt(variance/total_appearances)
             meta_field_value = f"{100*meta_percent:.3g}%"
-            winrate_field_value = f"{100*win_percent:.3g}±{100*ci_95:.3g}%"
+            winrate_field_value = f"{100*win_percent:.3g}%"
+            stddev_field_value = f"100*stddev:.3g}%"
         else:
             meta_field_value = "`N/A`"
             winrate_field_value = "`N/A`"
-        return meta_field_value, winrate_field_value
+            stddev_field_value = "`N/A`"
+        return meta_field_value, winrate_field_value, stddev_field_value
 
 
     @commands.command(
@@ -165,7 +167,7 @@ class Decks():
             return
         matches = list(self.bot.db.find_matches(
             {"players.deck": deck['name']}, ctx.message.guild))
-        meta_percent, win_percent = self._get_match_stats(
+        meta_percent, win_percent, stddev = self._get_match_stats(
             ctx, matches, deck['name'])
         if matches:
             match_history = self._make_match_history_table(
@@ -177,11 +179,11 @@ class Decks():
         emsg = embed.info(title=f"Deck: {deck['name']}") \
                     .add_field(name="Commanders", value=("\n".join(deck['commanders']))) \
                     .add_field(name="Aliases", value=("\n".join(deck['aliases']))) \
+                    .add_field(name="Win %", value=win_percent) \
+                    .add_field(name="Std Dev", value=stddev) \
                     .add_field(name="Meta %", value=meta_percent) \
-                    .add_field(name="Win % *", value=win_percent) \
                     .add_field(name="Recent Matches", value=match_history) \
                     .set_thumbnail(url=card['image_uris']['small']) \
-                    .set_footer(text="* win percentage uses a 95% confidence interval")
         await ctx.send(embed=emsg)
 
 def setup(bot):

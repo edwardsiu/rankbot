@@ -61,12 +61,11 @@ def process_match_stats(matches):
         winner_id = match["winner"]
         winning_deck = match["winning_deck"]
         decks[winning_deck]["wins"] += 1
-    list_decks = []
-    for deck in decks:
+    list_decks = [decks[i] for i in decks]
+    for deck in list_decks:
         deck["winrate"] = deck["wins"]/deck["entries"]
         variance = deck["winrate"]*(1-deck["winrate"])
-        deck["ci95"] = 1.96*math.sqrt(variance/deck["entries"])
-        list_decks.append(deck)
+        deck["stddev"] = math.sqrt(variance/deck["entries"])
     return list_decks
 
 def sort_by_entries(data):
