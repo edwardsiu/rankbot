@@ -1,9 +1,10 @@
+from datetime import datetime
 from discord.ext import commands
 import json
 import re
 from app import exceptions as err
 from app.constants import system
-from app.utils import checks, embed, scryfall, utils
+from app.utils import checks, embed, line_table, scryfall, utils
 from app.utils.deckhosts import deck_utils
 
 class Decks():
@@ -114,6 +115,36 @@ class Decks():
             emsg.add_field(name=f"{category_name} ({count})", value="\n".join(cards))
         await ctx.send(embed=emsg)
 
+    def _make_match_row(self, match, deck_name):
+        return [
+            datetime.fromtimestamp(match['timestamp']).strftime("%Y-%m-%d"),
+            match['game_id'],
+            'WIN' if match['winning_deck'] == deck_name else 'LOSE'
+        ]
+
+    def _make_match_history_table(self, matches, deck_name):
+        rows = [self._make_match_row(match, deck_name) for match in matches]
+        _line_table = line_table.LineTable(rows)
+        return _line_table.generate()[0]
+
+
+    def _get_match_stats(self, ctx, matches, deck_name):
+        total_appearances = sum(
+            [utils.get_appearances(match, deck_name) for match in matches])
+        if total_appearances:
+            total_deck_wins = self.bot.db.count_matches(
+                {"winning_deck": deck_name}, ctx.message.guild)
+            total_matches = self.bot.db.count_matches(
+                {"timestamp": {"$gt":system.deck_tracking_start_date}}, ctx.message.guild)
+            meta_percent = 100*total_appearances/(total_matches*4)
+            win_percent = 100*total_deck_wins/total_appearances
+            meta_field_value = f"{meta_percent:.3g}%"
+            winrate_field_value = f"{win_percent:.3g}%"
+        else:
+            meta_field_value = "`N/A`"
+            winrate_field_value = "`N/A`"
+        return meta_field_value, winrate_field_value
+
 
     @commands.command(
         brief="Display info about a deck",
@@ -129,33 +160,24 @@ class Decks():
         if not deck:
             await ctx.send(embed=embed.error(description=f"{deck_name} was not found"))
             return
-        matches = self.bot.db.find_matches(
-            {"players.deck": deck['name']}, ctx.message.guild)
-        total_appearances = 0
-        for match in matches:
-            total_appearances += sum([1 if player["deck"] == deck["name"] else 0 for player in match["players"]])
-        if total_appearances:
-            total_deck_wins = self.bot.db.count_matches(
-                {"winning_deck": deck['name']}, ctx.message.guild)
-            total_matches = self.bot.db.count_matches(
-                {"timestamp": {"$gt":system.deck_tracking_start_date}}, ctx.message.guild)
-            meta_percent = 100*total_appearances/(total_matches*4)
-            win_percent = 100*total_deck_wins/total_appearances
-            meta_field_value = f"{meta_percent:.3g}%"
-            winrate_field_value = f"{win_percent:.3g}%"
+        matches = list(self.bot.db.find_matches(
+            {"players.deck": deck['name']}, ctx.message.guild))
+        meta_percent, win_percent = self._get_match_stats(
+            ctx, matches, deck['name'])
+        if matches:
+            match_history = self._make_match_history_table(
+                matches[:5], deck['name'])
         else:
-            meta_field_value = "N/A"
-            winrate_field_value = "N/A"
+            match_history = "`N/A`"
         
         card = scryfall.search(deck['commanders'][0])
         emsg = embed.info(title=f"Deck: {deck['name']}") \
                     .add_field(name="Commanders", value=("\n".join(deck['commanders']))) \
-                    .add_field(name="Color Identity", value=deck['color'].upper()) \
-                    .add_field(name="Aliases", inline=False, value=("\n".join(deck['aliases']))) \
-                    .add_field(name="Meta %", value=meta_field_value) \
-                    .add_field(name="Win %", value=winrate_field_value) \
+                    .add_field(name="Aliases", value=("\n".join(deck['aliases']))) \
+                    .add_field(name="Meta %", value=meta_percent) \
+                    .add_field(name="Win %", value=win_percent) \
+                    .add_field(name="Match History", value=match_history) \
                     .set_thumbnail(url=card['image_uris']['small'])
-        
         await ctx.send(embed=emsg)
 
 def setup(bot):

@@ -97,3 +97,9 @@ def transform_deck_name(deck_name):
     sorted_name = "".join(sorted(deck_name.lower()))
     letters_only = re.search(r"([a-z]*)$", sorted_name).group()
     return letters_only
+
+def get_appearances(match, deck_name):
+    """Counts the number of times deck_name shows up in a match"""
+
+    return sum([1 if player["deck"] == deck_name else 0
+        for player in match['players']])
