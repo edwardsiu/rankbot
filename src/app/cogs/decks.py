@@ -176,7 +176,7 @@ class Decks():
                     .add_field(name="Aliases", value=("\n".join(deck['aliases']))) \
                     .add_field(name="Meta %", value=meta_percent) \
                     .add_field(name="Win %", value=win_percent) \
-                    .add_field(name="Match History", value=match_history) \
+                    .add_field(name="Recent Matches", value=match_history) \
                     .set_thumbnail(url=card['image_uris']['small'])
         await ctx.send(embed=emsg)
 
