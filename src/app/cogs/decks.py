@@ -183,7 +183,7 @@ class Decks():
                     .add_field(name="Std Dev", value=stddev) \
                     .add_field(name="Meta %", value=meta_percent) \
                     .add_field(name="Recent Matches", value=match_history) \
-                    .set_thumbnail(url=card['image_uris']['small']) \
+                    .set_thumbnail(url=card['image_uris']['small'])
         await ctx.send(embed=emsg)
 
 def setup(bot):
