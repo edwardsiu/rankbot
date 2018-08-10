@@ -142,7 +142,7 @@ class Data():
             await ctx.send(embed=emsg)
 
     def _make_deck_tables(self, title, data, syntax=None):
-        columns = ["Deck", "Meta %", "Win %", "SD", "Pilots"]
+        columns = ["Deck", "Meta %", "Win %", "Stddev", "Pilots"]
         rows = []
         total_entries = sum([deck['entries'] for deck in data])
         for deck in data:
