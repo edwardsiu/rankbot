@@ -150,12 +150,11 @@ class Data():
             if deck["deck_name"] == "Unknown" or deck["entries"] < system.min_matches:
                 continue
             meta_percent = 100*deck["entries"]/total_entries
-            win_percent =100*deck["wins"]/deck["entries"]
             row = [
                 deck["deck_name"],
                 f"{meta_percent:.3g}% ({deck['entries']})",
                 str(deck["wins"]),
-                f"{win_percent:.3g}%",
+                f"{deck['winrate']:.3g}±{deck['ci95']:.3g}%",
                 str(len(deck["players"]))
             ]
             rows.append(row)

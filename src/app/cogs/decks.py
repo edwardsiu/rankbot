@@ -1,6 +1,7 @@
 from datetime import datetime
 from discord.ext import commands
 import json
+from math import sqrt
 import re
 from app import exceptions as err
 from app.constants import system
@@ -136,10 +137,12 @@ class Decks():
                 {"winning_deck": deck_name}, ctx.message.guild)
             total_matches = self.bot.db.count_matches(
                 {"timestamp": {"$gt":system.deck_tracking_start_date}}, ctx.message.guild)
-            meta_percent = 100*total_appearances/(total_matches*4)
-            win_percent = 100*total_deck_wins/total_appearances
-            meta_field_value = f"{meta_percent:.3g}%"
-            winrate_field_value = f"{win_percent:.3g}%"
+            meta_percent = total_appearances/(total_matches*4)
+            win_percent = total_deck_wins/total_appearances
+            variance = win_percent*(1-win_percent)
+            ci_95 = 1.96*sqrt(variance/total_appearances)
+            meta_field_value = f"{100*meta_percent:.3g}%"
+            winrate_field_value = f"{100*win_percent:.3g}±{100*ci_95:.3g}%"
         else:
             meta_field_value = "`N/A`"
             winrate_field_value = "`N/A`"
@@ -175,9 +178,10 @@ class Decks():
                     .add_field(name="Commanders", value=("\n".join(deck['commanders']))) \
                     .add_field(name="Aliases", value=("\n".join(deck['aliases']))) \
                     .add_field(name="Meta %", value=meta_percent) \
-                    .add_field(name="Win %", value=win_percent) \
+                    .add_field(name="Win % *", value=win_percent) \
                     .add_field(name="Recent Matches", value=match_history) \
-                    .set_thumbnail(url=card['image_uris']['small'])
+                    .set_thumbnail(url=card['image_uris']['small']) \
+                    .set_footer(text="* win percentage uses a 95% confidence interval")
         await ctx.send(embed=emsg)
 
 def setup(bot):

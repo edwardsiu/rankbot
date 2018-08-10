@@ -1,3 +1,4 @@
+import math
 import re
 
 from app.constants import status_codes as stc
@@ -60,7 +61,12 @@ def process_match_stats(matches):
         winner_id = match["winner"]
         winning_deck = match["winning_deck"]
         decks[winning_deck]["wins"] += 1
-    list_decks = [decks[i] for i in decks]
+    list_decks = []
+    for deck in decks:
+        deck["winrate"] = deck["wins"]/deck["entries"]
+        variance = deck["winrate"]*(1-deck["winrate"])
+        deck["ci95"] = 1.96*math.sqrt(variance/deck["entries"])
+        list_decks.append(deck)
     return list_decks
 
 def sort_by_entries(data):
@@ -70,7 +76,7 @@ def sort_by_wins(data):
     return sorted(data, key=lambda deck: deck["wins"], reverse=True)
 
 def sort_by_winrate(data):
-    return sorted(data, key=lambda deck: float(deck["wins"])/deck["entries"], reverse=True)
+    return sorted(data, key=lambda deck: deck["winrate"], reverse=True)
 
 def sort_by_unique_players(data):
     return sorted(data, key=lambda deck: len(deck["players"]), reverse=True)
