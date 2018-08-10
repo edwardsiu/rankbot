@@ -36,8 +36,12 @@ class Data():
 
     def _make_leaderboard_table(self, players, key, title):
         rows = []
-        for i, player in enumerate(players):
-            rows.append([f"{i+1}.", player['name'], str(player[key])])
+        if key == "winrate":
+            for i, player in enumerate(players):
+                rows.append([f"{i+1}.", player['name'], f"{player['wins']/player['accepted']:.3g}"])
+        else:
+            for i, player in enumerate(players):
+                rows.append([f"{i+1}.", player['name'], str(player[key])])
         if not rows:
             return [embed.info(description="No players found with enough matches")]
         _line_table = line_table.LineTable(rows)
@@ -55,12 +59,12 @@ class Data():
     @commands.group(
         brief="Show the leaderboard",
         usage=("`{0}top`\n" \
-               "`{0}top [wins|games|score]`"
+               "`{0}top [wins|games|score|winrate]`"
         )
     )
     @commands.guild_only()
     async def top(self, ctx):
-        """Display the league leaderboard. Specify a key to sort by total wins, games, or points."""
+        """Display the league leaderboard. Specify a key to sort by total wins, win %, games, or points."""
 
         if ctx.invoked_subcommand is None:
             limit = utils.DEFAULT_LIMIT
@@ -85,6 +89,21 @@ class Data():
         for emsg in emsgs:
             await ctx.send(embed=emsg)
 
+    @top.command(
+        name='winrate',
+        brief="Show the leaderboard for win %",
+        usage=("`{0}top winrate`\n" \
+               "`{0}top winrate [n players]`"
+        )
+    )
+    async def _top_winrate(self, ctx, *args):
+        """Display the top 10 players in the league by win %. If a number is specified, display that many players instead."""
+
+        limit = utils.get_limit(args)
+        players = self.bot.db.find_top_members_by("winrate", ctx.message.guild, limit=limit)
+        emsgs = self._make_leaderboard_table(players, 'winrate', 'Top Players by Win %')
+        for emsg in emsgs:
+            await ctx.send(embed=emsg)
 
     @top.command(
         name='games',
@@ -101,6 +120,7 @@ class Data():
         emsgs = self._make_leaderboard_table(players, 'accepted', 'Top Players by Games Played')
         for emsg in emsgs:
             await ctx.send(embed=emsg)
+
 
     @top.command(
         name='score',

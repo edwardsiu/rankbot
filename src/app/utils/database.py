@@ -113,7 +113,16 @@ class RankDB(MongoClient):
         return self.members(guild).find(query, limit=limit)
 
     def find_top_members_by(self, sort_key, guild, limit=0):
-        return self.members(guild).find({"accepted": {"$gte": system.min_matches}}, limit=limit, sort=[(sort_key, DESCENDING)])
+        if sort_key == "winrate":
+            members = self.members(guild).find(
+                {"accepted": {"$gte": system.min_matches}}, limit=limit)
+            members = [member for member in members]
+            return sorted(members, key=(lambda o: o['wins']/o['accepted']), reverse=True)
+        else:
+            return self.members(guild).find(
+                {"accepted": {"$gte": system.min_matches}}, 
+                limit=limit, sort=[(sort_key, DESCENDING)]
+            )
 
     def push_pending_match(self, game_id, user_ids, guild):
         self.members(guild).update_many(
