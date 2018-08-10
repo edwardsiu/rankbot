@@ -38,7 +38,10 @@ class Data():
         rows = []
         if key == "winrate":
             for i, player in enumerate(players):
-                rows.append([f"{i+1}.", player['name'], f"{player['wins']/player['accepted']:.3g}"])
+                rows.append([
+                    f"{i+1}.", 
+                    player['name'], 
+                    f"{player['wins']/player['accepted']:.3g}%"])
         else:
             for i, player in enumerate(players):
                 rows.append([f"{i+1}.", player['name'], str(player[key])])
