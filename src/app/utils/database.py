@@ -115,9 +115,12 @@ class RankDB(MongoClient):
     def find_top_members_by(self, sort_key, guild, limit=0):
         if sort_key == "winrate":
             members = self.members(guild).find(
-                {"accepted": {"$gte": system.min_matches}}, limit=limit)
+                {"accepted": {"$gte": system.min_matches}})
             members = [member for member in members]
-            return sorted(members, key=(lambda o: o['wins']/o['accepted']), reverse=True)
+            results = sorted(members, key=(lambda o: o['wins']/o['accepted']), reverse=True)
+            if not limit:
+                return results
+            return results[:limit]
         else:
             return self.members(guild).find(
                 {"accepted": {"$gte": system.min_matches}}, 
