@@ -39,31 +39,42 @@ def get_match_stats(ctx):
         }, ctx.message.guild)
     if not matches:
         return None
-    return process_match_stats(matches)
+    return process_match_stats(ctx, matches)
 
-def process_match_stats(matches):
+def get_deck_short_name(ctx, deck_name, cache):
+    if len(deck_name) <= 16:
+        # already short enough
+        return deck_name
+    if deck_name not in cache:
+        cache[deck_name] = ctx.bot.db.get_deck_short_name(deck_name)
+    return cache[deck_name]
+
+def process_match_stats(ctx, matches):
     decks = {}
+    name_cache = {}
     for match in matches:
         for player in match["players"]:
             deck_name = player["deck"]
             if not deck_name:
                 deck_name = "Unknown"
+            deck_name = get_deck_short_name(ctx, deck_name, name_cache)
             if deck_name in decks:
                 decks[deck_name]["entries"] += 1
                 decks[deck_name]["players"].add(player["user_id"])
             else:
                 decks[deck_name] = {
-                    "deck_name": deck_name,
+                    "name": deck_name,
                     "entries": 1,
                     "players": {player["user_id"]},
                     "wins": 0
                 }
-        winner_id = match["winner"]
-        winning_deck = match["winning_deck"]
+        winning_deck = get_deck_short_name(ctx, match["winning_deck"], name_cache)
         decks[winning_deck]["wins"] += 1
-    list_decks = [decks[i] for i in decks]
+    total_entries = sum([decks[deck_name]['entries'] for deck_name in decks])
+    list_decks = [decks[i] for i in decks if (i != "Unknown" and i["entries"] >= system.min_matches)]
     for deck in list_decks:
         deck["winrate"] = deck["wins"]/deck["entries"]
+        deck["meta"] = deck["entries"]/total_entries
     return list_decks
 
 def sort_by_entries(data):

@@ -141,31 +141,37 @@ class Data():
         for emsg in emsgs:
             await ctx.send(embed=emsg)
 
-    def _make_deck_tables(self, title, data, syntax=None):
-        columns = ["Deck", "Meta %", "Wins", "Win %", "Pilots"]
-        rows = []
-        total_entries = sum([deck['entries'] for deck in data])
-        for deck in data:
-            # skip any untracked decks. this occurs if a game was overriden by an admin
-            if deck["deck_name"] == "Unknown" or deck["entries"] < system.min_matches:
-                continue
-            meta_percent = 100*deck["entries"]/total_entries
-            win_percent = float(100*deck["winrate"])
-            row = [
-                deck["deck_name"],
-                f"{meta_percent:.3}%",
-                f"{deck['wins']}",
-                f"{win_percent:.3}%",
-                str(len(deck["players"]))
+    def _make_deck_tables(self, data, key):
+        if key == "meta":
+            title = "Deck Stats by Meta %"
+            rows = [["Deck Name", "#", "Meta %"]]
+            rows += [
+                [deck['name'], str(deck['entries']), f"{100*deck[key]:.3g}%"] for deck in data
             ]
-            rows.append(row)
-        rows_per_table = 10
-        _tables = [
-            str(
-                table.Table(title, columns, rows[i:i+rows_per_table], syntax=syntax)
-            ) for i in range(0, len(rows), rows_per_table)
+        elif key == "wins":
+            title = "Deck Stats by Wins"
+            rows = [["Deck Name", "#", "Wins"]]
+            rows += [
+                [deck['name'], str(deck['entries']), str(deck['wins'])] for deck in data
+            ]
+        elif key == "winrate":
+            title = "Deck Stats by Win %"
+            rows = [["Deck Name", "#", "Win %"]]
+            rows += [
+                [deck['name'], str(deck['entries']), f"{100*deck[key]:.3g}%"] for deck in data
+            ]
+        elif key == "popularity":
+            title = "Deck Stats by Popularity"
+            rows = [["Deck Name", "#", "Pilots"]]
+            rows += [
+                [deck['name'], str(deck['entries']), str(len(deck['players']))] for deck in data
+            ] 
+
+        _tables = line_table.LineTable(rows)
+        emsgs = [
+            embed.msg(title=title, description=_table) for _table in _tables
         ]
-        return _tables
+        return emsgs
         
 
     @commands.command(
@@ -185,9 +191,13 @@ class Data():
 
         By default, this command sorts the results by meta share. Include one of the other keys to sort by those columns instead."""
 
+
+        # Use a line_table instead of a block_table for better mobile experience
+        # Display only the selected stat and the sample size
+        # Leave detail statistical analysis in the deck info command
         data = utils.get_match_stats(ctx)
         if not data:
-            emsg = embed.error(description="No matches found")
+            emsg = embed.error(description="No decks found with enough matches")
             await ctx.send(embed=emsg)
             return
 
@@ -206,11 +216,8 @@ class Data():
         else:
             sorted_data = utils.sort_by_entries(data)
             _tables = self._make_deck_tables("Deck Stats [Meta % ▼]", sorted_data, "ini")
-        if not _tables:
-            await ctx.send(embed=embed.info(description="No decks found with enough matches"))
-            return
         for _table in _tables:
-            await ctx.send(_table)
+            await ctx.send(embed=_table)
 
 
 def setup(bot):

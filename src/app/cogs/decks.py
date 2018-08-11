@@ -140,7 +140,7 @@ class Decks():
             meta_percent = total_appearances/(total_matches*4)
             win_percent = total_deck_wins/total_appearances
             # assume 25% is the expected winrate
-            p_value = st.binom_test(total_deck_wins, total_appearances, p=0.25)
+            p_value = st.binom_test(total_deck_wins, total_appearances, p=0.25, alternative="greater")
             confint = utils.confint_95(total_deck_wins, total_appearances)
             meta_field_value = f"{100*meta_percent:.3g}%"
             winrate_field_value = f"{100*win_percent:.3g}%, p={p_value:.3g}"
