@@ -143,25 +143,25 @@ class Data():
 
     def _make_deck_tables(self, data, key):
         if key == "meta":
-            title = "Deck Stats by Meta %"
+            title = "Sorted by Meta %"
             rows = [["Deck Name", "#", "Meta %"]]
             rows += [
                 [deck['name'], str(deck['entries']), f"{100*deck[key]:.3g}%"] for deck in data
             ]
         elif key == "wins":
-            title = "Deck Stats by Wins"
+            title = "Sorted by Wins"
             rows = [["Deck Name", "#", "Wins"]]
             rows += [
                 [deck['name'], str(deck['entries']), str(deck['wins'])] for deck in data
             ]
         elif key == "winrate":
-            title = "Deck Stats by Win %"
+            title = "Sorted by Win %"
             rows = [["Deck Name", "#", "Win %"]]
             rows += [
                 [deck['name'], str(deck['entries']), f"{100*deck[key]:.3g}%"] for deck in data
             ]
         elif key == "popularity":
-            title = "Deck Stats by Popularity"
+            title = "Sorted by Popularity"
             rows = [["Deck Name", "#", "Pilots"]]
             rows += [
                 [deck['name'], str(deck['entries']), str(len(deck['players']))] for deck in data
@@ -170,7 +170,9 @@ class Data():
         _line_table = line_table.LineTable(rows)
         _tables = _line_table.generate()
         emsgs = [
-            embed.msg(title=title, description=_table) for _table in _tables
+            embed.msg(title="Deck Stats") \
+                 .add_field(name=title, value=_table)
+            for _table in _tables
         ]
         return emsgs
         
