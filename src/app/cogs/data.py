@@ -151,12 +151,12 @@ class Data():
                 continue
             meta_percent = 100*deck["entries"]/total_entries
             win_percent = 100*deck["winrate"]
-            confint = 100*deck["confint"]
+            confint = deck["confint"]
             row = [
                 deck["deck_name"],
                 f"{meta_percent:.3}%",
                 f"{win_percent:.3}%",
-                f"±{confint:.3}",
+                f"{100*confint[0]:.3}-{100*confint[1]:.3}%",
                 str(len(deck["players"]))
             ]
             rows.append(row)

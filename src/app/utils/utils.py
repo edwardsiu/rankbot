@@ -64,7 +64,7 @@ def process_match_stats(matches):
     list_decks = [decks[i] for i in decks]
     for deck in list_decks:
         deck["winrate"] = deck["wins"]/deck["entries"]
-        deck["confint"] = confint_95_diff(deck["wins"], deck["entries"])
+        deck["confint"] = confint_95(deck["wins"], deck["entries"])
     return list_decks
 
 def sort_by_entries(data):
