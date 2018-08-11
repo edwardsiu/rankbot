@@ -167,7 +167,8 @@ class Data():
                 [deck['name'], str(deck['entries']), str(len(deck['players']))] for deck in data
             ] 
 
-        _tables = line_table.LineTable(rows)
+        _line_table = line_table.LineTable(rows)
+        _tables = _line_table.generate()
         emsgs = [
             embed.msg(title=title, description=_table) for _table in _tables
         ]
