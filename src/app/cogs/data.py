@@ -203,19 +203,19 @@ class Data():
 
         if not sort_key:
             sorted_data = utils.sort_by_entries(data)
-            _tables = self._make_deck_tables("Deck Stats [Meta % ▼]", sorted_data, "ini")
+            _tables = self._make_deck_tables(sorted_data, "meta")
         elif sort_key.lower() == "winrate":
             sorted_data = utils.sort_by_winrate(data)
-            _tables = self._make_deck_tables("Deck Stats [Win % ▼]", sorted_data, "ini")
+            _tables = self._make_deck_tables(sorted_data, "winrate")
         elif sort_key.lower() == "wins":
             sorted_data = utils.sort_by_wins(data)
-            _tables = self._make_deck_tables("Deck Stats [Wins ▼]", sorted_data, "ini")
+            _tables = self._make_deck_tables(sorted_data, "wins")
         elif sort_key.lower() == "popularity":
             sorted_data = utils.sort_by_unique_players(data)
-            _tables = self._make_deck_tables("Deck Stats [Popularity ▼]", sorted_data, "ini")
+            _tables = self._make_deck_tables(sorted_data, "popularity")
         else:
             sorted_data = utils.sort_by_entries(data)
-            _tables = self._make_deck_tables("Deck Stats [Meta % ▼]", sorted_data, "ini")
+            _tables = self._make_deck_tables(sorted_data, "meta")
         for _table in _tables:
             await ctx.send(embed=_table)
 
