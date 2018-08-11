@@ -2,6 +2,7 @@ from datetime import datetime
 from discord.ext import commands
 import json
 import re
+import scipy.stats as st
 from app import exceptions as err
 from app.constants import system
 from app.utils import checks, embed, line_table, scryfall, utils
@@ -131,16 +132,18 @@ class Decks():
     def _get_match_stats(self, ctx, matches, deck_name):
         total_appearances = sum(
             [utils.get_appearances(match, deck_name) for match in matches])
-        if total_appearances:
+        if total_appearances > 1:
             total_deck_wins = self.bot.db.count_matches(
                 {"winning_deck": deck_name}, ctx.message.guild)
             total_matches = self.bot.db.count_matches(
                 {"timestamp": {"$gt":system.deck_tracking_start_date}}, ctx.message.guild)
             meta_percent = total_appearances/(total_matches*4)
             win_percent = total_deck_wins/total_appearances
+            # assume 25% is the expected winrate
+            p_value = st.binom_test(total_deck_wins, total_appearances, p=0.25)
             confint = utils.confint_95(total_deck_wins, total_appearances)
             meta_field_value = f"{100*meta_percent:.3}%"
-            winrate_field_value = f"{100*win_percent:.3}%"
+            winrate_field_value = f"{100*win_percent:.3}%, p={p_value}"
             confint_field_value = f"{100*confint[0]:.3}% - {100*confint[1]:.3}%"
         else:
             meta_field_value = "`N/A`"
