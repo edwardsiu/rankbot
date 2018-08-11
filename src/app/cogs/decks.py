@@ -1,7 +1,6 @@
 from datetime import datetime
 from discord.ext import commands
 import json
-from math import sqrt
 import re
 from app import exceptions as err
 from app.constants import system
@@ -139,16 +138,14 @@ class Decks():
                 {"timestamp": {"$gt":system.deck_tracking_start_date}}, ctx.message.guild)
             meta_percent = total_appearances/(total_matches*4)
             win_percent = total_deck_wins/total_appearances
-            variance = win_percent*(1-win_percent)
-            stddev = sqrt(variance/total_appearances)
+            confint_diff = utils.confint_95_diff(
+                total_deck_wins, total_appearances)
             meta_field_value = f"{100*meta_percent:.3}%"
-            winrate_field_value = f"{100*win_percent:.3}%"
-            stddev_field_value = f"{100*stddev:.3}%"
+            winrate_field_value = f"{100*win_percent:.3}% ±{100*confint_diff:.3}"
         else:
             meta_field_value = "`N/A`"
             winrate_field_value = "`N/A`"
-            stddev_field_value = "`N/A`"
-        return meta_field_value, winrate_field_value, stddev_field_value
+        return meta_field_value, winrate_field_value
 
 
     @commands.command(
@@ -167,7 +164,7 @@ class Decks():
             return
         matches = list(self.bot.db.find_matches(
             {"players.deck": deck['name']}, ctx.message.guild))
-        meta_percent, win_percent, stddev = self._get_match_stats(
+        meta_percent, win_percent = self._get_match_stats(
             ctx, matches, deck['name'])
         if matches:
             match_history = self._make_match_history_table(
@@ -180,7 +177,6 @@ class Decks():
                     .add_field(name="Commanders", value=("\n".join(deck['commanders']))) \
                     .add_field(name="Aliases", value=("\n".join(deck['aliases']))) \
                     .add_field(name="Win %", value=win_percent) \
-                    .add_field(name="Std Dev", value=stddev) \
                     .add_field(name="Meta %", value=meta_percent) \
                     .add_field(name="Recent Matches", value=match_history) \
                     .set_thumbnail(url=card['image_uris']['small'])

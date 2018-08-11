@@ -142,7 +142,7 @@ class Data():
             await ctx.send(embed=emsg)
 
     def _make_deck_tables(self, title, data, syntax=None):
-        columns = ["Deck", "Meta %", "Win %", "Stddev", "Pilots"]
+        columns = ["Deck", "Meta %", "Win %", "95% CI", "Pilots"]
         rows = []
         total_entries = sum([deck['entries'] for deck in data])
         for deck in data:
@@ -151,12 +151,12 @@ class Data():
                 continue
             meta_percent = 100*deck["entries"]/total_entries
             win_percent = 100*deck["winrate"]
-            stddev = 100*deck["stddev"]
+            confint = 100*deck["confint"]
             row = [
                 deck["deck_name"],
                 f"{meta_percent:.3}%",
                 f"{win_percent:.3}%",
-                f"{stddev:.3}%",
+                f"±{confint:.3}",
                 str(len(deck["players"]))
             ]
             rows.append(row)

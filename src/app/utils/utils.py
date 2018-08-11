@@ -1,5 +1,5 @@
-import math
 import re
+import statsmodels.stats.proportion as stats
 
 from app.constants import status_codes as stc
 from app.constants import system
@@ -64,8 +64,7 @@ def process_match_stats(matches):
     list_decks = [decks[i] for i in decks]
     for deck in list_decks:
         deck["winrate"] = deck["wins"]/deck["entries"]
-        variance = deck["winrate"]*(1-deck["winrate"])
-        deck["stddev"] = math.sqrt(variance/deck["entries"])
+        deck["confint"] = confint_95_diff(deck["wins"], deck["entries"])
     return list_decks
 
 def sort_by_entries(data):
@@ -108,3 +107,16 @@ def get_appearances(match, deck_name):
 
     return sum([1 if player["deck"] == deck_name else 0
         for player in match['players']])
+
+def confint_95(success, samples):
+    """Uses Clopper-Pearson method with 95% confidence"""
+
+    return stats.proportion_confint(
+        success, samples, alpha=0.05, method='beta')
+
+def confint_95_diff(success, samples):
+    """Return the +/- value on the proportion for a 90% confint"""
+
+    proportion = success/samples
+    return confint_95(success, samples)[1] - proportion
+
