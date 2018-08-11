@@ -141,9 +141,9 @@ class Decks():
             win_percent = total_deck_wins/total_appearances
             variance = win_percent*(1-win_percent)
             stddev = sqrt(variance/total_appearances)
-            meta_field_value = f"{100*meta_percent:.3g}%"
-            winrate_field_value = f"{100*win_percent:.3g}%"
-            stddev_field_value = f"{100*stddev:.3g}%"
+            meta_field_value = f"{100*meta_percent:.3}%"
+            winrate_field_value = f"{100*win_percent:.3}%"
+            stddev_field_value = f"{100*stddev:.3}%"
         else:
             meta_field_value = "`N/A`"
             winrate_field_value = "`N/A`"

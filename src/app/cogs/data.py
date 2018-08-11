@@ -154,9 +154,9 @@ class Data():
             stddev = 100*deck["stddev"]
             row = [
                 deck["deck_name"],
-                f"{meta_percent:.3g}%",
-                f"{win_percent:.3g}%",
-                f"{stddev:.3g}%",
+                f"{meta_percent:.3}%",
+                f"{win_percent:.3}%",
+                f"{stddev:.3}%",
                 str(len(deck["players"]))
             ]
             rows.append(row)
