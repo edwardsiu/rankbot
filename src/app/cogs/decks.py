@@ -143,7 +143,7 @@ class Decks():
             p_value = st.binom_test(total_deck_wins, total_appearances, p=0.25)
             confint = utils.confint_95(total_deck_wins, total_appearances)
             meta_field_value = f"{100*meta_percent:.3}%"
-            winrate_field_value = f"{100*win_percent:.3}%, p={p_value}"
+            winrate_field_value = f"{100*win_percent:.3}%, p={p_value:.3}"
             confint_field_value = f"{100*confint[0]:.3}% - {100*confint[1]:.3}%"
         else:
             meta_field_value = "`N/A`"
