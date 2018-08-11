@@ -142,9 +142,9 @@ class Decks():
             # assume 25% is the expected winrate
             p_value = st.binom_test(total_deck_wins, total_appearances, p=0.25)
             confint = utils.confint_95(total_deck_wins, total_appearances)
-            meta_field_value = f"{100*meta_percent:.3}%"
-            winrate_field_value = f"{100*win_percent:.3}%, p={p_value:.3}"
-            confint_field_value = f"{100*confint[0]:.3}% - {100*confint[1]:.3}%"
+            meta_field_value = f"{100*meta_percent:.3g}%"
+            winrate_field_value = f"{100*win_percent:.3g}%, p={p_value:.3g}"
+            confint_field_value = f"{100*confint[0]:.3g}% - {100*confint[1]:.3g}%"
         else:
             meta_field_value = "`N/A`"
             winrate_field_value = "`N/A`"
