@@ -181,7 +181,7 @@ class Decks():
                     .add_field(name="Commanders", value=("\n".join(deck['commanders']))) \
                     .add_field(name="Aliases", value=("\n".join(deck['aliases']))) \
                     .add_field(name="Win %", value=win_percent) \
-                    .add_field(name="95% CI", value=confint) \
+                    .add_field(name="95% Confidence Interval", value=confint) \
                     .add_field(name="Meta %", value=meta_percent) \
                     .add_field(name="Recent Matches", value=match_history) \
                     .set_thumbnail(url=card['image_uris']['small'])
