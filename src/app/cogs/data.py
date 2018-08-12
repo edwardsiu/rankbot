@@ -136,30 +136,30 @@ class Data():
     def _make_deck_tables(self, data, key):
         if key == "meta":
             title = "Deck Stats: Meta %"
-            header = ["NAME", "META %", "SAMPLES"]
+            header = ["NAME", "META %", "#"]
             rows = [
                 [deck['name'], f"{100*deck[key]:.3g}%", str(deck['entries'])] for deck in data
             ]
         elif key == "wins":
             title = "Deck Stats: Wins"
-            header = ["NAME", "WINS", "SAMPLES"]
+            header = ["NAME", "WINS", "#"]
             rows = [
                 [deck['name'], str(deck['wins']), str(deck['entries'])] for deck in data
             ]
         elif key == "winrate":
             title = "Deck Stats: Win %"
-            header = ["NAME", "WIN %", "SAMPLES"]
+            header = ["NAME", "WIN %", "#"]
             rows = [
                 [deck['name'], f"{100*deck[key]:.3g}%", str(deck['entries'])] for deck in data
             ]
         elif key == "popularity":
             title = "Deck Stats: Popularity"
-            header = ["NAME", "PILOTS", "SAMPLES"]
+            header = ["NAME", "PILOTS", "#"]
             rows = [
                 [deck['name'], str(len(deck['players'])), str(deck['entries'])] for deck in data
             ] 
 
-        return line_table.LineTable(rows, title=title, headers=header)
+        return line_table.LineTable(rows, title=title, headers=header, separator="  ")
         
 
     @commands.command(
