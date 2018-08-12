@@ -125,8 +125,7 @@ class Decks():
 
     def _make_match_history_table(self, matches, deck_name):
         rows = [self._make_match_row(match, deck_name) for match in matches]
-        _line_table = line_table.LineTable(rows)
-        return _line_table.generate()[0]
+        return line_table.LineTable(rows).text[0]
 
 
     def _get_match_stats(self, ctx, matches, deck_name):

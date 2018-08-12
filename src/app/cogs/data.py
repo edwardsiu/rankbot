@@ -47,16 +47,7 @@ class Data():
                 rows.append([f"{i+1}.", player['name'], str(player[key])])
         if not rows:
             return [embed.info(description="No players found with enough matches")]
-        _line_table = line_table.LineTable(rows)
-        _tables = _line_table.generate()
-        emsgs = []
-        for _table in _tables:
-            emsg = embed.msg(
-                title = title,
-                description = _table
-            )
-            emsgs.append(emsg)
-        return emsgs
+        return line_table.LineTable(rows, title=title)
         
 
     @commands.group(
@@ -72,9 +63,9 @@ class Data():
         if ctx.invoked_subcommand is None:
             limit = utils.DEFAULT_LIMIT
             players = self.bot.db.find_top_members_by("points", ctx.message.guild, limit=limit)
-            emsgs = self._make_leaderboard_table(players, 'points', 'Top Players by Points')
-            for emsg in emsgs:
-                await ctx.send(embed=emsg)
+            _tables = self._make_leaderboard_table(players, 'points', 'Top Players by Points')
+            for _table in _tables.text:
+                await ctx.send(_table)
 
     @top.command(
         name='wins',
@@ -88,9 +79,9 @@ class Data():
 
         limit = utils.get_limit(args)
         players = self.bot.db.find_top_members_by("wins", ctx.message.guild, limit=limit)
-        emsgs = self._make_leaderboard_table(players, 'wins', 'Top Players by Total Wins')
-        for emsg in emsgs:
-            await ctx.send(embed=emsg)
+        _tables = self._make_leaderboard_table(players, 'wins', 'Top Players by Total Wins')
+        for _table in _tables.text:
+            await ctx.send(_table)
 
     @top.command(
         name='winrate',
@@ -104,9 +95,9 @@ class Data():
 
         limit = utils.get_limit(args)
         players = self.bot.db.find_top_members_by("winrate", ctx.message.guild, limit=limit)
-        emsgs = self._make_leaderboard_table(players, 'winrate', 'Top Players by Win %')
-        for emsg in emsgs:
-            await ctx.send(embed=emsg)
+        _tables = self._make_leaderboard_table(players, 'winrate', 'Top Players by Win %')
+        for _table in _tables.text:
+            await ctx.send(_table)
 
     @top.command(
         name='games',
@@ -120,9 +111,9 @@ class Data():
 
         limit = utils.get_limit(args)
         players = self.bot.db.find_top_members_by("accepted", ctx.message.guild, limit=limit)
-        emsgs = self._make_leaderboard_table(players, 'accepted', 'Top Players by Games Played')
-        for emsg in emsgs:
-            await ctx.send(embed=emsg)
+        _tables = self._make_leaderboard_table(players, 'accepted', 'Top Players by Games Played')
+        for _table in _tables.text:
+            await ctx.send(_table)
 
 
     @top.command(
@@ -137,9 +128,10 @@ class Data():
 
         limit = utils.get_limit(args)
         players = self.bot.db.find_top_members_by("points", ctx.message.guild, limit=limit)
-        emsgs = self._make_leaderboard_table(players, 'points', 'Top Players by Points')
-        for emsg in emsgs:
-            await ctx.send(embed=emsg)
+        _tables = self._make_leaderboard_table(players, 'points', 'Top Players by Points')
+        for _table in _tables.text:
+            await ctx.send(_table)
+
 
     def _make_deck_tables(self, data, key):
         if key == "meta":
@@ -167,12 +159,7 @@ class Data():
                 [deck['name'], str(deck['entries']), str(len(deck['players']))] for deck in data
             ] 
 
-        _block_table = line_table.BlockTable(header, rows)
-        _tables = _block_table.generate()
-        emsgs = [
-            embed.msg(title=title, description=_table) for _table in _tables
-        ]
-        return emsgs
+        return line_table.LineTable(rows, title=title, headers=header)
         
 
     @commands.command(
@@ -217,8 +204,8 @@ class Data():
         else:
             sorted_data = utils.sort_by_entries(data)
             _tables = self._make_deck_tables(sorted_data, "meta")
-        for _table in _tables:
-            await ctx.send(embed=_table)
+        for _table in _tables.text:
+            await ctx.send(_table)
 
 
 def setup(bot):
