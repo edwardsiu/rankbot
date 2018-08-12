@@ -8,6 +8,7 @@ class LineTable():
         self.rows = rows
         self.width = width - len(separator)*(len(rows[0])-1)
         self.max_width = width
+        self.separator = separator
         self.text = self.generate()
 
     def _calculate_widths(self):
@@ -39,9 +40,9 @@ class LineTable():
             for i in range(columns):
                 if len(row[i]) > column_widths[i]:
                     row[i] = self._truncate_cell(row[i], column_widths[i])
-            str_rows.append(" ".join([f"{row[i]}".ljust(column_widths[i]) for i in range(columns)]))
+            str_rows.append(self.separator.join([f"{row[i]}".ljust(column_widths[i]) for i in range(columns)]))
         if self.headers:
-            hrow = " ".join([f"{self.headers[i]}".ljust(column_widths[i]) for i in range(columns)])
+            hrow = self.separator.join([f"{self.headers[i]}".ljust(column_widths[i]) for i in range(columns)])
         rows_per_table = int(2000/(self.max_width))
         _tables = []
         divider = "-"*len(str_rows[0])
