@@ -172,9 +172,14 @@ class Members():
     @commands.guild_only()
     @commands.check(checks.is_registered)
     async def compare(self, ctx):
+        """Show player performances in pods containing only the mentioned players. If only one player is mentioned, then the default is to compare that player with the caller of the command."""
+
         mentions = ctx.message.mentions
         if len(mentions) < 1:
             await ctx.send(embed=embed.error(description="Mention a player to compare with"))
+            return
+        if len(mentions) == 1 and mentions[0].id == ctx.message.author.id:
+            await ctx.send(embed=embed.error(description="Not enough players mentioned"))
             return
         if len(mentions) == 1:
             mentions.append(ctx.message.author)
@@ -206,7 +211,8 @@ class Members():
             if winner in data:
                 data[winner] += 1
         players = ", ".join(data.keys())
-        emsg = embed.info(title=f"Compare: {players}")
+        emsg = embed.info(title=f"Matches Containing: {players}")
+        emsg.add_field(name="Total Matches", inline=False, value=str(total))
         for user_name in data:
             wins = data[user_name]
             losses = total - wins
