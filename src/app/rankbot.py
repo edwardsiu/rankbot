@@ -6,8 +6,8 @@ from app.utils import embed
 
 class RankBot(commands.Bot):
     def setup_config(self, config):
+        self._config = config
         self.db = database.RankDB(config["mongodb_host"], config["mongodb_port"])
-        self.client_id = config["client_id"]
         self.hasher = hashids.Hashids(salt="cEDH league")
 
     async def on_guild_join(self, guild):

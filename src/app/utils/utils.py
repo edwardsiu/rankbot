@@ -42,7 +42,7 @@ def get_match_stats(ctx):
     return process_match_stats(ctx, matches)
 
 def get_deck_short_name(ctx, deck_name, cache):
-    if len(deck_name) <= 16:
+    if len(deck_name) <= 18:
         # already short enough
         return deck_name
     if deck_name not in cache:

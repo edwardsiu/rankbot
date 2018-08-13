@@ -129,26 +129,29 @@ class Decks():
 
 
     def _get_match_stats(self, ctx, matches, deck_name):
+        match_stats = {}
         total_appearances = sum(
             [utils.get_appearances(match, deck_name) for match in matches])
+        total_deck_wins = self.bot.db.count_matches(
+            {"winning_deck": deck_name}, ctx.message.guild)
+        total_matches = self.bot.db.count_matches(
+            {"timestamp": {"$gt":system.deck_tracking_start_date}}, ctx.message.guild)
         if total_appearances > 1:
-            total_deck_wins = self.bot.db.count_matches(
-                {"winning_deck": deck_name}, ctx.message.guild)
-            total_matches = self.bot.db.count_matches(
-                {"timestamp": {"$gt":system.deck_tracking_start_date}}, ctx.message.guild)
             meta_percent = total_appearances/(total_matches*4)
             win_percent = total_deck_wins/total_appearances
-            # assume 25% is the expected winrate
             p_value = st.binom_test(total_deck_wins, total_appearances, p=0.25, alternative="greater")
             confint = utils.confint_95(total_deck_wins, total_appearances)
-            meta_field_value = f"{100*meta_percent:.3g}%"
-            winrate_field_value = f"{100*win_percent:.3g}%, p={p_value:.3g}"
-            confint_field_value = f"{100*confint[0]:.3g}% - {100*confint[1]:.3g}%"
+            match_stats['meta'] = f"{100*meta_percent:.3g}%"
+            match_stats['winrate'] = f"{100*win_percent:.3g}%, p={p_value:.3g}"
+            match_stats['confint'] = f"{100*confint[0]:.3g}% - {100*confint[1]:.3g}%"
         else:
-            meta_field_value = "`N/A`"
-            winrate_field_value = "`N/A`"
-            confint_field_value = "`N/A`"
-        return meta_field_value, winrate_field_value, confint_field_value
+            match_stats['meta'] = "`N/A`"
+            match_stats['winrate'] = "`N/A`"
+            match_stats['confint'] = "`N/A`"
+        match_stats['wins'] = str(total_deck_wins)
+        match_stats['losses'] = str(total_appearances - total_deck_wins)
+        match_stats['entries'] = str(total_appearances)
+        return match_stats
 
 
     @commands.command(
@@ -167,8 +170,7 @@ class Decks():
             return
         matches = list(self.bot.db.find_matches(
             {"players.deck": deck['name']}, ctx.message.guild))
-        meta_percent, win_percent, confint = self._get_match_stats(
-            ctx, matches, deck['name'])
+        match_stats = self._get_match_stats(ctx, matches, deck['name'])
         if matches:
             match_history = self._make_match_history_table(
                 matches[:5], deck['name'])
@@ -179,9 +181,12 @@ class Decks():
         emsg = embed.info(title=f"Deck: {deck['name']}") \
                     .add_field(name="Commanders", value=("\n".join(deck['commanders']))) \
                     .add_field(name="Aliases", value=("\n".join(deck['aliases']))) \
-                    .add_field(name="Win %", value=win_percent) \
-                    .add_field(name="95% Confidence Interval", value=confint) \
-                    .add_field(name="Meta %", value=meta_percent) \
+                    .add_field(name="# Matches", value=match_stats['entries']) \
+                    .add_field(name="Meta %", value=match_stats['meta']) \
+                    .add_field(name="Wins", value=match_stats['wins']) \
+                    .add_field(name="Losses", value=match_stats['losses']) \
+                    .add_field(name="Win %", value=match_stats['winrate']) \
+                    .add_field(name="95% Confidence Interval", value=match_stats['confint']) \
                     .add_field(name="Recent Matches", value=match_history) \
                     .set_thumbnail(url=card['image_uris']['small'])
         await ctx.send(embed=emsg)
