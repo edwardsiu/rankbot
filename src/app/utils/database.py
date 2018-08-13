@@ -372,7 +372,7 @@ class RankDB(MongoClient):
             return config["player_match_threshold"]
         return system.min_matches
 
-    def set_deck_match_threshld(self, threshold, guild):
+    def set_deck_match_threshold(self, threshold, guild):
         self.config(guild).update_one({}, {
             "$set": {
                 "deck_match_threshold": threshold

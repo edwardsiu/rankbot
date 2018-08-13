@@ -40,7 +40,8 @@ class Members():
             if deck_name and deck_name in decks:
                 decks[deck_name] += 1
             else:
-                decks[deck_name] = 1
+                if deck_name:
+                    decks[deck_name] = 1
         if decks:
             return max(decks.items(), key=operator.itemgetter(1))[0]
         return None

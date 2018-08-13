@@ -7,7 +7,7 @@ class Admin():
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(
+    @commands.group(
         brief="Configure settings for the league",
         usage=("`{0}config`\n" \
                "`{0}config [admin]`")
@@ -21,7 +21,8 @@ class Admin():
             settings = self.bot.db.get_config(ctx.message.guild)
             emsg = embed.info(title="League Configuration")
             for setting in settings:
-                emsg.add_field(name=setting, value=settings[setting])
+                if setting != "_id":
+                    emsg.add_field(name=setting, value=settings[setting])
             await ctx.send(embed=emsg)
             return
 
@@ -40,7 +41,7 @@ class Admin():
         await ctx.send(embed=embed.success(description=f"**SUCCESS** - {role.mention} set to league admin"))
 
     @config.command(
-        name="threshold"
+        name="threshold",
         brief="Set player or deck leaderboard match threshold",
         usage="`{0}config threshold [player|deck] [value]`"
     )
