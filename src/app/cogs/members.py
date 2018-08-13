@@ -224,12 +224,13 @@ To see the list of matches as well, add `list` to the command call."""
         await ctx.send(embed=emsg)
     
         if "list" in args:
-            headers = ["GAME ID", "WINNER"]
+            headers = ["ID", "WINNER"]
             rows = [
                 [match['game_id'], 
                 next((user['name'] for user in match['players'] if user['user_id'] == match['winner']), "N/A")] for match in matches
             ]
-            _tables = line_table.LineTable(rows=rows, headers=headers)
+            _tables = line_table.LineTable(
+                rows=rows, headers=headers, separator="  ")
             for _table in _tables.text:
                 await ctx.send(_table)
 
