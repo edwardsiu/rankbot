@@ -178,6 +178,10 @@ class Decks():
             match_history = "`N/A`"
         
         card = scryfall.search(deck['commanders'][0])
+        if 'image_uris' in card:
+            image_uri = card['image_uris']['small']
+        else:
+            image_uri = card['card_faces'][0]['image_uris']['small']
         emsg = embed.info(title=f"Deck: {deck['name']}") \
                     .add_field(name="Commanders", value=("\n".join(deck['commanders']))) \
                     .add_field(name="Aliases", value=("\n".join(deck['aliases']))) \
@@ -188,7 +192,7 @@ class Decks():
                     .add_field(name="Win %", value=match_stats['winrate']) \
                     .add_field(name="95% Confidence Interval", value=match_stats['confint']) \
                     .add_field(name="Recent Matches", value=match_history) \
-                    .set_thumbnail(url=card['image_uris']['small'])
+                    .set_thumbnail(url=image_uri)
         await ctx.send(embed=emsg)
 
 def setup(bot):
