@@ -57,29 +57,12 @@ class RankDB(MongoClient):
         db = self.guild(guild)
         return db.matches
 
-    def config(self):
-        db = self["league_configs"]
-        return db
+    def config(self, guild):
+        db = self.guild(guild)
+        return db.config
 
     def decks(self):
         return self["decks"].decks
-
-    def set_admin_role(self, role_name, guild):
-        if not self.config().roles.find_one({"guild": guild.id}):
-            self.config().roles.insert_one({
-                "guild": guild.id,
-                "admin": role_name
-            })
-        else:
-            self.config().roles.update_one({"guild": guild.id},
-                {"$set": {"admin": role_name}}
-            )
-
-    def get_admin_role(self, guild):
-        guild_config = self.config().roles.find_one({"guild": guild.id})
-        if not guild_config:
-            return None
-        return discord.utils.find(lambda r: r.name == guild_config["admin"], guild.roles)
 
     def setup_indices(self, guild):
         self.members(guild).create_index("user_id")
@@ -113,9 +96,10 @@ class RankDB(MongoClient):
         return self.members(guild).find(query, limit=limit)
 
     def find_top_members_by(self, sort_key, guild, limit=0):
+        player_match_threshold = self.get_player_match_threshold(guild)
         if sort_key == "winrate":
             members = self.members(guild).find(
-                {"accepted": {"$gte": system.min_matches}})
+                {"accepted": {"$gte": player_match_threshold}})
             members = [member for member in members]
             results = sorted(members, key=(lambda o: o['wins']/o['accepted']), reverse=True)
             if not limit:
@@ -357,3 +341,46 @@ class RankDB(MongoClient):
         deck = self.find_deck(alias)
         shortest_name = sorted(deck['aliases'], key=(lambda n: len(n)))[0]
         return shortest_name
+
+    # Config
+    def get_config(self, guild):
+        return self.config(guild).find_one()
+
+    def set_admin_role(self, role_name, guild):
+        self.config(guild).update_one({}, {
+            "$set": {
+                "admin": role_name
+            }
+        })
+
+    def get_admin_role(self, guild):
+        config = self.get_config(guild)
+        if "admin" in config and config["admin"]:
+            return discord.utils.find(lambda r: r.name == config["admin"], guild.roles)
+        return None
+
+    def set_player_match_threshold(self, threshold, guild):
+        self.config(guild).update_one({}, {
+            "$set": {
+                "player_match_threshold": threshold
+            }
+        })
+
+    def get_player_match_threshold(self, guild):
+        config = self.get_config(guild)
+        if "player_match_threshold" in config:
+            return config["player_match_threshold"]
+        return system.min_matches
+
+    def set_deck_match_threshld(self, threshold, guild):
+        self.config(guild).update_one({}, {
+            "$set": {
+                "deck_match_threshold": threshold
+            }
+        })
+
+    def get_deck_match_threshold(self, guild):
+        config = self.get_config(guild)
+        if "deck_match_threshold" in config:
+            return config["deck_match_threshold"]
+        return system.min_matches

@@ -71,7 +71,8 @@ def process_match_stats(ctx, matches):
         winning_deck = get_deck_short_name(ctx, match["winning_deck"], name_cache)
         decks[winning_deck]["wins"] += 1
     total_entries = sum([decks[deck_name]['entries'] for deck_name in decks])
-    list_decks = [decks[i] for i in decks if (i != "Unknown" and decks[i]["entries"] >= system.min_matches)]
+    deck_match_threshold = ctx.bot.db.get_deck_match_threshold(ctx.message.guild)
+    list_decks = [decks[i] for i in decks if (i != "Unknown" and decks[i]["entries"] >= deck_match_threshold)]
     for deck in list_decks:
         deck["winrate"] = deck["wins"]/deck["entries"]
         deck["meta"] = deck["entries"]/total_entries
