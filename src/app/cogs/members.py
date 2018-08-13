@@ -166,13 +166,16 @@ class Members():
     @commands.command(
         brief="Show your match history against another player",
         usage=("`{0}compare @player`\n" \
-               "`{0}compare @player1 @player2`"
+               "`{0}compare @player1 @player2`\n" \
+               "`{0}compare list @player`"
         )
     )
     @commands.guild_only()
     @commands.check(checks.is_registered)
-    async def compare(self, ctx):
-        """Show player performances in pods containing only the mentioned players. If only one player is mentioned, then the default is to compare that player with the caller of the command."""
+    async def compare(self, ctx, *args):
+        """Show player performances in pods containing only the mentioned players. If only one player is mentioned, then the default is to compare that player with the caller of the command. 
+
+To see the list of matches as well, add `list` to the command call."""
 
         mentions = ctx.message.mentions
         if len(mentions) < 1:
@@ -219,7 +222,16 @@ class Members():
             percent = wins/total
             emsg.add_field(name=user_name, inline=False, value=f"{wins}-{losses}, {percent:.1%}")
         await ctx.send(embed=emsg)
-                
+    
+        if "list" in args:
+            headers = ["GAME ID", "WINNER"]
+            rows = [
+                [match['game_id'], 
+                next((user['name'] for user in match['players'] if user['user_id'] == match['winner']), "N/A")] for match in matches
+            ]
+            _tables = line_table.LineTable(rows=rows, headers=headers)
+            for _table in _tables.text:
+                await ctx.send(_table)
 
 def setup(bot):
     bot.add_cog(Members(bot))
