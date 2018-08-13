@@ -139,10 +139,10 @@ class Data():
             rows = [
                 [f"{i+1}.", deck['name'], f"{100*deck[key]:.3g}%"] for i, deck in enumerate(data)
             ]
-        elif key == "wins":
-            title = "Deck Stats: Wins"
+        elif key == "winloss":
+            title = "Deck Stats: Win-Loss Ratio"
             rows = [
-                [f"{i+1}.", deck['name'], str(deck['wins'])] for i, deck in enumerate(data)
+                [f"{i+1}.", deck['name'], f"{deck['wins']}-{deck['losses']}"] for i, deck in enumerate(data)
             ]
         elif key == "winrate":
             title = "Deck Stats: Win %"
@@ -156,12 +156,31 @@ class Data():
             ]
 
         return line_table.LineTable(rows, title=title)
+
+    def _make_complete_deck_tables(self, data):
+        headings = ["Name", "Wins", "Losses", "Win %", "Meta %", "Pilots"]
+        rows = [
+            [
+                str(deck['name']),
+                str(deck['wins']),
+                str(deck['losses']),
+                f"{100*deck['winrate']:.3g}%",
+                f"{100*deck['meta']:.3g}%",
+                str(len(deck['players']))
+            ] for deck in data
+        ]
+        height = 10
+        _tables = [
+            str(table.Table(title="Deck Stats", columns=headings, rows=rows[i:i+height]))
+            for i in range(0, len(rows)-1, height)
+        ]
+        return _tables
         
 
     @commands.command(
         brief="Display records of tracked decks",
         usage=("`{0}deckstats`\n" \
-               "`{0}deckstats [wins|winrate|popularity]`"
+               "`{0}deckstats [meta|winrate|popularity|all]`"
         )
     )
     @commands.guild_only()
@@ -170,10 +189,10 @@ class Data():
         
         Games played is the number of times a deck has been logged. 
         The meta share is the percentage of time a deck is logged and is proportional to games played.
-        Wins and win % should be self-explanatory. 
+        Win % should be self-explanatory. 
         Popularity is represented by the number of unique pilots that have logged matches with the deck.
 
-        By default, this command sorts the results by meta share. Include one of the other keys to sort by those columns instead."""
+        By default, this command sorts the results by meta share but displays with wins and losses of each deck. Include one of the other keys to sort by those columns instead."""
 
 
         # Use a line_table instead of a block_table for better mobile experience
@@ -187,19 +206,19 @@ class Data():
 
         if not sort_key:
             sorted_data = utils.sort_by_entries(data)
-            _tables = self._make_deck_tables(sorted_data, "meta")
+            _tables = self._make_deck_tables(sorted_data, "winloss")
         elif sort_key.lower() == "winrate":
             sorted_data = utils.sort_by_winrate(data)
             _tables = self._make_deck_tables(sorted_data, "winrate")
-        elif sort_key.lower() == "wins":
-            sorted_data = utils.sort_by_wins(data)
-            _tables = self._make_deck_tables(sorted_data, "wins")
+        elif sort_key.lower() == "meta":
+            sorted_data = utils.sort_by_entries(data)
+            _tables = self._make_deck_tables(sorted_data, "meta")
         elif sort_key.lower() == "popularity":
             sorted_data = utils.sort_by_unique_players(data)
             _tables = self._make_deck_tables(sorted_data, "popularity")
         else:
-            sorted_data = utils.sort_by_entries(data)
-            _tables = self._make_deck_tables(sorted_data, "meta")
+            sorted_data = utils.sort_by_winrate(data)
+            _tables = self._make_complete_deck_tables(sorted_data)
         for _table in _tables.text:
             await ctx.send(_table)
 

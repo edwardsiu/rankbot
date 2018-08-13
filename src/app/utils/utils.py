@@ -76,6 +76,7 @@ def process_match_stats(ctx, matches):
     for deck in list_decks:
         deck["winrate"] = deck["wins"]/deck["entries"]
         deck["meta"] = deck["entries"]/total_entries
+        deck["losses"] = deck["entries"] - deck["wins"]
     return list_decks
 
 def sort_by_entries(data):
