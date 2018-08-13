@@ -1,7 +1,7 @@
 from datetime import datetime
 import operator
 from discord.ext import commands
-from app.utils import checks, embed, table, utils
+from app.utils import checks, embed, line_table, table, utils
 
 class Members():
     def __init__(self, bot):
@@ -163,6 +163,57 @@ class Members():
                 await ctx.send(str(_table))
     
 
+    @commands.command(
+        brief="Show your match history against another player",
+        usage=("`{0}compare @player`\n" \
+               "`{0}compare @player1 @player2`"
+        )
+    )
+    @commands.guild_only()
+    @commands.check(checks.is_registered)
+    async def compare(self, ctx):
+        mentions = ctx.message.mentions
+        if len(mentions) < 1:
+            await ctx.send(embed=embed.error(description="Mention a player to compare with"))
+            return
+        if len(mentions) == 1:
+            mentions.append(ctx.message.author)
+        if len(mentions) > 4:
+            await ctx.send(embed=embed.error(description="Too many players mentioned"))
+            return
+        registered = self.bot.db.find_members(
+            {"user_id": {"$in": [user.id for user in mentions]}},
+            ctx.message.guild
+        )
+        if len(list(registered)) < len(mentions):
+            await ctx.send(embed=embed.error(description="All players must be registered"))
+            return
+        matches = self.bot.db.find_matches(
+            {"players.user_id": {"$all": [user.id for user in mentions]}},
+            ctx.message.guild
+        )
+        if not matches:
+            await ctx.send(embed=embed.info(description="No matches found containing all mentioned players"))
+            return
+        matches = list(matches)
+        total = len(matches)
+        data = {user.name: 0 for user in mentions}
+        user_ids = [user.id for user in mentions]
+        for match in matches:
+            winner = next((user.name for user in mentions if user.id == match['winner']), None)
+            if not winner:
+                continue
+            if winner in data:
+                data[winner] += 1
+        players = ", ".join(data.keys())
+        emsg = embed.info(title=f"Compare: {players}")
+        for user_name in data:
+            wins = data[user_name]
+            losses = total - wins
+            percent = wins/total
+            emsg.add_field(name=user_name, inline=False, value=f"{wins}-{losses}, {percent:.1%}")
+        await ctx.send(embed=emsg)
+                
 
 def setup(bot):
     bot.add_cog(Members(bot))
