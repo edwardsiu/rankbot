@@ -20,7 +20,7 @@ NAMES = {
     "buw": "Esper",
     "bgr": "Jund",
     "bgu": "Sultai",
-    "bgw": "Abzhan",
+    "bgw": "Abzan",
     "ruw": "Jeskai",
     "gru": "Temur",
     "brw": "Mardu",
