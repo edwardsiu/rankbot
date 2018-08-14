@@ -292,13 +292,13 @@ class RankDB(MongoClient):
             }
         )
 
-    def add_deck(self, color, color_name, deck_name, aliases, commanders, description=""):
+    def add_deck(self, color, color_name, deck_name, aliases, commanders, link=""):
         decks = self.decks()
         document = {
             "name": deck_name,
             "color": utils.sort_color_str(color),
             "color_name": color_name,
-            "description": description,
+            "link": link,
             "aliases": aliases,
             "canonical_aliases": [utils.transform_deck_name(alias) for alias in aliases],
             "commanders": commanders

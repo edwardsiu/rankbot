@@ -165,7 +165,8 @@ class OwnerCog():
             color_name,
             deck_name,
             [deck_name],
-            [cmdr['name'] for cmdr in deck["commanders"]]
+            [cmdr['name'] for cmdr in deck["commanders"]],
+            deck_link
         )
         await ctx.send(embed=embed.success(description=f'**SUCCESS** - Imported {deck_name} to deck database'))
 
