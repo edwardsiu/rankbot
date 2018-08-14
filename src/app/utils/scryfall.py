@@ -11,3 +11,8 @@ def search(card_name):
         raise err.CardNotFoundError()
     else:
         return r.json()
+
+def get_image_uris(card):
+    if "card_faces" in card:
+        return card['card_faces'][0]['image_uris']
+    return card['image_uris']
