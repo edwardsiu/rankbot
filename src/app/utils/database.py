@@ -331,6 +331,12 @@ class RankDB(MongoClient):
             }
         })
 
+    def add_deck_link(self, alias, link):
+        canonical_name = utils.transform_deck_name(alias)
+        return self.decks().update_one({"canonical_aliases": canonical_name}, {
+            "$set": { "link": link }
+        })
+
     def find_one_deck_by_color(self, color):
         return self.decks().find_one({"color": utils.sort_color_str(color)})
 

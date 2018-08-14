@@ -194,6 +194,37 @@ class OwnerCog():
             await ctx.send(embed=embed.error(description='**ERROR** - No aliases added'))
         else:
             await ctx.send(embed=embed.success(description=f'**SUCCESS** - New aliases added for **{deck["name"]}**'))
+
+    @add_component.command(
+        name='link', hidden=True,
+        brief="Add a link to a deck",
+        usage="`{0}add link [deck name] [deck link]`"
+    )
+    async def _add_link(self, ctx, *args):
+        """Add or update a decklist link for a deck. Names that are multiple words must be enclosed in quotes."""
+
+        if len(args) < 2:
+            await ctx.send(embed=embed.error(description='**ERROR** - Not enough args'))
+            return
+
+        deck_name = args[0]
+        deck_link = args[1]
+        deck = self.bot.db.find_deck(deck_name)
+        if not deck:
+            await ctx.send(embed=embed.error(description='**ERROR** - Deck not found'))
+            return
+
+        try:
+            decklist = deck_utils.extract(deck_link)
+        except err.DeckNotFoundError:
+            await ctx.send(embed=embed.error(description='**ERROR** - Failed to fetch deck from the given link'))
+            return
+        except err.CardNotFoundError:
+            await ctx.send(embed=embed.error(description='**ERROR** - Failed to fetch commander from Scryfall'))
+            return
+
+        self.bot.db.add_deck_link(deck_name, deck_link)
+        await ctx.send(embed=embed.success(description=f"**SUCCESS** - Added a link for **{deck['name']}**"))
         
 
     def _load_decks(self):
@@ -207,7 +238,8 @@ class OwnerCog():
                     category["color_name"],
                     deck["name"],
                     deck["aliases"],
-                    deck["commanders"]
+                    deck["commanders"],
+                    deck["link"]
                 )
         return decks_added
 

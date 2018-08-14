@@ -117,7 +117,6 @@ class Decks():
             return
         decklist = await self._get_deck(ctx, deck['link'])
         if not decklist:
-            await ctx.send(embed=embed.error(description="Error fetching decklist"))
             return
         commanders = " & ".join([commander['name'] for commander in decklist['commanders']])
         image_uris = scryfall.get_image_uris(decklist['commanders'][0])
