@@ -292,13 +292,13 @@ class RankDB(MongoClient):
             }
         )
 
-    def add_deck(self, color, color_name, deck_name, aliases, commanders, description=""):
+    def add_deck(self, color, color_name, deck_name, aliases, commanders, link=""):
         decks = self.decks()
         document = {
             "name": deck_name,
             "color": utils.sort_color_str(color),
             "color_name": color_name,
-            "description": description,
+            "link": link,
             "aliases": aliases,
             "canonical_aliases": [utils.transform_deck_name(alias) for alias in aliases],
             "commanders": commanders
@@ -329,6 +329,12 @@ class RankDB(MongoClient):
                     "$each": new_canonical_aliases
                 }
             }
+        })
+
+    def add_deck_link(self, alias, link):
+        canonical_name = utils.transform_deck_name(alias)
+        return self.decks().update_one({"canonical_aliases": canonical_name}, {
+            "$set": { "link": link }
         })
 
     def find_one_deck_by_color(self, color):

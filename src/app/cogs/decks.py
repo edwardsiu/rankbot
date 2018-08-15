@@ -98,18 +98,31 @@ class Decks():
 
     @commands.command(
         brief="Display a decklist preview",
-        usage="`{0}preview [link to decklist]`"
+        usage="`{0}preview [deck name]`"
     )
-    async def preview(self, ctx, *, link: str=""):
+    async def preview(self, ctx, *, deck_name: str=""):
         """Show a preview of a decklist. Supported deck hosts are tappedout.net and deckstats.net."""
 
-        deck = await self._get_deck(ctx, link)
-        if not deck:
+        if not deck_name:
+            await ctx.send(embed=embed.error(description="No deck name specified."))
             return
-        commanders = " & ".join([commander['name'] for commander in deck['commanders']])
+
+        deck = self.bot.db.find_deck(deck_name)
+        if not deck:
+            await ctx.send(embed=embed.error(
+                description=f"Deck not found. Use `{ctx.prefix}decks` to see a list of decks."))
+            return
+        if not deck['link']:
+            await ctx.send(embed=embed.info(description=f"**{deck['name']}** does not have a decklist"))
+            return
+        decklist = await self._get_deck(ctx, deck['link'])
+        if not decklist:
+            return
+        commanders = " & ".join([commander['name'] for commander in decklist['commanders']])
+        image_uris = scryfall.get_image_uris(decklist['commanders'][0])
         emsg = embed.info(title=commanders) \
-                    .set_thumbnail(url=deck['commanders'][0]['image_uris']['art_crop'])
-        for category in deck['decklist']:
+                    .set_thumbnail(url=image_uris['art_crop'])
+        for category in decklist['decklist']:
             category_name = category['category']
             count = sum([card['count'] for card in category['cards']])
             cards = [f"{card['count']} {card['name']}" for card in category['cards']]
@@ -178,10 +191,7 @@ class Decks():
             match_history = "`N/A`"
         
         card = scryfall.search(deck['commanders'][0])
-        if 'image_uris' in card:
-            image_uri = card['image_uris']['small']
-        else:
-            image_uri = card['card_faces'][0]['image_uris']['small']
+        image_uris = scryfall.get_image_uris(card)
         emsg = embed.info(title=f"Deck: {deck['name']}") \
                     .add_field(name="Commanders", value=("\n".join(deck['commanders']))) \
                     .add_field(name="Aliases", value=("\n".join(deck['aliases']))) \
@@ -192,7 +202,7 @@ class Decks():
                     .add_field(name="Win %", value=match_stats['winrate']) \
                     .add_field(name="95% Confidence Interval", value=match_stats['confint']) \
                     .add_field(name="Recent Matches", value=match_history) \
-                    .set_thumbnail(url=image_uri)
+                    .set_thumbnail(url=image_uris['small'])
         await ctx.send(embed=emsg)
 
 def setup(bot):

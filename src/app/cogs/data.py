@@ -219,6 +219,9 @@ class Data():
         else:
             sorted_data = utils.sort_by_winrate(data)
             _tables = self._make_complete_deck_tables(sorted_data)
+            for _table in _tables:
+                await ctx.send(_table)
+            return
         for _table in _tables.text:
             await ctx.send(_table)
 
