@@ -120,7 +120,10 @@ class Decks():
             return
         commanders = " & ".join([commander['name'] for commander in decklist['commanders']])
         image_uris = scryfall.get_image_uris(decklist['commanders'][0])
-        emsg = embed.info(title=commanders) \
+        emsg = embed.info(
+            title=commanders,
+            description=f"[Link to Decklist]({deck['link']})"
+        ) \
                     .set_thumbnail(url=image_uris['art_crop'])
         for category in decklist['decklist']:
             category_name = category['category']
