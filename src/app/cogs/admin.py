@@ -10,7 +10,7 @@ class Admin():
     @commands.group(
         brief="Configure settings for the league",
         usage=("`{0}config`\n" \
-               "`{0}config [admin]`")
+               "`{0}config [admin|threshold]`")
     )
     @commands.guild_only()
     @commands.check(checks.is_admin)
@@ -31,8 +31,6 @@ class Admin():
         brief="Set the league admin role",
         usage="`{0}config admin @role`"
     )
-    @commands.guild_only()
-    @commands.check(checks.is_admin)
     async def set_admin(self, ctx, *, role: discord.Role):
         """Sets the league admin role to the mentioned role.
         League admins can audit, accept, and remove matches."""

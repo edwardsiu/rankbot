@@ -107,7 +107,7 @@ class RankDB(MongoClient):
             return results[:limit]
         else:
             return self.members(guild).find(
-                {"accepted": {"$gte": system.min_matches}}, 
+                {"accepted": {"$gte": player_match_threshold}}, 
                 limit=limit, sort=[(sort_key, DESCENDING)]
             )
 
