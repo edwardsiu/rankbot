@@ -27,7 +27,7 @@ class Data():
                     .add_field(name="Players", value=str(num_members)) \
                     .add_field(name="Games Played", value=str(num_accepted)) \
                     .add_field(name="Unconfirmed Games", value=str(num_pending)) \
-                    .add_field(name="Donate", inline=False, value=f"[PayPal](self.bot.config['donation_link'])")
+                    .add_field(name="Donate", inline=False, value=f"[PayPal]({self.bot._config['donation_link']})")
             #        .add_field(name="Link", value=(
             #f"https://discordapp.com/oauth2/authorize?" \
             #f"client_id={self.bot.client_id}&scope=bot&permissions=0")
