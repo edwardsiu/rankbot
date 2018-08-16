@@ -181,7 +181,6 @@ class Matches():
         columns = ["Player", "Deck", "Status"]
         rows = []
         for player in match["players"]:
-            user_id = str(player["user_id"])
             deck_name = player["deck"] if player["deck"] else "???"
             status = " ☑" if player["confirmed"] else " ☐"
             rows.append([player["name"], deck_name, status])

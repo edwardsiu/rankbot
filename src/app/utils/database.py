@@ -172,6 +172,9 @@ class RankDB(MongoClient):
         return self.find_matches(
             {"players.user_id": user_id}, guild, limit)
 
+    def update_match(self, query, modifier, guild):
+        return self.matches(guild).update_one(query, modifier)
+
     def count_matches(self, query, guild):
         return self.matches(guild).count(query)
 
@@ -186,7 +189,7 @@ class RankDB(MongoClient):
     def confirm_match_for_user(self, game_id, user_id, deck_name, guild):
         match = self.find_match(game_id, guild)
         if user_id == match["winner"]:
-            self.matches(guild).update_one(
+            return self.matches(guild).update_one(
                 {"game_id": game_id, "players.user_id": user_id},
                 {
                     "$set": {
@@ -197,7 +200,7 @@ class RankDB(MongoClient):
                 }
             )
         else:
-            self.matches(guild).update_one(
+            return self.matches(guild).update_one(
                 {"game_id": game_id, "players.user_id": user_id},
                 {
                     "$set": {
@@ -234,7 +237,6 @@ class RankDB(MongoClient):
 
     def check_match_status(self, game_id, guild):
         match = self.find_match(game_id, guild)
-        players = match["players"]
         if match["status"] == stc.ACCEPTED:
             return False
         if self._find_unconfirmed_player(match["players"]):

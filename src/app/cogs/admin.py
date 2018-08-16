@@ -31,7 +31,7 @@ class Admin():
         brief="Set the league admin role",
         usage="`{0}config admin @role`"
     )
-    async def set_admin(self, ctx, *, role: discord.Role):
+    async def _config_admin(self, ctx, *, role: discord.Role):
         """Sets the league admin role to the mentioned role.
         League admins can audit, accept, and remove matches."""
 
@@ -43,7 +43,7 @@ class Admin():
         brief="Set player or deck leaderboard match threshold",
         usage="`{0}config threshold [player|deck] [value]`"
     )
-    async def set_threshold(self, ctx, *args):
+    async def _config_threshold(self, ctx, *args):
         """Set the player or deck threshold to appear on the leaderboard."""
 
         if len(args) < 2:
@@ -62,6 +62,39 @@ class Admin():
             await ctx.send(embed=embed.error(description="Unrecognized threshold type."))
             return
         await ctx.send(embed=embed.success(description=f"**SUCCESS** - {thresh_t.upper()} threshold set to {value}"))
+
+    @commands.command(
+        name="user-deck",
+        brief="Set a deck for a player of a match",
+        usage="`{0}user-deck [game id] @user [deck name]`"
+    )
+    async def _set_user_deck(self, ctx, *args):
+        """Update a match by setting a user's deck to the specified deck name."""
+
+        if len(args) < 3:
+            await ctx.send(embed=embed.error(description=f"Not enough args. See `{ctx.prefix}help user-deck`."))
+            return
+
+        game_id = args[0]
+        deck_name = args[2]
+        if not ctx.message.mentions:
+            await ctx.send(embed=embed.error(description=f"Please include the player to adjust."))
+            return
+        user = ctx.message.mentions[0]
+        deck = self.bot.db.find_deck(deck_name)
+        if not deck:
+            await ctx.send(embed=embed.error(
+                description=f"Deck name not recognized. See `{ctx.prefix}decks` for a list of all decks."))
+            return
+        if not self.bot.db.confirm_match_for_user(game_id, user.id, deck['name'], ctx.message.guild):
+            await ctx.send(embed=embed.error(
+                description=f"No match found for that game id with the given user as a participant."
+            ))
+        else:
+            await ctx.send(embed=embed.success(
+                title=f"Game id: {game_id}",
+                description=f"Set deck to **{deck['name']}** for **{user.name}**"
+            ))
 
 
     @commands.command(
