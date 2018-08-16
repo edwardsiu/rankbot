@@ -200,11 +200,11 @@ To see the list of matches as well, add `list` to the command call."""
             {"players.user_id": {"$all": [user.id for user in mentions]}},
             ctx.message.guild
         )
-        if not matches:
-            await ctx.send(embed=embed.info(description="No matches found containing all mentioned players"))
-            return
         matches = list(matches)
         total = len(matches)
+        if not total:
+            await ctx.send(embed=embed.info(description="No matches found containing all mentioned players"))
+            return
         data = {user.name: 0 for user in mentions}
         user_ids = [user.id for user in mentions]
         for match in matches:
