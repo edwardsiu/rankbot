@@ -55,7 +55,7 @@ class Members():
 
     def _add_last_played_deck_field(self, emsg, player):
         if "deck" in player and player["deck"]:
-            emsg.add_field(name="Last Played Deck", value=player["deck"])
+            emsg.add_field(name="Current Deck", value=player["deck"])
 
 
     def _get_profile_card(self, user, guild):
