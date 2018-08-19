@@ -228,7 +228,7 @@ class Data():
 
 
     def _make_match_table(self, title, matches, winner_type="player"):
-        header = f"`{'DATE':10} {'WINNER':16} {'ID':4}`\n"
+        header = f"Showing winning **{winner_type}**\n"
         divider = "`" + "-"*32 + "`\n"
         rows = []
         max_name_len = 16
@@ -244,11 +244,11 @@ class Data():
                 if len(winner) > max_name_len:
                     winner = winner[:(max_name_len-3)] + "..."
             game_id = f"[{match['game_id']}]({match['replay_link']})" if match['replay_link'] else match['game_id']
-            rows.append(f"`{date} {winner} `{game_id}")
+            rows.append(f"`{date} `{game_id}` {winner}`")
         emsgs = [
             embed.info(title=title, description=(
                 header + divider + "\n".join(rows[i:(i+20)])
-            )) for i in range(len(rows))
+            )) for i in range(0, len(rows), 20)
         ]
         return emsgs
 

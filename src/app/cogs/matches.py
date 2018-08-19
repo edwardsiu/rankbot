@@ -178,15 +178,15 @@ class Matches():
 
 
     def _make_game_table(self, ctx, match):
-        headers = ["PLAYER", "DECK", "STATUS"]
+        headers = ["PLAYER", "DECK", " "]
         rows = [
             [
                 player['name'],
                 utils.shorten_deck_name(ctx, player["deck"], maxlen=16) if player["deck"] else "N/A",
-                " ☑" if player["confirmed"] else " ☐"
+                "☑" if player["confirmed"] else "☐"
             ] for player in match['players']
         ]
-        _line_table = line_table.BlockTable(rows, headers=headers)
+        _line_table = line_table.BlockTable(rows, headers=headers, width=40)
         return _line_table.text[0]
 
 
