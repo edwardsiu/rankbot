@@ -13,8 +13,10 @@ def success(**kwargs):
     emsg = discord.Embed(color=C_SUCCESS, **kwargs)
     return emsg
 
-def error(**kwargs):
+def error(ctx=None, **kwargs):
     emsg = discord.Embed(color=C_ERR, **kwargs)
+    if ctx:
+        emsg.set_footer(text=f"Type {ctx.prefix}help {ctx.command.qualified_name} for usage info")
     return emsg
 
 def match_delta(game_id, delta):

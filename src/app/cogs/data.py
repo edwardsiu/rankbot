@@ -227,5 +227,103 @@ class Data():
             await ctx.send(_table)
 
 
+    def _make_match_table(self, title, matches, winner_type="player"):
+        header = f"`{'DATE':10} {'WINNER':16} {'ID':4}`\n"
+        divider = "`" + "-"*32 + "`\n"
+        rows = []
+        for match in matches:
+            date = utils.date_from_timestamp(match['timestamp'])
+            if winner_type == "deck":
+                deck_name = match['winning_deck'] if match['winning_deck'] else "N/A"
+                if len(deck_name) > 16:
+                    deck_name = self.bot.db.get_deck_short_name(deck_name)
+                winner = deck_name
+            else:
+                winner = next((i['name'] for i in match['players'] if i['user_id'] == match['winner']), "N/A")
+                if len(winner) > 16:
+                    winner = winner[:13] + "..."
+            game_id = f"[{match['game_id']}]({match['replay_link']})" if match['replay_link'] else match['game_id']
+            rows.append(f"`{date} {winner} `{game_id}")
+        emsgs = [
+            embed.info(title=title, description=(
+                header + divider + "\n".join(rows[i:(i+20)])
+            )) for i in range(len(rows))
+        ]
+        return emsgs
+
+    
+    @commands.group(
+        brief="Find a filtered list of games",
+        usage=("`{0}games [decks|players]`")
+    )
+    @commands.guild_only()
+    async def games(self, ctx):
+        """Displays a list of filtered games. If no filter type is included, the most recent 10 games will be displayed. If filtered by decks, include a comma-separated list of decks that the games should contain. If filtered by players, mention all players that the games should contain."""
+
+        if ctx.invoked_subcommand is None:
+            matches = self.bot.db.find_matches({}, ctx.message.guild, limit=10)
+            emsgs = self._make_match_table('Recent Games', matches, winner_type="player")
+            for emsg in emsgs:
+                await ctx.send(embed=emsg)
+            return
+
+
+    @games.command(
+        name="decks",
+        brief="Find a filtered list of games by decks",
+        usage="`{0}games decks [deck 1], [deck 2], ...`"
+    )
+    async def _games_by_decks(self, ctx, *, deck_names: str=""):
+        """Displays a list of games filtered by decks. Include a comma-separated list of decks to filter by."""
+
+        if not deck_names:
+            await ctx.send(embed=embed.error(ctx, description="No deck name included"))
+            return
+        deck_name_list = deck_names.split(',')
+        if len(deck_name_list) > 4:
+            await ctx.send(embed=embed.error(ctx, description="Games cannot contain more than 4 decks"))
+            return
+
+        deck_names = []
+        for deck_name in deck_name_list:
+            deck = self.bot.db.find_deck(deck_name)
+            if not deck:
+                continue
+            deck_names.append(deck['name'])
+
+        if not deck_names:
+            await ctx.send(embed=embed.error(ctx, description="No decks found with the given deck names"))
+            return
+        matches = self.bot.db.find_matches({"players.deck": {"$all": deck_names}}, ctx.message.guild, limit=60)
+        title = "Games Containing: " + ", ".join(deck_names)
+        emsgs = self._make_match_table(title, matches, winner_type="deck")
+        for emsg in emsgs:
+            await ctx.send(embed=emsg)
+        
+
+    @games.command(
+        name="players",
+        brief="Find a filtered list of games by players",
+        usage="`{0}games players @player1 @player2 ...`"
+    )
+    async def _games_by_players(self, ctx, *args):
+        """Displays a list of games filtered by players. Mention all players to filter by. If no players are mentioned, filter by games containing the sender."""
+
+        mentions = ctx.message.mentions
+        if len(mentions) > 4:
+            await ctx.send(embed=embed.error(description="Too many players mentioned"))
+            return
+        if len(mentions) == 0:
+            mentions.append(ctx.message.author)
+        matches = self.bot.db.find_matches(
+            {"players.user_id": {"$all": [user.id for user in mentions]}},
+            ctx.message.guild
+        )
+        matches = list(matches)
+        title = "Games Containing: " + ", ".join([mention.name for mention in mentions])
+        emsgs = self._make_match_table(title, matches, winner_type="player")
+        for emsg in emsgs:
+            await ctx.send(embed=emsg)
+
 def setup(bot):
     bot.add_cog(Data(bot))

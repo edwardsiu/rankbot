@@ -1,3 +1,4 @@
+from datetime import datetime
 import re
 import statsmodels.stats.proportion as stats
 
@@ -131,4 +132,7 @@ def confint_95_diff(success, samples):
 
     proportion = success/samples
     return confint_95(success, samples)[1] - proportion
+
+def date_from_timestamp(timestamp):
+    return datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d")
 

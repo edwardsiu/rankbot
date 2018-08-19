@@ -216,6 +216,9 @@ class Matches():
                     .add_field(name="Date (UTC)", value=date.strftime("%Y-%m-%d")) \
                     .add_field(name="Winner", value=winner["name"]) \
                     .add_field(name="Status", value=status_symbol)
+
+        if match['replay_link']:
+            emsg.add_field(name="Replay", value=match['replay_link'])
         
         emsg.description = self._make_game_table(match)
         await ctx.send(embed=emsg)

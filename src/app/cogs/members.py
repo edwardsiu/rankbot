@@ -166,16 +166,13 @@ class Members():
     @commands.command(
         brief="Show your match history against another player",
         usage=("`{0}compare @player`\n" \
-               "`{0}compare @player1 @player2`\n" \
-               "`{0}compare list @player`"
+               "`{0}compare @player1 @player2`"
         )
     )
     @commands.guild_only()
     @commands.check(checks.is_registered)
     async def compare(self, ctx, *args):
-        """Show player performances in pods containing only the mentioned players. If only one player is mentioned, then the default is to compare that player with the caller of the command. 
-
-To see the list of matches as well, add `list` to the command call."""
+        """Show player performances in pods containing only the mentioned players. If only one player is mentioned, then the default is to compare that player with the caller of the command."""
 
         mentions = ctx.message.mentions
         if len(mentions) < 1:
@@ -189,13 +186,6 @@ To see the list of matches as well, add `list` to the command call."""
         if len(mentions) > 4:
             await ctx.send(embed=embed.error(description="Too many players mentioned"))
             return
-        registered = self.bot.db.find_members(
-            {"user_id": {"$in": [user.id for user in mentions]}},
-            ctx.message.guild
-        )
-        if len(list(registered)) < len(mentions):
-            await ctx.send(embed=embed.error(description="All players must be registered"))
-            return
         matches = self.bot.db.find_matches(
             {"players.user_id": {"$all": [user.id for user in mentions]}},
             ctx.message.guild
@@ -206,7 +196,6 @@ To see the list of matches as well, add `list` to the command call."""
             await ctx.send(embed=embed.info(description="No matches found containing all mentioned players"))
             return
         data = {user.name: 0 for user in mentions}
-        user_ids = [user.id for user in mentions]
         for match in matches:
             winner = next((user.name for user in mentions if user.id == match['winner']), None)
             if not winner:
@@ -214,7 +203,7 @@ To see the list of matches as well, add `list` to the command call."""
             if winner in data:
                 data[winner] += 1
         players = ", ".join(data.keys())
-        emsg = embed.info(title=f"Matches Containing: {players}")
+        emsg = embed.info(title=f"Games Containing: {players}")
         emsg.add_field(name="Total Matches", inline=False, value=str(total))
         for user_name in data:
             wins = data[user_name]
@@ -222,17 +211,7 @@ To see the list of matches as well, add `list` to the command call."""
             percent = wins/total
             emsg.add_field(name=user_name, inline=False, value=f"{wins}-{losses}, {percent:.1%}")
         await ctx.send(embed=emsg)
-    
-        if "list" in args:
-            headers = ["ID", "WINNER"]
-            rows = [
-                [match['game_id'], 
-                next((user['name'] for user in match['players'] if user['user_id'] == match['winner']), "N/A")] for match in matches
-            ]
-            _tables = line_table.LineTable(
-                rows=rows, headers=headers, separator="  ")
-            for _table in _tables.text:
-                await ctx.send(_table)
+
 
 def setup(bot):
     bot.add_cog(Members(bot))
