@@ -231,17 +231,18 @@ class Data():
         header = f"`{'DATE':10} {'WINNER':16} {'ID':4}`\n"
         divider = "`" + "-"*32 + "`\n"
         rows = []
+        max_name_len = 16
         for match in matches:
             date = utils.date_from_timestamp(match['timestamp'])
             if winner_type == "deck":
                 deck_name = match['winning_deck'] if match['winning_deck'] else "N/A"
-                if len(deck_name) > 16:
+                if len(deck_name) > max_name_len:
                     deck_name = self.bot.db.get_deck_short_name(deck_name)
                 winner = deck_name
             else:
-                winner = next((i['name'] for i in match['players'] if i['user_id'] == match['winner']), "N/A")
-                if len(winner) > 16:
-                    winner = winner[:13] + "..."
+                winner = utils.get_winner_name(match)
+                if len(winner) > max_name_len:
+                    winner = winner[:(max_name_len-3)] + "..."
             game_id = f"[{match['game_id']}]({match['replay_link']})" if match['replay_link'] else match['game_id']
             rows.append(f"`{date} {winner} `{game_id}")
         emsgs = [
@@ -317,7 +318,8 @@ class Data():
             mentions.append(ctx.message.author)
         matches = self.bot.db.find_matches(
             {"players.user_id": {"$all": [user.id for user in mentions]}},
-            ctx.message.guild
+            ctx.message.guild,
+            limit=60
         )
         matches = list(matches)
         title = "Games Containing: " + ", ".join([mention.name for mention in mentions])

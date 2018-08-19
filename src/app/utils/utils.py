@@ -136,3 +136,28 @@ def confint_95_diff(success, samples):
 def date_from_timestamp(timestamp):
     return datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d")
 
+def short_date_from_timestamp(timestamp):
+    return datetime.fromtimestamp(timestamp).strftime("%m/%d")
+
+def get_winner_name(match):
+    return next((i['name'] for i in match['players'] if i['user_id'] == match['winner']),"N/A")
+
+def get_player_deck(user_id, match):
+    return next((i['deck'] for i in match['players'] if i['user_id'] == user_id), "N/A")
+
+def shorten_deck_name(ctx, name, maxlen=16):
+    if len(name) <= maxlen:
+        return name
+    shortened = ctx.bot.db.get_deck_short_name(name)
+    if len(shortened) <= maxlen:
+        return shortened
+    return shortened[:(maxlen-3)] + "..."
+
+def shorten_player_name(name, maxlen=16):
+    if len(name) <= maxlen:
+        return name
+    tokens = name.split()
+    if len(tokens[0]) <= maxlen:
+        return tokens[0]
+    return tokens[0][:(maxlen-3)] + "..."
+

@@ -123,20 +123,18 @@ class Members():
 
     def _make_match_tables(self, user, matches):
         title = "{}'s Match History".format(user.name)
-        columns = ["Date (UTC)", "Game Id", "Deck", "Result"]
+        headers = ["DATE", "ID", "DECK", "RESULT"]
+        max_name_len = 16
         rows = []
         for match in matches:
-            date = datetime.fromtimestamp(match["timestamp"]).strftime("%Y-%m-%d")
-            player = next((i for i in match["players"] if i["user_id"] == user.id), None)
-            deck_name = player["deck"] if player["deck"] else "Unknown"
-            result = "WIN" if match["winner"] == user.id else "LOSE"
-            row = [date, match["game_id"], deck_name, result]
-            rows.append(row)
-        _tables = []
-        table_height = 10
-        for i in range(0, len(rows), table_height):
-            _tables.append(table.Table(title, columns, rows[i:i+table_height]))
-        return _tables
+            date = utils.short_date_from_timestamp(match['timestamp'])
+            deck_name = utils.get_player_deck(user.id, match)
+            if len(deck_name) > max_name_len:
+                deck_name = self.bot.db.get_deck_short_name(deck_name)
+            result = "WIN" if match['winner'] == user.id else "LOSE"
+            rows.append([date, match['game_id'], deck_name, result])
+        _line_table = line_table.LineTable(rows, title=title, headers=headers)
+        return _line_table
 
     @commands.command(
         brief="Show your recent matches",
@@ -158,9 +156,9 @@ class Members():
             if not matches:
                 await ctx.send(embed=embed.info(description=f"No matches found for **{user.name}**"))
                 continue
-            _tables = self._make_match_tables(user, matches)
-            for _table in _tables:
-                await ctx.send(str(_table))
+            _line_table = self._make_match_tables(user, matches)
+            for _table in _line_table.text:
+                await ctx.send(_table)
     
 
     @commands.command(
