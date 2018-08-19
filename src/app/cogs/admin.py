@@ -152,6 +152,7 @@ class Admin():
 
 
     @commands.command(
+        name="link",
         brief="Add a replay link to a game",
         usage="`{0}link [game id] [replay link]`"
     )
