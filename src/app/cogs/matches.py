@@ -1,7 +1,7 @@
 import asyncio
 from datetime import datetime
 from discord.ext import commands
-from app.utils import checks, embed, table
+from app.utils import checks, embed, line_table, table, utils
 from app.constants import emojis
 from app.constants import status_codes as stc
 
@@ -177,15 +177,17 @@ class Matches():
             )
 
 
-    def _make_game_table(self, match):
-        columns = ["Player", "Deck", "Status"]
-        rows = []
-        for player in match["players"]:
-            deck_name = player["deck"] if player["deck"] else "???"
-            status = " ☑" if player["confirmed"] else " ☐"
-            rows.append([player["name"], deck_name, status])
-        _table = table.Table(columns=columns, rows=rows, max_width=45)
-        return str(_table)
+    def _make_game_table(self, ctx, match):
+        headers = ["PLAYER", "DECK", "STATUS"]
+        rows = [
+            [
+                utils.shorten_player_name(player['name'], maxlen=14),
+                utils.shorten_deck_name(ctx, player["deck"], maxlen=14) if player["deck"] else "N/A",
+                "☑" if player["confirmed"] else "☐"
+            ] for player in match
+        ]
+        _line_table = line_table.LineTable(rows, headers=headers)
+        return _line_table.text[0]
 
 
     @commands.command(
@@ -220,7 +222,7 @@ class Matches():
         if match['replay_link']:
             emsg.add_field(name="Replay", value=match['replay_link'])
         
-        emsg.description = self._make_game_table(match)
+        emsg.description = self._make_game_table(ctx, match)
         await ctx.send(embed=emsg)
 
     async def _find_user(self, user_id):
