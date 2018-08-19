@@ -150,7 +150,8 @@ class RankDB(MongoClient):
                     "confirmed": False
                 } for user in users
             ],
-            "timestamp": time.time()
+            "timestamp": time.time(),
+            "replay_links": ""
         }
         self.matches(ctx.message.guild).insert_one(pending_record)
         self.push_pending_match(game_id, [user.id for user in users], ctx.message.guild)

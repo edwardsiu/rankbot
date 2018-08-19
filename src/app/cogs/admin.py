@@ -149,6 +149,31 @@ class Admin():
 
         self.bot.db.delete_match(game_id, ctx.message.guild)
         await ctx.send(embed=embed.msg(description=f"`{game_id}` has been removed"))
+
+
+    @commands.command(
+        brief="Add a replay link to a game",
+        usage="`{0}link [game id] [replay link]`"
+    )
+    @commands.guild_only()
+    @commands.check(checks.is_admin)
+    async def _link(self, ctx, *args):
+        """Add a replay link to a game. Links can later be discovered and filtered with the `replay` command."""
+
+        if len(args) < 2:
+            await ctx.send(embed=embed.error(description="Not enough args. Please include a game id and a replay link."))
+            return
+
+        game_id = args[0]
+        replay_link = args[1]
+
+        if not self.bot.db.update_match(
+            {"game_id": game_id},
+            {"$set": {"replay_link": replay_link}},
+            ctx.message.guild):
+            await ctx.send(embed=embed.error(description=f"**{game_id}** not found"))
+        else:
+            await ctx.send(embed=embed.success(description=f"Replay link updated for **{game_id}**"))
     
 
 def setup(bot):
