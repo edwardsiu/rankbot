@@ -181,12 +181,12 @@ class Matches():
         headers = ["PLAYER", "DECK", "STATUS"]
         rows = [
             [
-                utils.shorten_player_name(player['name'], maxlen=14),
-                utils.shorten_deck_name(ctx, player["deck"], maxlen=14) if player["deck"] else "N/A",
-                "☑" if player["confirmed"] else "☐"
+                player['name'],
+                utils.shorten_deck_name(ctx, player["deck"], maxlen=16) if player["deck"] else "N/A",
+                " ☑" if player["confirmed"] else " ☐"
             ] for player in match['players']
         ]
-        _line_table = line_table.LineTable(rows, headers=headers)
+        _line_table = line_table.BlockTable(rows, headers=headers)
         return _line_table.text[0]
 
 

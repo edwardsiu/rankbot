@@ -57,3 +57,31 @@ class LineTable():
                 _table = f"**{self.title}**\n{_table}"
             _tables.append(_table)
         return _tables
+
+class BlockTable(LineTable):
+    def generate(self):
+        column_widths = self._calculate_widths()
+        str_rows = []
+        columns = len(column_widths)
+        for row in self.rows:
+            # truncate any cells that are too long
+            for i in range(columns):
+                if len(row[i]) > column_widths[i]:
+                    row[i] = self._truncate_cell(row[i], column_widths[i])
+            str_rows.append(self.separator.join([f"{row[i]}".ljust(column_widths[i]) for i in range(columns)]))
+        if self.headers:
+            hrow = self.separator.join([f"{self.headers[i]}".ljust(column_widths[i]) for i in range(columns)])
+        rows_per_table = int(2000/(self.max_width))
+        _tables = []
+        divider = "-"*len(str_rows[0])
+        for i in range(0, len(self.rows), rows_per_table):
+            start = i
+            end = i + rows_per_table - 3 # subtract 3 rows for title, header, and divider
+            _table = "\n".join([f"{row}" for row in str_rows[start:end]])
+            if self.headers:
+                _table = f"{hrow}\n{_table}"
+            _table = f"{divider}\n{_table}"
+            if self.title:
+                _table = f"**{self.title}**\n{_table}"
+            _tables.append(f"```{_table}```")
+        return _tables
