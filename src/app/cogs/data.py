@@ -294,6 +294,10 @@ class Data():
             await ctx.send(embed=embed.error(ctx, description="No decks found with the given deck names"))
             return
         matches = self.bot.db.find_matches({"players.deck": {"$all": deck_names}}, ctx.message.guild, limit=20)
+        matches = list(matches)
+        if not matches:
+            await ctx.send(embed=embed.info(description=("No matches found containing " + ", ".join(deck_names))))
+            return
         title = "Games Containing: " + ", ".join(deck_names)
         emsgs = self._make_match_table(title, matches, winner_type="deck")
         for emsg in emsgs:
@@ -320,6 +324,9 @@ class Data():
             limit=20
         )
         matches = list(matches)
+        if not matches:
+            await ctx.send(embed=embed.info(description=("No matches found containing " + ", ".join([user.name for user in mentions]))))
+            return
         title = "Games Containing: " + ", ".join([mention.name for mention in mentions])
         emsgs = self._make_match_table(title, matches, winner_type="player")
         for emsg in emsgs:
