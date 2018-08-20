@@ -228,12 +228,11 @@ class Data():
 
 
     def _make_match_table(self, title, matches, winner_type="player"):
-        header = f"Showing winning **{winner_type}**\n"
-        divider = "`" + "-"*32 + "`\n"
+        header = f"`{'DATE':5} {'ID':4} {'WINNER':16} REPLAY`\n"
         rows = []
         max_name_len = 16
         for match in matches:
-            date = utils.date_from_timestamp(match['timestamp'])
+            date = utils.short_date_from_timestamp(match['timestamp'])
             if winner_type == "deck":
                 deck_name = match['winning_deck'] if match['winning_deck'] else "N/A"
                 if len(deck_name) > max_name_len:
@@ -241,16 +240,13 @@ class Data():
                 winner = deck_name
             else:
                 winner = utils.get_winner_name(match)
-                if len(winner) > max_name_len:
-                    winner = winner[:(max_name_len-3)] + "..."
-            game_id = f"[{match['game_id']}]({match['replay_link']})" if match['replay_link'] else match['game_id']
-            rows.append(f"`{date} `{game_id}` {winner}`")
-        emsgs = [
-            embed.info(title=title, description=(
-                header + divider + "\n".join(rows[i:(i+20)])
-            )) for i in range(0, len(rows), 20)
-        ]
-        return emsgs
+                winner = utils.shorten_player_name(winner)
+            replay_link = f"[Link]({match['replay_link']})" if match['replay_link'] else "N/A"
+            rows.append(f"`{date} {match['game_id']} {winner:16}` {replay_link}")
+        _tables = []
+        for i in range(0, len(rows), 20):
+            _tables.append(f"**{title}**\n" + f"`{'-'*34}`\n" + "\n".join(rows[i:(i+20)]))
+        return _tables
 
     
     @commands.group(
@@ -263,9 +259,9 @@ class Data():
 
         if ctx.invoked_subcommand is None:
             matches = self.bot.db.find_matches({}, ctx.message.guild, limit=10)
-            emsgs = self._make_match_table('Recent Games', matches, winner_type="player")
-            for emsg in emsgs:
-                await ctx.send(embed=emsg)
+            _tables = self._make_match_table('Recent Games', matches, winner_type="player")
+            for _table in _tables:
+                await ctx.send(_table)
             return
 
 
@@ -297,9 +293,9 @@ class Data():
             return
         matches = self.bot.db.find_matches({"players.deck": {"$all": deck_names}}, ctx.message.guild, limit=60)
         title = "Games Containing: " + ", ".join(deck_names)
-        emsgs = self._make_match_table(title, matches, winner_type="deck")
-        for emsg in emsgs:
-            await ctx.send(embed=emsg)
+        _tables = self._make_match_table(title, matches, winner_type="deck")
+        for _table in _tables:
+                await ctx.send(_table)
         
 
     @games.command(
@@ -323,9 +319,9 @@ class Data():
         )
         matches = list(matches)
         title = "Games Containing: " + ", ".join([mention.name for mention in mentions])
-        emsgs = self._make_match_table(title, matches, winner_type="player")
-        for emsg in emsgs:
-            await ctx.send(embed=emsg)
+        _tables = self._make_match_table(title, matches, winner_type="player")
+        for _table in _tables:
+                await ctx.send(_table)
 
 def setup(bot):
     bot.add_cog(Data(bot))
