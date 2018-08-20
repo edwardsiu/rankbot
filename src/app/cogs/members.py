@@ -124,7 +124,7 @@ class Members():
     def _make_match_tables(self, ctx, user, matches):
         title = "{}'s Match History".format(user.name)
         headers = ["DATE", "ID", "DECK", "RESULT"]
-        max_name_len = 16
+        max_name_len = 15
         rows = []
         for match in matches:
             date = utils.short_date_from_timestamp(match['timestamp'])
