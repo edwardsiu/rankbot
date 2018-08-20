@@ -121,7 +121,7 @@ class Members():
         await ctx.send(embed=emsg)
 
 
-    def _make_match_tables(self, user, matches):
+    def _make_match_tables(self, ctx, user, matches):
         title = "{}'s Match History".format(user.name)
         headers = ["DATE", "ID", "DECK", "RESULT"]
         max_name_len = 16
@@ -129,8 +129,7 @@ class Members():
         for match in matches:
             date = utils.short_date_from_timestamp(match['timestamp'])
             deck_name = utils.get_player_deck(user.id, match)
-            if len(deck_name) > max_name_len:
-                deck_name = self.bot.db.get_deck_short_name(deck_name)
+            deck_name = utils.shorten_deck_name(ctx, deck_name, maxlen=max_name_len)
             result = "WIN" if match['winner'] == user.id else "LOSE"
             rows.append([date, match['game_id'], deck_name, result])
         _line_table = line_table.LineTable(rows, title=title, headers=headers)
@@ -156,7 +155,7 @@ class Members():
             if not matches:
                 await ctx.send(embed=embed.info(description=f"No matches found for **{user.name}**"))
                 continue
-            _line_table = self._make_match_tables(user, matches)
+            _line_table = self._make_match_tables(ctx, user, matches)
             for _table in _line_table.text:
                 await ctx.send(_table)
     
