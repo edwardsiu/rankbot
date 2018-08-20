@@ -241,7 +241,7 @@ class Data():
             else:
                 winner = utils.get_winner_name(match)
                 winner = utils.shorten_player_name(winner)
-            replay_link = f"[Link]({match['replay_link']})" if match['replay_link'] else "`N/A`"
+            replay_link = f"[Link]({match['replay_link']})" if match['replay_link'] else "`??????`"
             rows.append(f"`{date} {match['game_id']}` {replay_link} `{winner}`")
         emsgs = []
         for i in range(0, len(rows), 20):
