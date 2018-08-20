@@ -228,7 +228,7 @@ class Data():
 
 
     def _make_match_table(self, title, matches, winner_type="player"):
-        header = f"`{'DATE':5} {'ID':4} {'WINNER':16} | REPLAY`\n"
+        header = f"`{'DATE':5} {'ID':4} REPLAY WINNER`\n"
         rows = []
         max_name_len = 16
         for match in matches:
@@ -242,7 +242,7 @@ class Data():
                 winner = utils.get_winner_name(match)
                 winner = utils.shorten_player_name(winner)
             replay_link = f"[Link]({match['replay_link']})" if match['replay_link'] else "`N/A`"
-            rows.append(f"`{date} {match['game_id']} {winner:16} |` {replay_link}")
+            rows.append(f"`{date} {match['game_id']}` {replay_link} `{winner}`")
         emsgs = []
         for i in range(0, len(rows), 20):
             emsgs.append(
