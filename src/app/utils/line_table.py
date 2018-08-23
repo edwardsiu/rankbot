@@ -8,6 +8,7 @@ class LineTable():
         self.rows = rows
         self.width = width - len(separator)*(len(rows[0])-1)
         self.max_width = width
+        self.rows_per_table = 20
         self.separator = separator
         self.text = self.generate()
 
@@ -43,12 +44,11 @@ class LineTable():
             str_rows.append(self.separator.join([f"{row[i]}".ljust(column_widths[i]) for i in range(columns)]))
         if self.headers:
             hrow = self.separator.join([f"{self.headers[i]}".ljust(column_widths[i]) for i in range(columns)])
-        rows_per_table = int(2000/(self.max_width))
         _tables = []
         divider = "-"*len(str_rows[0])
         for i in range(0, len(self.rows), rows_per_table):
             start = i
-            end = i + rows_per_table - 3 # subtract 3 rows for title, header, and divider
+            end = i + self.rows_per_table
             _table = "\n".join([f"`{row}`" for row in str_rows[start:end]])
             if self.headers:
                 _table = f"`{hrow}`\n{_table}"
@@ -71,12 +71,11 @@ class BlockTable(LineTable):
             str_rows.append(self.separator.join([f"{row[i]}".ljust(column_widths[i]) for i in range(columns)]))
         if self.headers:
             hrow = self.separator.join([f"{self.headers[i]}".ljust(column_widths[i]) for i in range(columns)])
-        rows_per_table = int(2000/(self.max_width))
         _tables = []
         divider = "-"*len(str_rows[0])
         for i in range(0, len(self.rows), rows_per_table):
             start = i
-            end = i + rows_per_table - 3 # subtract 3 rows for title, header, and divider
+            end = i + self.rows_per_table
             _table = "\n".join([f"{row}" for row in str_rows[start:end]])
             if self.headers:
                 _table = f"{hrow}\n{_table}"
