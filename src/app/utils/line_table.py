@@ -46,7 +46,7 @@ class LineTable():
             hrow = self.separator.join([f"{self.headers[i]}".ljust(column_widths[i]) for i in range(columns)])
         _tables = []
         divider = "-"*len(str_rows[0])
-        for i in range(0, len(self.rows), rows_per_table):
+        for i in range(0, len(self.rows), self.rows_per_table):
             start = i
             end = i + self.rows_per_table
             _table = "\n".join([f"`{row}`" for row in str_rows[start:end]])
@@ -73,7 +73,7 @@ class BlockTable(LineTable):
             hrow = self.separator.join([f"{self.headers[i]}".ljust(column_widths[i]) for i in range(columns)])
         _tables = []
         divider = "-"*len(str_rows[0])
-        for i in range(0, len(self.rows), rows_per_table):
+        for i in range(0, len(self.rows), self.rows_per_table):
             start = i
             end = i + self.rows_per_table
             _table = "\n".join([f"{row}" for row in str_rows[start:end]])
