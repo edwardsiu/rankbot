@@ -14,6 +14,18 @@ class OwnerCog():
     
     # Hidden means it won't show up on the default help.
     @commands.command(
+        name='whoami', hidden=True,
+        brief="Get the bot invite link",
+        usage="`{0}whoami`"
+    )
+    @commands.is_owner()
+    async def _whoami(self, ctx):
+        """Return the bot invite link."""
+
+        await ctx.message.author.send(f"https://discordapp.com/oauth2/authorize?" \
+            f"client_id={self.bot._config['client_id']}&scope=bot&permissions=0")
+
+    @commands.command(
         name='load', hidden=True,
         brief="Load a command module",
         usage="`{0}load [cog name]`"
