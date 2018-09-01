@@ -68,6 +68,11 @@ class RankDB(MongoClient):
         self.members(guild).create_index("user_id")
         self.matches(guild).create_index("game_id")
         self.matches(guild).create_index("status")
+        self.config(guild).insert_one({
+            "admin": "",
+            "player_match_threshold": 10,
+            "deck_match_threshold": 10
+        })
 
 
     # Member methods
