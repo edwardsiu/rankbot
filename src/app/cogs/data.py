@@ -170,7 +170,7 @@ class Data():
         height = 10
         _tables = [
             str(table.Table(title="Deck Stats", columns=headings, rows=rows[i:i+height]))
-            for i in range(0, len(rows)-1, height)
+            for i in range(0, len(rows), height)
         ]
         return _tables
 
@@ -188,7 +188,7 @@ class Data():
         height = 10
         _tables = [
             str(table.Table(title=f"{user.name}'s Deck Stats", columns=headings, rows=rows[i:i+height]))
-            for i in range(0, len(rows)-1, height)
+            for i in range(0, len(rows), height)
         ]
         return _tables
         
