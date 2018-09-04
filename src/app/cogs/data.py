@@ -173,12 +173,30 @@ class Data():
             for i in range(0, len(rows)-1, height)
         ]
         return _tables
+
+    def _make_full_player_deck_tables(self, data, user):
+        headings = ["Name", "Wins", "Losses", "Win %"]
+        rows = [
+            [
+                str(deck['name']),
+                str(deck['wins']),
+                str(deck['losses']),
+                f"{100&deck['winrate']:.3g}%"
+            ] for deck in data
+        ]
+        height = 10
+        _tables = [
+            str(table.Table(title=f"**{user.name}'s** Deck Stats", columns=headings, rows=rows[i:i+height]))
+            for i in range(0, len(rows)-1, height)
+        ]
+        return _tables
         
 
     @commands.command(
         brief="Display records of tracked decks",
         usage=("`{0}deckstats`\n" \
-               "`{0}deckstats [meta|winrate|popularity|all]`"
+               "`{0}deckstats [meta|winrate|popularity|all]`\n" \
+               "`{0}deckstats [wins|winrate|all] @user`"
         )
     )
     @commands.guild_only()
@@ -189,6 +207,7 @@ class Data():
         The meta share is the percentage of time a deck is logged and is proportional to games played.
         Win % should be self-explanatory. 
         Popularity is represented by the number of unique pilots that have logged matches with the deck.
+        If a user is mentioned, display only deckstats for that user.
 
         By default, this command sorts the results by meta share but displays with wins and losses of each deck. Include one of the other keys to sort by those columns instead."""
 
@@ -196,7 +215,11 @@ class Data():
         # Use a line_table instead of a block_table for better mobile experience
         # Display only the selected stat and the sample size
         # Leave detail statistical analysis in the deck info command
-        data = utils.get_match_stats(ctx)
+        if not ctx.message.mentions:
+            data = utils.get_match_stats(ctx)
+        else:
+            await self.display_player_deck_stats(ctx, sort_key)
+            return
         if not data:
             emsg = embed.error(description="No decks found with enough matches")
             await ctx.send(embed=emsg)
@@ -217,6 +240,32 @@ class Data():
         else:
             sorted_data = utils.sort_by_winrate(data)
             _tables = self._make_complete_deck_tables(sorted_data)
+            for _table in _tables:
+                await ctx.send(_table)
+            return
+        for _table in _tables.text:
+            await ctx.send(_table)
+
+    async def display_player_deck_stats(self, ctx, sort_key):
+        sort_key = sort_key.split()[0]
+        user = ctx.message.mentions[0]
+        if not self.bot.db.find_member(user.id, ctx.message.guild):
+            await ctx.send(embed=embed.error(f"**{user.name}** is not a registered player"))
+            return
+        data = utils.get_player_match_stats(ctx, user)
+        if not data:
+            await ctx.send(embed=embed.error(description=f"No matches found for **{user.name}**"))
+            return
+        
+        if sort_key.lower() == "wins":
+            sorted_data = utils.sort_by_entries(data)
+            _tables = self._make_deck_tables(sorted_data, "winloss")
+        elif sort_key.lower() == "winrate":
+            sorted_data = utils.sort_by_winrate(data)
+            _tables = self._make_deck_tables(sorted_data, "winrate")
+        else:
+            sorted_data = utils.sort_by_winrate(data)
+            _tables = self._make_full_player_deck_tables(sorted_data, user)
             for _table in _tables:
                 await ctx.send(_table)
             return

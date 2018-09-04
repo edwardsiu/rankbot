@@ -42,6 +42,18 @@ def get_match_stats(ctx):
         return None
     return process_match_stats(ctx, matches)
 
+def get_player_match_stats(ctx, user):
+    matches = ctx.bot.db.find_matches(
+        {
+            "timestamp": {"$gt": system.deck_tracking_start_date},
+            "status": stc.ACCEPTED,
+            "player.user_id": user.id
+        }, ctx.message.guild
+    )
+    if not matches:
+        return None
+    return process_player_match_stats(ctx, user, matches)
+
 def get_deck_short_name(ctx, deck_name, cache):
     if len(deck_name) <= 18:
         # already short enough
@@ -77,6 +89,28 @@ def process_match_stats(ctx, matches):
     for deck in list_decks:
         deck["winrate"] = deck["wins"]/deck["entries"]
         deck["meta"] = deck["entries"]/total_entries
+        deck["losses"] = deck["entries"] - deck["wins"]
+    return list_decks
+
+def process_player_match_stats(ctx, user, matches):
+    decks = {}
+    name_cache = {}
+    for entries, match in enumerate(matches):
+        deck_name = get_player_deck(user.id, match)
+        deck_name = get_deck_short_name(ctx, deck_name, name_cache)
+        if deck_name in decks:
+            decks[deck_name]["entries"] += 1
+            decks[deck_name]["wins"] += 1 if match["winner"] == user.id else 0
+        else:
+            decks[deck_name] = {
+                "name": deck_name,
+                "entries": 1,
+                "wins": 1 if match["winner"] == user.id else 0
+            }
+    total_entries = entries + 1
+    list_decks = decks.values()
+    for deck in list_decks:
+        deck["winrate"] = deck["wins"]/deck["entries"]
         deck["losses"] = deck["entries"] - deck["wins"]
     return list_decks
 
