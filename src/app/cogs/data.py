@@ -175,18 +175,19 @@ class Data():
         return _tables
 
     def _make_full_player_deck_tables(self, data, user):
-        headings = ["Name", "Wins", "Losses", "Win %"]
+        headings = ["Name", "Wins", "Losses", "Win %", "Games"]
         rows = [
             [
                 str(deck['name']),
                 str(deck['wins']),
                 str(deck['losses']),
-                f"{100&deck['winrate']:.3g}%"
+                f"{100*deck['winrate']:.3g}%",
+                str(deck['entries'])
             ] for deck in data
         ]
         height = 10
         _tables = [
-            str(table.Table(title=f"**{user.name}'s** Deck Stats", columns=headings, rows=rows[i:i+height]))
+            str(table.Table(title=f"{user.name}'s Deck Stats", columns=headings, rows=rows[i:i+height]))
             for i in range(0, len(rows)-1, height)
         ]
         return _tables
@@ -196,7 +197,7 @@ class Data():
         brief="Display records of tracked decks",
         usage=("`{0}deckstats`\n" \
                "`{0}deckstats [meta|winrate|popularity|all]`\n" \
-               "`{0}deckstats [wins|winrate|all] @user`"
+               "`{0}deckstats [usage|winrate|all] @user`"
         )
     )
     @commands.guild_only()
@@ -257,7 +258,7 @@ class Data():
             await ctx.send(embed=embed.error(description=f"No matches found for **{user.name}**"))
             return
         
-        if sort_key.lower() == "wins":
+        if sort_key.lower() == "usage":
             sorted_data = utils.sort_by_entries(data)
             _tables = self._make_deck_tables(sorted_data, "winloss")
         elif sort_key.lower() == "winrate":

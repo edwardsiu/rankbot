@@ -47,7 +47,7 @@ def get_player_match_stats(ctx, user):
         {
             "timestamp": {"$gt": system.deck_tracking_start_date},
             "status": stc.ACCEPTED,
-            "player.user_id": user.id
+            "players.user_id": user.id
         }, ctx.message.guild
     )
     if not matches:
@@ -95,7 +95,7 @@ def process_match_stats(ctx, matches):
 def process_player_match_stats(ctx, user, matches):
     decks = {}
     name_cache = {}
-    for entries, match in enumerate(matches):
+    for match in matches:
         deck_name = get_player_deck(user.id, match)
         deck_name = get_deck_short_name(ctx, deck_name, name_cache)
         if deck_name in decks:
@@ -107,7 +107,6 @@ def process_player_match_stats(ctx, user, matches):
                 "entries": 1,
                 "wins": 1 if match["winner"] == user.id else 0
             }
-    total_entries = entries + 1
     list_decks = decks.values()
     for deck in list_decks:
         deck["winrate"] = deck["wins"]/deck["entries"]
