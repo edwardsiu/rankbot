@@ -1,0 +1,12 @@
+[Unit]
+Description=discord bot
+After=syslog.target network.target mongodb.service
+
+[Service]
+WorkingDirectory=/home/ec2-user/rankbot/src
+Type=simple
+ExecStart=/home/ec2-user/rankbot/env/bin/python /home/ec2-user/rankbot/src/run.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
