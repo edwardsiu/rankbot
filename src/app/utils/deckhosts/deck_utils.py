@@ -17,7 +17,7 @@ def _get_color_identity(commanders):
     for commander in commanders:
         if commander:
             colors += commander["color_identity"]
-    return utils.sort_color_str("".join(colors))
+    return utils.sort_color_str("".join(set(colors)))
 
 def extract(link):
     if "tappedout" in link:
