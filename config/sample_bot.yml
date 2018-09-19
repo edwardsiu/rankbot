@@ -2,6 +2,4 @@ token: "My Bot Token"
 client_id: "My Client Id"
 mongodb_host: "localhost"
 mongodb_port: 27017
-players: 4
-league_name: "cEDH League"
-owner: "My Discord User Id"
+command_prefix: "$"
