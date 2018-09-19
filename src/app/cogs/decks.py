@@ -63,9 +63,13 @@ class Decks():
                     continue
                 decks = self.bot.db.find_decks_by_color(color)
                 emsg.add_field(name=example["color_name"], value=(
-                    "\n".join(deck["name"] for deck in decks)
+                    "\n".join([deck["name"] for deck in decks])
                 ))
-            await ctx.send(embed=emsg)
+                if (len(emsg.fields) == 9):
+                    await ctx.send(embed=emsg)
+                    emsg = embed.msg(title="Registered Decks")
+            if len(emsg.fields) > 0:
+                await ctx.send(embed=emsg)
         else:
             example = self.bot.db.find_one_deck_by_color(color)
             if not example:
