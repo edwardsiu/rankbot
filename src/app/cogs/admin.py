@@ -99,7 +99,7 @@ class Admin():
                 ))
             else:
                 await ctx.send(embed=embed.success(
-                    title=f"Game id: {game_id}",
+                    title=f"Game id: {game_ids[i]}",
                     description=f"Set deck to **{deck['name']}** for **{user.name}**"
                 ))
 
