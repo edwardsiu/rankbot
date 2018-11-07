@@ -64,37 +64,44 @@ class Admin():
         await ctx.send(embed=embed.success(description=f"**SUCCESS** - {thresh_t.upper()} threshold set to {value}"))
 
     @commands.command(
-        name="user-deck",
-        brief="Set a deck for a player of a match",
-        usage="`{0}user-deck [game id] @user [deck name]`"
+        name="update",
+        brief="Update a player's deck for a given match",
+        usage=("`{0}update [game id] @user [deck name]`\n" \
+               "`{0}update [game_id1,game_id2,game_id3] @user [deck1,deck2,deck3]`"
+        )
     )
     async def _set_user_deck(self, ctx, *args):
         """Update a match by setting a user's deck to the specified deck name."""
 
         if len(args) < 3:
-            await ctx.send(embed=embed.error(description=f"Not enough args. See `{ctx.prefix}help user-deck`."))
+            await ctx.send(embed=embed.error(description=f"Not enough args. See `{ctx.prefix}help update`."))
             return
 
-        game_id = args[0]
-        deck_name = args[2]
+        game_ids = args[0].split(",")
+        deck_names = args[2].split(",")
+        if len(game_ids) != len(deck_names):
+            await ctx.send(embed=embed.error(description="There must be the same number of decks as games specified."))
+            return
         if not ctx.message.mentions:
             await ctx.send(embed=embed.error(description=f"Please include the player to adjust."))
             return
         user = ctx.message.mentions[0]
-        deck = self.bot.db.find_deck(deck_name)
-        if not deck:
-            await ctx.send(embed=embed.error(
-                description=f"Deck name not recognized. See `{ctx.prefix}decks` for a list of all decks."))
-            return
-        if not self.bot.db.confirm_match_for_user(game_id, user.id, deck['name'], ctx.message.guild):
-            await ctx.send(embed=embed.error(
-                description=f"No match found for that game id with the given user as a participant."
-            ))
-        else:
-            await ctx.send(embed=embed.success(
-                title=f"Game id: {game_id}",
-                description=f"Set deck to **{deck['name']}** for **{user.name}**"
-            ))
+        nupdates = len(game_ids)
+        for i in range(nupdates):
+            deck = self.bot.db.find_deck(deck_names[i])
+            if not deck:
+                await ctx.send(embed=embed.error(
+                    description=f"Deck name \"{deck_names[i]}\" not recognized. See `{ctx.prefix}decks` for a list of all decks."))
+                continue
+            if not self.bot.db.confirm_match_for_user(game_ids[i], user.id, deck['name'], ctx.message.guild):
+                await ctx.send(embed=embed.error(
+                    description=f"No game found for `{game_ids[i]}` with the given user as a participant."
+                ))
+            else:
+                await ctx.send(embed=embed.success(
+                    title=f"Game id: {game_id}",
+                    description=f"Set deck to **{deck['name']}** for **{user.name}**"
+                ))
 
 
     @commands.command(
