@@ -257,32 +257,6 @@ class Matches():
             )
             await ctx.send(embed=emsg)
 
-    def _get_game_ids_list(self, matches):
-        if not matches.count():
-            return "N/A"
-        return "\n".join([f"`{match['game_id']}`" for match in matches])
-
-    
-    @commands.command(
-        brief="List all pending and disputed matches",
-        usage="`{0}matches`"
-    )
-    @commands.guild_only()
-    async def matches(self, ctx):
-        """Shows a list of all disputed and pending matches.
-        Primarily for league admins to find any matches that require resolution."""
-
-        disputed_matches = self.bot.db.find_matches({"status": stc.DISPUTED}, ctx.message.guild)
-        pending_matches = self.bot.db.find_matches({"status": stc.PENDING}, ctx.message.guild)
-        disputed = self._get_game_ids_list(disputed_matches)
-        pending = self._get_game_ids_list(pending_matches)
-        emsg = embed.info(title="Pending and Disputed Matches") \
-                    .add_field(name="Disputed", value=disputed) \
-                    .add_field(name="Pending", value=pending) \
-                    .add_field(name="Actions", 
-                        value=f"`{ctx.prefix}game [game id]`\n`{ctx.prefix}accept [game id]`\n`{ctx.prefix}remove [game id]`")
-        await ctx.send(embed=emsg)
-
 
 def setup(bot):
     bot.add_cog(Matches(bot))

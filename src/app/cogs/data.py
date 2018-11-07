@@ -11,24 +11,34 @@ class Data():
     def __init__(self, bot):
         self.bot = bot
 
+
+    def _get_game_ids_list(self, matches):
+        if not matches.count():
+            return "N/A"
+        return "\n".join([f"`{match['game_id']}`" for match in matches])
+
+
     @commands.group(
-        brief="Show summary info for the leage",
+        brief="Show summary info for the league",
         usage="`{0}info`"
     )
     @commands.guild_only()
     async def info(self, ctx):
-        """Show summary info of the league. Displays the number of registered players, the number of games recorded, and the number of pending games."""
+        """Show summary info of the league. Displays the number of registered players, the number of games recorded, and pending and disputed matches."""
 
-        num_pending = self.bot.db.count_matches({"status": stc.PENDING}, ctx.message.guild)
         num_accepted = self.bot.db.count_matches({"status": stc.ACCEPTED}, ctx.message.guild)
         num_members = self.bot.db.members(ctx.message.guild).count()
+        disputed_matches = self.bot.db.find_matches({"status": stc.DISPUTED}, ctx.message.guild)
+        pending_matches = self.bot.db.find_matches({"status": stc.PENDING}, ctx.message.guild)
+        disputed = self._get_game_ids_list(disputed_matches)
+        pending = self._get_game_ids_list(pending_matches)
 
         emsg = embed.info(title=f"{ctx.message.guild.name} League") \
                     .add_field(name="Players", value=str(num_members)) \
                     .add_field(name="Games Played", value=str(num_accepted)) \
-                    .add_field(name="Unconfirmed Games", value=str(num_pending))
-            #        .add_field(name="Donate", inline=False, value=f"[PayPal]({self.bot._config['donation_link']})")
-        #)
+                    .add_field(name="Pending Games", value=pending) \
+                    .add_field(name="Disputed Games", value=disputed)
+
         await ctx.send(embed=emsg)
 
 
