@@ -1,7 +1,8 @@
 import asyncio
 from datetime import datetime
 from discord.ext import commands
-from app.utils import checks, embed
+from app.constants import emojis
+from app.utils import checks, embed, utils
 
 class Seasons():
     def __init__(self, bot):
@@ -29,9 +30,9 @@ class Seasons():
         if "end_time" in season_info:
             end_date = datetime.fromtimestamp(season_info["end_time"])
             emsg.add_field(name="End Date", value=end_date.strftime("%Y-%m-%d"))
-
-            emsg.add_field(name="Season Winners", value="\n".join(
-                [f"`{i+1}. {self.bot.db.find_member(user_id, ctx.message.guild)['name']}`" 
+            awards = [emojis.first_place, emojis.second_place, emojis.third_place]
+            emsg.add_field(name="Season Awards", value="\n".join(
+                [f"`{awards[i]} - {self.bot.db.find_member(user_id, ctx.message.guild)['name']}`" 
                 for i, user_id in enumerate(season_info["season_leaders"])]
                 )
             )
@@ -47,10 +48,23 @@ class Seasons():
     async def end_season(self, ctx):
         """End the current season and start a new season. Season awards will be given out to the top 3 players."""
 
+        # Display end-of-season stats for the top 10 players for points and games played
+        players = self.bot.db.find_top_members_by("points", ctx.message.guild, limit=10)
+        points_tables = utils.make_leaderboard_table(players, 'points', 'Top Players by Points')
+        for _table in points_tables.text:
+            await ctx.send(_table)
+
+        players = self.bot.db.find_top_members_by("accepted", ctx.message.guild, limit=10)
+        played_tables = utils.make_leaderboard_table(players, 'accepted', 'Top Players by Games Played')
+        for _table in played_tables.text:
+            await ctx.send(_table)
+
+        # Rollover to the new season
         last_season_number, season_leaders = self.bot.db.reset_season(ctx.message.guild)
+        awards = [emojis.first_place, emojis.second_place, emojis.third_place]
         emsg = embed.success(description=f"Season {last_season_number} has ended.")
-        emsg.add_field(name="Season Winners", value="\n".join(
-            [f"`{i+1}. {player['name']}`" for i, player in enumerate(season_leaders)]
+        emsg.add_field(name="Season Awards", value="\n".join(
+            [f"`{awards[i]} - {player['name']}`" for i, player in enumerate(season_leaders)]
         ))
         await ctx.send(embed=emsg)
 

@@ -4,6 +4,7 @@ import statsmodels.stats.proportion as stats
 
 from app.constants import status_codes as stc
 from app.constants import system
+from app.utils import embed, line_table
 
 DEFAULT_LIMIT = 10
 
@@ -194,3 +195,17 @@ def shorten_player_name(name, maxlen=16):
         return tokens[0]
     return tokens[0][:(maxlen-3)] + "..."
 
+def make_leaderboard_table(players, key, title):
+    rows = []
+    if key == "winrate":
+        for i, player in enumerate(players):
+            rows.append([
+                f"{i+1}.", 
+                player['name'], 
+                f"{100*player['wins']/player['accepted']:.3g}%"])
+    else:
+        for i, player in enumerate(players):
+            rows.append([f"{i+1}.", player['name'], str(player[key])])
+    if not rows:
+        return [embed.info(description="No players found with enough matches")]
+    return line_table.LineTable(rows, title=title)

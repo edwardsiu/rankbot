@@ -27,6 +27,8 @@ class Data():
         """Show summary info of the league. Displays the number of registered players, the number of games recorded, and pending and disputed matches."""
 
         num_accepted = self.bot.db.count_matches({"status": stc.ACCEPTED}, ctx.message.guild)
+        season_info = self.bot.db.get_season(ctx.message.guild)
+        num_season_accepted = self.bot.db.count_matches({"status": stc.ACCEPTED, "timestamp": {"$gte":season_info['start_time']}}, ctx.message.guild)
         num_members = self.bot.db.members(ctx.message.guild).count()
         disputed_matches = self.bot.db.find_matches({"status": stc.DISPUTED}, ctx.message.guild)
         pending_matches = self.bot.db.find_matches({"status": stc.PENDING}, ctx.message.guild)
@@ -35,27 +37,13 @@ class Data():
 
         emsg = embed.info(title=f"{ctx.message.guild.name} League") \
                     .add_field(name="Players", value=str(num_members)) \
-                    .add_field(name="Games Played", value=str(num_accepted)) \
+                    .add_field(name="Current Season", value=str(season_info['season_number'])) \
+                    .add_field(name="Total Games Played", value=str(num_accepted)) \
+                    .add_field(name="Games Played This Season", value=str(num_season_accepted)) \
                     .add_field(name="Pending Games", value=pending) \
-                    .add_field(name="Disputed Games", value=disputed)
+                    .add_field(name="Disputed Games", value=disputed) 
 
         await ctx.send(embed=emsg)
-
-
-    def _make_leaderboard_table(self, players, key, title):
-        rows = []
-        if key == "winrate":
-            for i, player in enumerate(players):
-                rows.append([
-                    f"{i+1}.", 
-                    player['name'], 
-                    f"{100*player['wins']/player['accepted']:.3g}%"])
-        else:
-            for i, player in enumerate(players):
-                rows.append([f"{i+1}.", player['name'], str(player[key])])
-        if not rows:
-            return [embed.info(description="No players found with enough matches")]
-        return line_table.LineTable(rows, title=title)
         
 
     @commands.group(
@@ -71,7 +59,7 @@ class Data():
         if ctx.invoked_subcommand is None:
             limit = utils.DEFAULT_LIMIT
             players = self.bot.db.find_top_members_by("points", ctx.message.guild, limit=limit)
-            _tables = self._make_leaderboard_table(players, 'points', 'Top Players by Points')
+            _tables = utils.make_leaderboard_table(players, 'points', 'Top Players by Points')
             for _table in _tables.text:
                 await ctx.send(_table)
 
@@ -87,7 +75,7 @@ class Data():
 
         limit = utils.get_limit(args)
         players = self.bot.db.find_top_members_by("wins", ctx.message.guild, limit=limit)
-        _tables = self._make_leaderboard_table(players, 'wins', 'Top Players by Total Wins')
+        _tables = utils.make_leaderboard_table(players, 'wins', 'Top Players by Total Wins')
         for _table in _tables.text:
             await ctx.send(_table)
 
@@ -103,7 +91,7 @@ class Data():
 
         limit = utils.get_limit(args)
         players = self.bot.db.find_top_members_by("winrate", ctx.message.guild, limit=limit)
-        _tables = self._make_leaderboard_table(players, 'winrate', 'Top Players by Win %')
+        _tables = utils.make_leaderboard_table(players, 'winrate', 'Top Players by Win %')
         for _table in _tables.text:
             await ctx.send(_table)
 
@@ -119,7 +107,7 @@ class Data():
 
         limit = utils.get_limit(args)
         players = self.bot.db.find_top_members_by("accepted", ctx.message.guild, limit=limit)
-        _tables = self._make_leaderboard_table(players, 'accepted', 'Top Players by Games Played')
+        _tables = utils.make_leaderboard_table(players, 'accepted', 'Top Players by Games Played')
         for _table in _tables.text:
             await ctx.send(_table)
 
@@ -136,7 +124,7 @@ class Data():
 
         limit = utils.get_limit(args)
         players = self.bot.db.find_top_members_by("points", ctx.message.guild, limit=limit)
-        _tables = self._make_leaderboard_table(players, 'points', 'Top Players by Points')
+        _tables = utils.make_leaderboard_table(players, 'points', 'Top Players by Points')
         for _table in _tables.text:
             await ctx.send(_table)
 
