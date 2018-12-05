@@ -8,6 +8,21 @@ from app.utils import utils
 
 """PRECOND: All messages that are to be processed are received in a server rather than DM
 
+Config: {
+    admin: str,
+    player_match_threshold: int,
+    deck_match_threshold: int
+}
+
+Seasons: {
+    start_time: int,
+    end_time: int,
+    season_number: int,
+    season_leaders: [
+        {user_id: int}
+    ]
+}
+
 Member: {
     name: str,
     user_id: int,
@@ -16,7 +31,10 @@ Member: {
     accepted: int,
     wins: int,
     losses: int,
-    deck: str
+    deck: str,
+    season_gold_badges: int,
+    season_silver_badges: int,
+    season_bronze_badges: int
 }
 
 Match: {
@@ -61,6 +79,10 @@ class RankDB(MongoClient):
         db = self.guild(guild)
         return db.config
 
+    def seasons(self, guild):
+        db = self.guild(guild)
+        return db.seasons
+
     def decks(self):
         return self["decks"].decks
 
@@ -73,6 +95,10 @@ class RankDB(MongoClient):
             "player_match_threshold": 10,
             "deck_match_threshold": 10
         })
+        self.seasons(guild).insert_one({
+            "start_time": time.time(),
+            "season_number": 1
+        })
 
 
     # Member methods
@@ -81,12 +107,15 @@ class RankDB(MongoClient):
             document = {
                 "name": user.name,  # string
                 "user_id": user.id, # int (was string)
-                "points": 1000,
+                "points": system.base_points,
                 "pending": [],
                 "accepted": 0,
                 "wins": 0,
                 "losses": 0,
-                "deck": ""
+                "deck": "",
+                "season_gold_badges": 0,
+                "season_silver_badges": 0,
+                "season_bronze_badges": 0
             }
             return self.members(guild).insert_one(document)
         return False
@@ -171,8 +200,20 @@ class RankDB(MongoClient):
     def find_match(self, game_id, guild):
         return self.matches(guild).find_one({"game_id": game_id})
 
-    def find_matches(self, query, guild, limit=0):
-        return self.matches(guild).find(query, limit=limit, sort=[("timestamp", DESCENDING)])
+    def find_matches(self, query, guild, limit=0, season=None):
+        """season arg will return recent matches by default."""
+
+        if not season:
+            return self.matches(guild).find(query, limit=limit, sort=[("timestamp", DESCENDING)])
+        else:
+            season_info = self.get_season(guild, season)
+            if not season_info:
+                return None
+            if "end_time" in season_info:
+                query["timestamp"] = {"$gte": season_info["start_time"], "$lt": season_info["end_time"]}
+                return self.matches(guild).find(query, limit=limit, sort=[("timestamp", DESCENDING)])
+            query["timestamp"] = {"$gte": season_info["start_time"]}
+            return self.matches(guild).find(query, limit=limit, sort=[("timestamp", DESCENDING)])
 
     def find_user_matches(self, user_id, guild, limit=0):
         return self.find_matches(
@@ -398,3 +439,46 @@ class RankDB(MongoClient):
         if "deck_match_threshold" in config:
             return config["deck_match_threshold"]
         return system.min_matches
+
+    # Seasons
+    def get_season(self, guild, season=None):
+        seasons = self.seasons(guild)
+        if not season:
+            return seasons.find({}, limit=1, sort=[("start_time", DESCENDING)])[0]
+        else:
+            return seasons.find_one({"season_number": season})
+
+    def reset_scores(self, guild):
+        self.members(guild).update_many({}, {"$set": {"points": system.base_points}})
+
+    def reset_season(self, guild):
+        # Record results from the current season
+        current_season = self.get_season(guild)
+        end_time = time.time()
+        leaders = list(self.find_top_members_by("points", guild, limit=3))
+        self.seasons(guild).update_one(
+            {"season_number": current_season["season_number"]},
+            {
+                "$set": {
+                    "end_time": end_time,
+                    "season_leaders": [player["user_id"] for player in leaders]
+                }
+            }
+        )
+
+        # Give season rewards
+        for i, badge in enumerate(["gold", "silver", "bronze"]):
+            self.members(guild).update_one(
+                {"user_id": leaders[i]["user_id"]},
+                {"$inc": {f"season_{badge}_badges": 1}}
+            )
+
+        self.reset_scores(guild)
+
+        # Create new season
+        new_season = {
+            "start_time": end_time,
+            "season_number": current_season["season_number"]+1
+        }
+        self.seasons(guild).insert_one(new_season)
+        return current_season["season_number"], leaders

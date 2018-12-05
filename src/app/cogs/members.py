@@ -1,6 +1,7 @@
 from datetime import datetime
 import operator
 from discord.ext import commands
+from app.constants import emojis
 from app.utils import checks, embed, line_table, table, utils
 
 class Members():
@@ -57,6 +58,16 @@ class Members():
         if "deck" in player and player["deck"]:
             emsg.add_field(name="Current Deck", value=player["deck"])
 
+    def _add_season_badges(self, emsg, player):
+        badges = ""
+        if player["season_gold_badges"] > 0:
+            badges += emojis.first_place*player["season_gold_badges"]
+        if player["season_silver_badges"] > 0:
+            badges += emojis.second_place*player["season_silver_badges"]
+        if player["season_bronze_badges"] > 0:
+            badges += emojis.third_place*player["season_bronze_badges"]
+        if len(badges) > 0:
+            emsg.add_field(name="Season Badges", value=badges)
 
     def _get_profile_card(self, user, guild):
         player = self.bot.db.find_member(user.id, guild)
@@ -71,6 +82,7 @@ class Members():
                     .add_field(name="Win %", value="{:.3f}%".format(win_percent))
         self._add_favorite_deck_field(emsg, player, guild)
         self._add_last_played_deck_field(emsg, player)
+        self._add_season_badges(emsg, player)
         return emsg
 
 
