@@ -449,7 +449,15 @@ class RankDB(MongoClient):
             return seasons.find_one({"season_number": season})
 
     def reset_scores(self, guild):
-        self.members(guild).update_many({}, {"$set": {"points": system.base_points}})
+        self.members(guild).update_many({}, 
+            {
+                "$set": {
+                    "points": system.base_points,
+                    "wins": 0,
+                    "accepted": 0,
+                    "losses": 0
+                }
+            })
 
     def reset_season(self, guild):
         # Record results from the current season
