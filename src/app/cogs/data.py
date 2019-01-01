@@ -59,6 +59,9 @@ class Data():
         if ctx.invoked_subcommand is None:
             limit = utils.DEFAULT_LIMIT
             players = self.bot.db.find_top_members_by("points", ctx.message.guild, limit=limit)
+            if not players:
+                await ctx.send(embed.info(description="No players found with enough games played."))
+                return
             _tables = utils.make_leaderboard_table(players, 'points', 'Top Players by Points')
             for _table in _tables.text:
                 await ctx.send(_table)
@@ -75,6 +78,9 @@ class Data():
 
         limit = utils.get_limit(args)
         players = self.bot.db.find_top_members_by("wins", ctx.message.guild, limit=limit)
+        if not players:
+            await ctx.send(embed.info(description="No players found with enough games played."))
+            return
         _tables = utils.make_leaderboard_table(players, 'wins', 'Top Players by Total Wins')
         for _table in _tables.text:
             await ctx.send(_table)
@@ -91,6 +97,9 @@ class Data():
 
         limit = utils.get_limit(args)
         players = self.bot.db.find_top_members_by("winrate", ctx.message.guild, limit=limit)
+        if not players:
+            await ctx.send(embed.info(description="No players found with enough games played."))
+            return
         _tables = utils.make_leaderboard_table(players, 'winrate', 'Top Players by Win %')
         for _table in _tables.text:
             await ctx.send(_table)
@@ -107,6 +116,9 @@ class Data():
 
         limit = utils.get_limit(args)
         players = self.bot.db.find_top_members_by("accepted", ctx.message.guild, limit=limit)
+        if not players:
+            await ctx.send(embed.info(description="No players found with enough games played."))
+            return
         _tables = utils.make_leaderboard_table(players, 'accepted', 'Top Players by Games Played')
         for _table in _tables.text:
             await ctx.send(_table)
@@ -124,6 +136,9 @@ class Data():
 
         limit = utils.get_limit(args)
         players = self.bot.db.find_top_members_by("points", ctx.message.guild, limit=limit)
+        if not players:
+            await ctx.send(embed.info(description="No players found with enough games played."))
+            return
         _tables = utils.make_leaderboard_table(players, 'points', 'Top Players by Points')
         for _table in _tables.text:
             await ctx.send(_table)
