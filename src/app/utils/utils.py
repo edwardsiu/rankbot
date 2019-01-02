@@ -213,12 +213,12 @@ def make_leaderboard_table(players, key, title):
 def player_accumulator(A, B):
     for player in B["players"]:
         if player["deck"] == A["deck_name"]:
-            if player["name"] not in A["data"]:
-                A["data"][player["name"]] = {"wins": 0, "losses": 0, "games": 1}
+            if player["user_id"] not in A["data"]:
+                A["data"][player["user_id"]] = {"name": player["name"], "wins": 0, "losses": 0, "games": 1}
             else:
-                A["data"][player["name"]]["games"] += 1
+                A["data"][player["user_id"]]["games"] += 1
             if player["user_id"] == B["winner"]:
-                A["data"][player["name"]]["wins"] += 1
+                A["data"][player["user_id"]]["wins"] += 1
             else:
-                A["data"][player["name"]]["losses"] += 1
+                A["data"][player["user_id"]]["losses"] += 1
     return A
