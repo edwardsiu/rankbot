@@ -218,7 +218,7 @@ class Data():
         headings = ["Name", "Wins", "Losses", "Win %", "Games"]
         rows = [
             [
-                player,
+                flattened_data[player]['name'],
                 str(flattened_data[player]['wins']),
                 str(flattened_data[player]['losses']),
                 f"{flattened_data[player]['wins']/flattened_data[player]['games']:.1%}",
