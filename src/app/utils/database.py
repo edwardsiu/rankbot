@@ -215,6 +215,11 @@ class RankDB(MongoClient):
             query["timestamp"] = {"$gte": season_info["start_time"]}
             return self.matches(guild).find(query, limit=limit, sort=[("timestamp", DESCENDING)])
 
+    def find_matches_with_deck(self, deck_name, guild, limit=0, season=None):
+        """season arg will return current season matches by default."""
+
+        return self.matches(guild).find({"players.deck": deck_name}, guild, limit, season)
+
     def find_user_matches(self, user_id, guild, limit=0):
         return self.find_matches(
             {"players.user_id": user_id}, guild, limit)

@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import logging
 import re
+from functools import reduce
 
 from app.constants import status_codes as stc
 from app.constants import system
@@ -188,6 +189,8 @@ class Data():
         return _tables
 
     def _make_full_player_deck_tables(self, data, user):
+        """Makes a table displaying a player's results on every deck they've played."""
+
         headings = ["Name", "Wins", "Losses", "Win %", "Games"]
         rows = [
             [
@@ -204,13 +207,36 @@ class Data():
             for i in range(0, len(rows), height)
         ]
         return _tables
+
+    def _make_full_deck_player_tables(self, data, deck_name):
+        """Makes a table displaying a deck's results for every player hat has piloted it."""
+
+        flattened_data = reduce(utils.player_accumulator, data, {"deck_name": deck_name, "data": {}})["data"]
+        headings = ["Name", "Wins", "Losses", "Win %", "Games"]
+        rows = [
+            [
+                player,
+                str(flattened_data[player]['wins']),
+                str(flattened_data[player]['losses']),
+                f"{flattened_data[player]['wins']/flattened_data[player]['games']:.1%}",
+                str(flattened_data[player]['games'])
+            ] for player in flattened_data
+        ]
+        rows.sort(key=lambda o: int(o[1]), reverse=True)
+        height = 10
+        _tables = [
+            str(table.Table(title=f"{deck_name} Stats by Player", columns=headings, rows=rows[i:i+height]))
+            for i in range(0, len(rows, height))
+        ]
+        return _tables
         
 
     @commands.command(
         brief="Display records of tracked decks",
         usage=("`{0}deckstats`\n" \
                "`{0}deckstats [meta|winrate|popularity|all]`\n" \
-               "`{0}deckstats [usage|winrate|all] @user`"
+               "`{0}deckstats [usage|winrate|all] @user`\n" \
+               "`{0}deckstats [deck name]`"
         )
     )
     @commands.guild_only()
@@ -222,6 +248,7 @@ class Data():
         Win % should be self-explanatory. 
         Popularity is represented by the number of unique pilots that have logged matches with the deck.
         If a user is mentioned, display only deckstats for that user.
+        If a deck name is given, display deckstats for all users that have played that deck.
 
         By default, this command sorts the results by meta share but displays with wins and losses of each deck. Include one of the other keys to sort by those columns instead."""
 
@@ -242,7 +269,21 @@ class Data():
         if not sort_key:
             sorted_data = utils.sort_by_entries(data)
             _tables = self._make_deck_tables(sorted_data, "winloss")
-        elif sort_key.lower() == "winrate":
+            for _table in _tables.text:
+                await ctx.send(_table)
+            return
+
+        # Check if the sort_key is a deck name
+        # If it is a deck name, get deckstats by player for that deck
+        deck = self.bot.db.find_deck(sort_key)
+        if deck:
+            data = self.bot.db.find_matches_with_deck(deck["name"], ctx.message.guild, limit=0, season=None)
+            _tables = self._make_full_deck_player_tables(data, deck["name"])
+            for _table in _tables:
+                await ctx.send(_table)
+            return
+
+        if sort_key.lower() == "winrate":
             sorted_data = utils.sort_by_winrate(data)
             _tables = self._make_deck_tables(sorted_data, "winrate")
         elif sort_key.lower() == "meta":

@@ -209,3 +209,16 @@ def make_leaderboard_table(players, key, title):
     if not rows:
         return [embed.info(description="No players found with enough matches")]
     return line_table.LineTable(rows, title=title)
+
+def player_accumulator(A, B):
+    for player in B["players"]:
+        if player["deck"] == A["deck_name"]:
+            if player["name"] not in A["data"]:
+                A["data"][player["name"]] = {"wins": 0, "losses": 0, "games": 1}
+            else:
+                A["data"][player["name"]]["games"] += 1
+            if player["user_id"] == B["winner"]:
+                A["data"][player["name"]]["wins"] += 1
+            else:
+                A["data"][player["name"]]["losses"] += 1
+    return A
