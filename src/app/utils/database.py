@@ -140,10 +140,12 @@ class RankDB(MongoClient):
                 return results
             return results[:limit]
         else:
-            return self.members(guild).find(
+            members = self.members(guild).find(
                 {"accepted": {"$gte": player_match_threshold}}, 
                 limit=limit, sort=[(sort_key, DESCENDING)]
             )
+            members = [member for member in members]
+            return members
 
     def push_pending_match(self, game_id, user_ids, guild):
         self.members(guild).update_many(
@@ -218,7 +220,7 @@ class RankDB(MongoClient):
     def find_matches_with_deck(self, deck_name, guild, limit=0, season=None):
         """season arg will return current season matches by default."""
 
-        return self.matches(guild).find({"players.deck": deck_name}, guild, limit, season)
+        return self.find_matches({"players.deck": deck_name}, guild, limit, season)
 
     def find_user_matches(self, user_id, guild, limit=0):
         return self.find_matches(
