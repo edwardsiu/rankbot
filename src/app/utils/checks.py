@@ -1,7 +1,9 @@
 import discord
+from app.utils import embed
 
-def is_registered(ctx):
+async def is_registered(ctx):
     if not ctx.bot.db.find_member(ctx.message.author.id, ctx.message.guild):
+        await ctx.send(embed=embed.error(description=f"**{ctx.message.author.name}** is not registered"))
         return False
     return True
 
