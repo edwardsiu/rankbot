@@ -367,6 +367,8 @@ class RankDB(MongoClient):
             return 0
 
     def find_deck(self, alias):
+        if alias.lower() == "rogue":
+            return {"name": "Rogue"}
         canonical_name = utils.transform_deck_name(alias)
         return self.decks().find_one({"canonical_aliases": canonical_name})
 
