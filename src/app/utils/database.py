@@ -473,22 +473,33 @@ class RankDB(MongoClient):
         current_season = self.get_season(guild)
         end_time = time.time()
         leaders = list(self.find_top_members_by("points", guild, limit=3))
-        self.seasons(guild).update_one(
-            {"season_number": current_season["season_number"]},
-            {
-                "$set": {
-                    "end_time": end_time,
-                    "season_leaders": [player["user_id"] for player in leaders]
+        if not leaders[0]:
+            self.seasons(guild).update_one(
+                {"season_number": current_season["season_number"]},
+                {
+                    "$set": {
+                        "end_time": end_time
+                    }
                 }
-            }
-        )
+            )
+        else:
+            self.seasons(guild).update_one(
+                {"season_number": current_season["season_number"]},
+                {
+                    "$set": {
+                        "end_time": end_time,
+                        "season_leaders": [player["user_id"] for player in leaders]
+                    }
+                }
+            )
 
         # Give season rewards
-        for i, badge in enumerate(["gold", "silver", "bronze"]):
-            self.members(guild).update_one(
-                {"user_id": leaders[i]["user_id"]},
-                {"$inc": {f"season_{badge}_badges": 1}}
-            )
+        if leaders[0] is not None:
+            for i, badge in enumerate(["gold", "silver", "bronze"]):
+                self.members(guild).update_one(
+                    {"user_id": leaders[i]["user_id"]},
+                    {"$inc": {f"season_{badge}_badges": 1}}
+                )
 
         self.reset_scores(guild)
 

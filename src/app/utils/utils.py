@@ -207,7 +207,7 @@ def make_leaderboard_table(players, key, title):
         for i, player in enumerate(players):
             rows.append([f"{i+1}.", player['name'], str(player[key])])
     if not rows:
-        return [embed.info(description="No players found with enough matches")]
+        return None
     return line_table.LineTable(rows, title=title)
 
 def player_accumulator(A, B):

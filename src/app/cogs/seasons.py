@@ -51,21 +51,24 @@ class Seasons():
         # Display end-of-season stats for the top 10 players for points and games played
         players = self.bot.db.find_top_members_by("points", ctx.message.guild, limit=10)
         points_tables = utils.make_leaderboard_table(players, 'points', 'Top Players by Points')
-        for _table in points_tables.text:
-            await ctx.send(_table)
+        if points_tables is not None:
+            for _table in points_tables.text:
+                await ctx.send(_table)
 
         players = self.bot.db.find_top_members_by("accepted", ctx.message.guild, limit=10)
         played_tables = utils.make_leaderboard_table(players, 'accepted', 'Top Players by Games Played')
-        for _table in played_tables.text:
-            await ctx.send(_table)
+        if played_tables is not None:
+            for _table in played_tables.text:
+                await ctx.send(_table)
 
         # Rollover to the new season
         last_season_number, season_leaders = self.bot.db.reset_season(ctx.message.guild)
         awards = [emojis.first_place, emojis.second_place, emojis.third_place]
         emsg = embed.success(description=f"Season {last_season_number} has ended.")
-        emsg.add_field(name="Season Awards", value="\n".join(
-            [f"`{awards[i]} - {player['name']}`" for i, player in enumerate(season_leaders)]
-        ))
+        if season_leaders[0] is not None:
+            emsg.add_field(name="Season Awards", value="\n".join(
+                [f"`{awards[i]} - {player['name']}`" for i, player in enumerate(season_leaders)]
+            ))
         await ctx.send(embed=emsg)
 
 def setup(bot):
