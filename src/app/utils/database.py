@@ -473,7 +473,7 @@ class RankDB(MongoClient):
         current_season = self.get_season(guild)
         end_time = time.time()
         leaders = list(self.find_top_members_by("points", guild, limit=3))
-        if not leaders[0]:
+        if not leaders:
             self.seasons(guild).update_one(
                 {"season_number": current_season["season_number"]},
                 {
@@ -494,7 +494,7 @@ class RankDB(MongoClient):
             )
 
         # Give season rewards
-        if leaders[0] is not None:
+        if leaders:
             for i, badge in enumerate(["gold", "silver", "bronze"]):
                 self.members(guild).update_one(
                     {"user_id": leaders[i]["user_id"]},

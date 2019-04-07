@@ -65,7 +65,7 @@ class Seasons():
         last_season_number, season_leaders = self.bot.db.reset_season(ctx.message.guild)
         awards = [emojis.first_place, emojis.second_place, emojis.third_place]
         emsg = embed.success(description=f"Season {last_season_number} has ended.")
-        if season_leaders[0] is not None:
+        if season_leaders:
             emsg.add_field(name="Season Awards", value="\n".join(
                 [f"`{awards[i]} - {player['name']}`" for i, player in enumerate(season_leaders)]
             ))
