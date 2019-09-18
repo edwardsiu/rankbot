@@ -96,7 +96,7 @@ class Data():
         """Display the top 10 players in the league by wins. If a limit is specified, display that many players instead. If a min is specified, display players with at least that many games played."""
 
         try:
-            limit, min_games = self.get_top_args(ctx, args)
+            limit, min_games = await self.get_top_args(ctx, args)
         except ValueError:
             return
         players = self.bot.db.find_top_members_by("wins", ctx.message.guild, limit=limit, threshold=min_games)
@@ -119,7 +119,7 @@ class Data():
         """Display the top 10 players in the league by win %. If a limit is specified, display that many players instead. If a min is specified, display players with at least that many games played."""
 
         try:
-            limit, min_games = self.get_top_args(ctx, args)
+            limit, min_games = await self.get_top_args(ctx, args)
         except ValueError:
             return
         players = self.bot.db.find_top_members_by("winrate", ctx.message.guild, limit=limit, threshold=min_games)
@@ -142,7 +142,7 @@ class Data():
         """Display the top 10 players in the league by games played. If a limit is specified, display that many players instead. If a min is specified, display players with at least that many games played."""
 
         try:
-            limit, min_games = self.get_top_args(ctx, args)
+            limit, min_games = await self.get_top_args(ctx, args)
         except ValueError:
             return
         players = self.bot.db.find_top_members_by("accepted", ctx.message.guild, limit=limit, threshold=min_games)
@@ -166,7 +166,7 @@ class Data():
         """Display the top 10 players in the league by points. If a limit is specified, display that many players instead. If a min is specified, display players with at least that many games played."""
 
         try:
-            limit, min_games = self.get_top_args(ctx, args)
+            limit, min_games = await self.get_top_args(ctx, args)
         except ValueError:
             return
         players = self.bot.db.find_top_members_by("points", ctx.message.guild, limit=limit, threshold=min_games)
