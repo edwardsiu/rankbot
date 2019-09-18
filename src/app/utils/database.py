@@ -129,11 +129,12 @@ class RankDB(MongoClient):
     def find_members(self, query, guild, limit=0):
         return self.members(guild).find(query, limit=limit)
 
-    def find_top_members_by(self, sort_key, guild, limit=0):
-        player_match_threshold = self.get_player_match_threshold(guild)
+    def find_top_members_by(self, sort_key, guild, limit=0, threshold=None):
+        if not threshold:
+            threshold = self.get_player_match_threshold(guild)
         if sort_key == "winrate":
             members = self.members(guild).find(
-                {"accepted": {"$gte": player_match_threshold}})
+                {"accepted": {"$gte": threshold}})
             members = [member for member in members]
             results = sorted(members, key=(lambda o: o['wins']/o['accepted']), reverse=True)
             if not limit:
@@ -141,7 +142,7 @@ class RankDB(MongoClient):
             return results[:limit]
         else:
             members = self.members(guild).find(
-                {"accepted": {"$gte": player_match_threshold}}, 
+                {"accepted": {"$gte": threshold}}, 
                 limit=limit, sort=[(sort_key, DESCENDING)]
             )
             members = [member for member in members]

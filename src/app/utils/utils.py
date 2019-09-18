@@ -23,14 +23,18 @@ def get_avatar(user):
         return user.default_avatar_url
     return user.avatar_url
 
-def get_limit(args):
-    """Returns the number of elements to fetch from the database.
-    Searches through all the args for an integer"""
+def get_command_arg(args, key, default):
+    """Iterate through args to find key, then return the next value
+    if it exists. If the key is not found, return default"""
 
-    for arg in args:
-        if arg.isdigit():
-            return int(re.match(r"\d*", arg).group())
-    return DEFAULT_LIMIT
+    for i, arg in enumerate(args):
+        if (arg == key) and (i+1 < len(args)):
+            value = args[i+1]
+            if value.isdigit():
+                return int(value)
+            else:
+                return value
+    return default
 
 # deck data processing
 def get_match_stats(ctx):

@@ -150,14 +150,17 @@ class Members():
     @commands.command(
         brief="Show your recent matches",
         usage=("`{0}recent`\n" \
-               "`{0}recent [n matches]`"
+               "`{0}recent limit [n matches]`"
         )
     )
     @commands.guild_only()
     async def recent(self, ctx, *args):
         """Show your last 10 matches. If a number is specified, show that many matches instead."""
 
-        limit = utils.get_limit(args)
+        limit = utils.get_command_arg(args, "limit", 10)
+        if (type(limit) is not int):
+            await ctx.send(embed=embed.error(description=f"Limit should be a number."))
+            return
 
         users = utils.get_target_users(ctx)
         for user in users:

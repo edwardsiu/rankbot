@@ -8,6 +8,8 @@ from app.constants import status_codes as stc
 from app.constants import system
 from app.utils import checks, embed, line_table, table, utils
 
+DEFAULT_LIMIT = 10
+
 class Data():
     def __init__(self, bot):
         self.bot = bot
@@ -50,7 +52,9 @@ class Data():
     @commands.group(
         brief="Show the leaderboard",
         usage=("`{0}top`\n" \
-               "`{0}top [wins|games|score|winrate]`"
+               "`{0}top [wins|winrate|games|score]`\n" \
+               "`{0}top [wins|winrate|games|score] limit [n players]`\n" \
+               "`{0}top [wins|winrate|games|score] min [n games]`"
         )
     )
     @commands.guild_only()
@@ -68,18 +72,34 @@ class Data():
             for _table in _tables.text:
                 await ctx.send(_table)
 
+    async def get_top_args(self, ctx, args):
+        limit = utils.get_command_arg(args, "limit", DEFAULT_LIMIT)
+        if (type(limit) is not int):
+            await ctx.send(embed=embed.error(description="Limit should be a number."))
+            raise ValueError
+        DEFAULT_THRESHOLD = self.bot.db.get_player_match_threshold(ctx.message.guild)
+        min_games = utils.get_command_arg(args, "min", DEFAULT_THRESHOLD)
+        if (type(min_games) is not int):
+            await ctx.send(embed=embed.error(description="Min should be a number."))
+            raise ValueError
+        return limit, min_games
+
     @top.command(
         name='wins',
         brief="Show the leaderboard for total wins",
         usage=("`{0}top wins`\n" \
-               "`{0}top wins [n players]`"
+               "`{0}top wins limit [n players]`\n" \
+               "`{0}top wins min [n games]`"
         )
     )
     async def _top_wins(self, ctx, *args):
-        """Display the top 10 players in the league by wins. If a number is specified, display that many players instead."""
+        """Display the top 10 players in the league by wins. If a limit is specified, display that many players instead. If a min is specified, display players with at least that many games played."""
 
-        limit = utils.get_limit(args)
-        players = self.bot.db.find_top_members_by("wins", ctx.message.guild, limit=limit)
+        try:
+            limit, min_games = self.get_top_args(ctx, args)
+        except ValueError:
+            return
+        players = self.bot.db.find_top_members_by("wins", ctx.message.guild, limit=limit, threshold=min_games)
         if not players:
             await ctx.send(embed=embed.info(description="No players found with enough games played."))
             return
@@ -91,14 +111,18 @@ class Data():
         name='winrate',
         brief="Show the leaderboard for win %",
         usage=("`{0}top winrate`\n" \
-               "`{0}top winrate [n players]`"
+               "`{0}top winrate limit [n players]`\n" \
+               "`{0}top winrate min [n games]`"
         )
     )
     async def _top_winrate(self, ctx, *args):
-        """Display the top 10 players in the league by win %. If a number is specified, display that many players instead."""
+        """Display the top 10 players in the league by win %. If a limit is specified, display that many players instead. If a min is specified, display players with at least that many games played."""
 
-        limit = utils.get_limit(args)
-        players = self.bot.db.find_top_members_by("winrate", ctx.message.guild, limit=limit)
+        try:
+            limit, min_games = self.get_top_args(ctx, args)
+        except ValueError:
+            return
+        players = self.bot.db.find_top_members_by("winrate", ctx.message.guild, limit=limit, threshold=min_games)
         if not players:
             await ctx.send(embed=embed.info(description="No players found with enough games played."))
             return
@@ -110,14 +134,18 @@ class Data():
         name='games',
         brief="Show the leaderboard for total games played",
         usage=("`{0}top games`\n" \
-               "`{0}top games [n players]`"
+               "`{0}top games limit [n players]`\n" \
+               "`{0}top games min [n games]`"
         )
     )
     async def _top_games(self, ctx, *args):
-        """Display the top 10 players in the league by games played. If a number is specified, display that many players instead."""
+        """Display the top 10 players in the league by games played. If a limit is specified, display that many players instead. If a min is specified, display players with at least that many games played."""
 
-        limit = utils.get_limit(args)
-        players = self.bot.db.find_top_members_by("accepted", ctx.message.guild, limit=limit)
+        try:
+            limit, min_games = self.get_top_args(ctx, args)
+        except ValueError:
+            return
+        players = self.bot.db.find_top_members_by("accepted", ctx.message.guild, limit=limit, threshold=min_games)
         if not players:
             await ctx.send(embed=embed.info(description="No players found with enough games played."))
             return
@@ -130,14 +158,18 @@ class Data():
         name='score',
         brief="Show the leaderboard for highest score",
         usage=("`{0}top score`\n" \
-               "`{0}top score [n players]`"
+               "`{0}top score limit [n players]`\n" \
+               "`{0}top score min [n games]`"
         )
     )
     async def _top_score(self, ctx, *args):
-        """Display the top 10 players in the league by points. If a number is specified, display that many players instead."""
+        """Display the top 10 players in the league by points. If a limit is specified, display that many players instead. If a min is specified, display players with at least that many games played."""
 
-        limit = utils.get_limit(args)
-        players = self.bot.db.find_top_members_by("points", ctx.message.guild, limit=limit)
+        try:
+            limit, min_games = self.get_top_args(ctx, args)
+        except ValueError:
+            return
+        players = self.bot.db.find_top_members_by("points", ctx.message.guild, limit=limit, threshold=min_games)
         if not players:
             await ctx.send(embed=embed.info(description="No players found with enough games played."))
             return
