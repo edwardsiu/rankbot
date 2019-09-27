@@ -60,6 +60,8 @@ def get_player_match_stats(ctx, user):
     return process_player_match_stats(ctx, user, matches)
 
 def get_deck_short_name(ctx, deck_name, cache):
+    if not deck_name:
+        return "Unknown"
     if len(deck_name) <= 18:
         # already short enough
         return deck_name
@@ -73,8 +75,6 @@ def process_match_stats(ctx, matches):
     for match in matches:
         for player in match["players"]:
             deck_name = player["deck"]
-            if not deck_name:
-                deck_name = "Unknown"
             deck_name = get_deck_short_name(ctx, deck_name, name_cache)
             if deck_name in decks:
                 decks[deck_name]["entries"] += 1
