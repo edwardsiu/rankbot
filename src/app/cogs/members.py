@@ -73,6 +73,16 @@ class Members():
         player = self.bot.db.find_member(user.id, guild)
         if not player:
             return None
+
+        # update username if the username changed
+        if player["name"] != user.name:
+            self.bot.db.matches(guild).update_one({
+                "user_id": user.id
+            }, {
+                "$set": {
+                    "name": user.name
+                }
+            })
         win_percent = 100*player["wins"]/player["accepted"] if player["accepted"] else 0.0
         emsg = embed.info(title=user.name) \
                     .set_thumbnail(url=utils.get_avatar(user)) \
