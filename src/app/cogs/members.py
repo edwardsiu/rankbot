@@ -76,7 +76,7 @@ class Members():
 
         # update username if the username changed
         if player["name"] != user.name:
-            self.bot.db.matches(guild).update_one({
+            self.bot.db.members(guild).update_one({
                 "user_id": user.id
             }, {
                 "$set": {
