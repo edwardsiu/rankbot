@@ -8,7 +8,7 @@ from app.constants import system
 from app.utils import checks, embed, line_table, scryfall, utils
 from app.utils.deckhosts import deck_utils
 
-class Decks():
+class Decks(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 

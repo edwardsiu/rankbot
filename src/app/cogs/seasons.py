@@ -4,7 +4,7 @@ from discord.ext import commands
 from app.constants import emojis
 from app.utils import checks, embed, utils
 
-class Seasons():
+class Seasons(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 

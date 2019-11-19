@@ -4,7 +4,7 @@ from discord.ext import commands
 from app.constants import emojis
 from app.utils import checks, embed, line_table, table, utils
 
-class Members():
+class Members(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.favorite_deck_window = 10

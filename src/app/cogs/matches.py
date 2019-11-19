@@ -5,7 +5,7 @@ from app.utils import checks, embed, line_table, table, utils
 from app.constants import emojis
 from app.constants import status_codes as stc
 
-class Matches():
+class Matches(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 

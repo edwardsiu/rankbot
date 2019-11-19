@@ -3,7 +3,7 @@ from discord.ext import commands
 from app.constants import status_codes as stc
 from app.utils import checks, embed
 
-class Admin():
+class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 

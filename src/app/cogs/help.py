@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from app.utils import embed
 
-class Help():
+class Help(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
