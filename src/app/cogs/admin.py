@@ -70,6 +70,7 @@ class Admin(commands.Cog):
                "`{0}update [game_id1,game_id2,game_id3] @user [deck1,deck2,deck3]`"
         )
     )
+    @commands.check(checks.is_admin)
     async def _set_user_deck(self, ctx, *args):
         """Update a match by setting a user's deck to the specified deck name."""
 
