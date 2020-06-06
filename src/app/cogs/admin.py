@@ -3,7 +3,7 @@ from discord.ext import commands
 from app.constants import status_codes as stc
 from app.utils import checks, embed
 
-class Admin():
+class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -70,6 +70,7 @@ class Admin():
                "`{0}update [game_id1,game_id2,game_id3] @user [deck1,deck2,deck3]`"
         )
     )
+    @commands.check(checks.is_admin)
     async def _set_user_deck(self, ctx, *args):
         """Update a match by setting a user's deck to the specified deck name."""
 

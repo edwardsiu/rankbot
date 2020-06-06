@@ -10,7 +10,7 @@ from app.utils import checks, embed, line_table, table, utils
 
 DEFAULT_LIMIT = 10
 
-class Data():
+class Data(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 

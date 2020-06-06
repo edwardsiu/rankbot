@@ -8,7 +8,7 @@ from app import exceptions as err
 from app.utils import embed
 from app.utils.deckhosts import deck_utils
 
-class OwnerCog():
+class OwnerCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
     
@@ -31,7 +31,7 @@ class OwnerCog():
         usage="`{0}load [cog name]`"
     )
     @commands.is_owner()
-    async def cog_load(self, ctx, *, cog: str):
+    async def load_cog(self, ctx, *, cog: str):
         """Loads a command cog."""
 
         try:
@@ -47,7 +47,7 @@ class OwnerCog():
         usage="`{0}unload [cog name]`"
     )
     @commands.is_owner()
-    async def cog_unload(self, ctx, *, cog: str):
+    async def unload_cog(self, ctx, *, cog: str):
         """Unloads a command cog."""
 
         try:
@@ -63,7 +63,7 @@ class OwnerCog():
         usage="`{0}reload [cog name]`"
     )
     @commands.is_owner()
-    async def cog_reload(self, ctx, *, cog: str):
+    async def reload_cog(self, ctx, *, cog: str):
         """Reloads a command cog."""
 
         try:
