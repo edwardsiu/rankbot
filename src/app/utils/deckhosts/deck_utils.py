@@ -4,7 +4,7 @@ import requests
 
 from app import exceptions as err
 from app.utils import scryfall, utils
-from app.utils.deckhosts import deckstats, tappedout
+from app.utils.deckhosts import deckstats, tappedout, moxfield
 
 def sort_categories(decklist):
     """Sort by number of rows so that the discord embed places
@@ -24,6 +24,8 @@ def extract(link):
         deck = tappedout.search(link)
     elif "deckstats" in link:
         deck = deckstats.search(link)
+    elif "moxfield" in link:
+        deck = moxfield.search(link)
     else:
         raise err.DeckNotFoundError()
 
