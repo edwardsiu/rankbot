@@ -14,7 +14,7 @@ def _parse_decklist(decklist):
     return deck_utils.sort_categories(parsed)
 
 def search(link):
-    deck_id_match = re.search(r'(?<=decks\/)[\w\d]+', link)
+    deck_id_match = re.search(r'(?<=decks\/)[\w\d_-]+', link)
     if not deck_id_match:
         return []
     deck_id = deck_id_match.group()
