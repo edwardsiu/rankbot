@@ -18,7 +18,7 @@ def search(link):
     if not deck_id_match:
         return []
     deck_id = deck_id_match.group()
-    r = requests.get(f"https://api.moxfield.com/v1/decks/all/{deck_id}")
+    r = requests.get(f"https://api.moxfield.com/v2/decks/all/{deck_id}")
     cmdr_names = []
     decklist = r.json()
     if "commander" not in decklist:
