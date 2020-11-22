@@ -4,13 +4,31 @@ import requests
 from app import exceptions as err
 from app.utils.deckhosts import deck_utils
 
+TYPE_MAP = {
+    "1": "Planeswalker",
+    "2": "Creature",
+    "3": "Sorcery",
+    "4": "Instant",
+    "5": "Artifact",
+    "6": "Enchantment",
+    "7": "Land",
+}
+
 def _parse_decklist(decklist):
-    parsed = []
-    # parsed = [{"category": "name", "cards": []}]
-    # cards = [{"name": "name", "count": 1}]
-    # categories = {}
-    # for card_name in decklist["mainboard"]:
-    #     card = decklist["mainboard"][card_name]
+    extracted = [
+        {
+            "category": TYPE_MAP[decklist[card_name]["card"]["type"]],
+            "name": card_name,
+            "count": decklist[card_name]["quantity"],
+        } for card_name in decklist
+    ]
+    category_map = {}
+    for card in extracted:
+        card_category = card["category"]
+        if card_category not in category_map:
+            category_map[card_category] = []
+        category_map[card_category].append({ "name": card["name"], "count": card["count"] })
+    parsed = [{"category": category, "cards": category_map[category]} for category in category_map]
     return deck_utils.sort_categories(parsed)
 
 def search(link):
@@ -19,11 +37,8 @@ def search(link):
         return []
     deck_id = deck_id_match.group()
     r = requests.get(f"https://api.moxfield.com/v2/decks/all/{deck_id}")
-    cmdr_names = []
     decklist = r.json()
-    if "commander" not in decklist:
+    if "commanders" not in decklist:
         raise err.DeckNotFoundError()
-    cmdr_names.append(decklist["commander"]["name"])
-    if ("partner" in decklist):
-        cmdr_names.append(decklist["partner"]["name"])
-    return {"commanders": cmdr_names, "decklist": _parse_decklist(decklist)}
+    cmdr_names = [card_name for card_name in decklist["commanders"]]
+    return {"commanders": cmdr_names, "decklist": _parse_decklist(decklist["mainboard"])}
