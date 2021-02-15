@@ -10,6 +10,8 @@ async def is_registered(ctx):
 async def is_admin(ctx):
     if await ctx.bot.is_owner(ctx.message.author):
         return True
+    if ctx.bot.is_super_admin(ctx.message.author.id):
+        return True
     if ctx.message.author.id == ctx.message.guild.owner_id:
         return True
     admin_role = ctx.bot.db.get_admin_role(ctx.message.guild)
