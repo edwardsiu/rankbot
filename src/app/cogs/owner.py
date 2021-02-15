@@ -5,7 +5,7 @@ import json
 import random
 from app.constants import color_names
 from app import exceptions as err
-from app.utils import embed
+from app.utils import checks, embed
 from app.utils.deckhosts import deck_utils
 
 class OwnerCog(commands.Cog):
@@ -82,7 +82,7 @@ class OwnerCog(commands.Cog):
                "`{0}add deck`\n"
         )
     )
-    @commands.is_owner()
+    @commands.check(checks.is_super_admin)
     async def add_component(self, ctx):
         """Add a user, match, or deck to the league."""
 

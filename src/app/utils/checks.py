@@ -18,3 +18,10 @@ async def is_admin(ctx):
     if not discord.utils.find(lambda r: r.name == admin_role.name, ctx.message.author.roles):
         return False
     return True
+
+async def is_super_admin(ctx):
+    if await ctx.bot.is_owner(ctx.message.author):
+        return True
+    if ctx.bot.is_super_admin(ctx.message.author.id):
+        return True
+    return False
