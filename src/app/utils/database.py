@@ -367,6 +367,13 @@ class RankDB(MongoClient):
             decks.find_one_and_replace({"name": deck_name}, document)
             return 0
 
+    def remove_deck(self, deck_name):
+        decks = self.decks()
+        if not decks.find_one({"name": deck_name}):
+            return 0
+        decks.delete_one({"name": deck_name})
+        return 1
+
     def find_deck(self, alias):
         if alias.lower() == "rogue":
             return {"name": "Rogue"}

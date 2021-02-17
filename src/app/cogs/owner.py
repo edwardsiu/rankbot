@@ -272,6 +272,30 @@ class OwnerCog(commands.Cog):
         else:
             await ctx.send(embed=embed.success(
                 description=f"**SUCCESS** - {decks_added} new deck(s) imported"))
+
+    @commands.command(
+        name='remove-deck', hidden=True,
+        brief="Remove a deck from the bot",
+        usage="`{0}remove-deck [deck name]`"
+    )
+    @commands.check(checks.is_super_admin)
+    async def remove_deck(self, ctx, *args):
+        """Remove a deck from the league."""
+
+        if len(args) < 1:
+            await ctx.send(embed=embed.error(description=f'**ERROR** - Not enough args'))
+            return
+        if len(args) > 1:
+            await ctx.send(embed=embed.error(description=f'**ERROR** - Too many args. Make sure to enclose deck names in quotes.'))
+            return
+
+        deck_name = args[0]
+        response = self.bot.db.remove_deck(deck_name)
+        if not response:
+            await ctx.send(embed=embed.error(description=f'**ERROR** - Failed to remove {deck_name}'))
+            return
+        await ctx.send(embed=embed.success(description=f'**SUCCESS** - Removed {deck_name} from deck database'))
+
         
 
 

@@ -4,5 +4,5 @@ mongodb_host: "localhost"
 mongodb_port: 27017
 command_prefix: "$"
 super_admin_ids:
-  - "12345"
-  - "67890"
+  - 12345
+  - 67890

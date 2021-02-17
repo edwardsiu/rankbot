@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from app.utils import embed
+from app.utils import checks, embed
 
 class Help(commands.Cog):
     def __init__(self, bot):
@@ -16,7 +16,7 @@ class Help(commands.Cog):
         emsg = embed.info(title="Command Help")
         cogs = {}
         for command in self.bot.commands:
-            if command.hidden:
+            if not checks.is_super_admin(ctx) and command.hidden:
                 continue
             if command.cog_name in cogs:
                 cogs[command.cog_name].append(command)
