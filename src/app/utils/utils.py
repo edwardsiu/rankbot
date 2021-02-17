@@ -66,6 +66,10 @@ def get_deck_short_name(ctx, deck_name, cache):
         # already short enough
         return deck_name
     if deck_name not in cache:
+        deck_short_name = ctx.bot.db.get_deck_short_name(deck_name)
+        if not deck_short_name:
+            cache[deck_name] = deck_name
+            return deck_name
         cache[deck_name] = ctx.bot.db.get_deck_short_name(deck_name)
     return cache[deck_name]
 

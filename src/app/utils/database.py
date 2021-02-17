@@ -411,6 +411,8 @@ class RankDB(MongoClient):
 
     def get_deck_short_name(self, alias):
         deck = self.find_deck(alias)
+        if not deck:
+            return None
         shortest_name = sorted(deck['aliases'], key=(lambda n: len(n)))[0]
         return shortest_name
 
